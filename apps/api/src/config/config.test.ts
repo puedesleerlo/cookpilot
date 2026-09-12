@@ -48,10 +48,38 @@ describe('the secret inventory', () => {
     expect(modelish).toEqual([]);
   });
 
+  /**
+   * Two files may be tracked, and only two.
+   *
+   * `.env.example` documents the inventory and holds no values. `.env.production` pins the
+   * deployed API URL, which is not a secret — it is a public address the browser is about
+   * to request — and which has to be committed, because a build that silently loses it
+   * falls back to the page's own origin and ships an app that looks perfect and fails on
+   * its first request.
+   *
+   * The exception defends itself: every name in `.env.production` must be `VITE_`-
+   * prefixed, so it cannot become a place a server secret is smuggled into git.
+   */
+  const TRACKABLE_ENV_FILES = ['.env.example', '.env.production'];
+
   it('keeps .env out of git', () => {
     const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).split('\n');
-    expect(tracked.filter((f) => /(^|\/)\.env(\.|$)/.test(f) && !f.endsWith('.env.example'))).toEqual([]);
+    const envFiles = tracked.filter((f) => /(^|\/)\.env(\.|$)/.test(f));
+    expect(envFiles.filter((f) => !TRACKABLE_ENV_FILES.some((ok) => f.endsWith(ok)))).toEqual([]);
     expect(readFileSync(path.join(root, '.gitignore'), 'utf8')).toMatch(/^\.env/m);
+  });
+
+  it('lets nothing but public client config into the tracked production env', () => {
+    const names = readFileSync(path.join(root, '.env.production'), 'utf8')
+      .split('\n')
+      .map((line) => /^\s*([A-Z][A-Z0-9_]*)\s*=/.exec(line)?.[1])
+      .filter((name): name is string => Boolean(name));
+
+    expect(names.length).toBeGreaterThan(0);
+    // `VITE_` is the only prefix Vite exposes to the browser, so it is the only prefix that
+    // belongs in a file anyone can read on GitHub.
+    expect(names.filter((name) => !name.startsWith('VITE_'))).toEqual([]);
+    for (const declared of SECRETS) expect(names).not.toContain(declared.name);
   });
 
   it('does not let the worker read the voice key', () => {
