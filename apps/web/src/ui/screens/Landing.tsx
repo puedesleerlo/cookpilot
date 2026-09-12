@@ -37,7 +37,7 @@ export const Landing = () => {
           {
             glyph: 'produce' as const,
             head: 'Say what is in the fridge',
-            body: 'Out loud or typed. It keeps what it did not recognise rather than guessing.',
+            body: 'Type it, pick it from the list, and say what has to go today. It keeps what it did not recognise rather than guessing.',
           },
           {
             glyph: 'burner' as const,

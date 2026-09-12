@@ -25,6 +25,7 @@ export const Timeline = ({ plan, schedule, constraints }: Props) => {
   const [view, setView] = useState<'chart' | 'sheet'>('chart');
   const [open, setOpen] = useState<Task | null>(null);
   const reset = useSession((s) => s.reset);
+  const goTo = useSession((s) => s.goTo);
 
   const hues = allocateDishHues(plan.dishes.map((d) => d.id));
   const m = schedule.metrics;
@@ -174,6 +175,9 @@ export const Timeline = ({ plan, schedule, constraints }: Props) => {
       ) : null}
 
       <footer className="flex flex-wrap items-center gap-3 pb-4">
+        <Button variant="secondary" onClick={() => goTo('intake')}>
+          Change the fridge
+        </Button>
         <Button variant="quiet" onClick={reset}>
           Start again
         </Button>

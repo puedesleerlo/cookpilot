@@ -182,3 +182,86 @@ export const resolveIngredient = (rawTerm: string): Resolution => {
 };
 
 export const canonicalNames = (): string[] => LEXICON.map((e) => e.canonicalName);
+
+// ------------------------------------------------------------------ search
+
+export type LexiconMatch = {
+  entry: LexiconEntry;
+  /** The name that matched, which may be a synonym the user typed. */
+  matched: string;
+};
+
+/**
+ * Search for autocomplete.
+ *
+ * This is a dictionary lookup over a whole query, and it must stay one. The consolidated
+ * delta deleted the free-text intake, and the temptation it deleted was exactly this table
+ * pointed at a sentence: finding "chicken" and "rice" inside "chicken and rice for four" is
+ * a keyword slot matcher wearing a lexicon's clothes, and it is wrong often enough —
+ * "chicken stock", "cauliflower rice" — that the user ends up with a plan built on food
+ * they do not have. Offering candidates a person then picks is a different thing: the
+ * person decides, and can decline every one of them.
+ */
+/**
+ * How well one of an entry's names answers the query. Lower is better; -1 is no answer.
+ *
+ * The order is the order a person means things in. An exact match beats a prefix beats a
+ * containment, and a canonical name beats a synonym at each step — without that last part,
+ * typing "chick" offers **stock**, because "chicken stock" is one of its synonyms and it
+ * happens to have a shorter canonical name than chicken breast.
+ */
+const rankOf = (name: string, canonical: string, q: string): number => {
+  const isCanonical = name === canonical;
+  if (name === q) return isCanonical ? 0 : 1;
+  if (name.startsWith(q)) return isCanonical ? 2 : 3;
+  if (name.includes(q)) return isCanonical ? 4 : 5;
+  return -1;
+};
+
+export const searchLexicon = (query: string, limit = 8): LexiconMatch[] => {
+  const q = normalise(query);
+  if (q.length === 0) return [];
+
+  const scored: { match: LexiconMatch; rank: number }[] = [];
+
+  for (const entry of LEXICON) {
+    let best: { match: LexiconMatch; rank: number } | null = null;
+    for (const name of [entry.canonicalName, ...entry.synonyms]) {
+      const rank = rankOf(name, entry.canonicalName, q);
+      if (rank < 0) continue;
+      if (!best || rank < best.rank) best = { match: { entry, matched: name }, rank };
+    }
+    if (best) scored.push(best);
+  }
+
+  return scored
+    .sort(
+      (a, b) =>
+        a.rank - b.rank ||
+        a.match.entry.canonicalName.length - b.match.entry.canonicalName.length ||
+        (a.match.entry.canonicalName < b.match.entry.canonicalName ? -1 : 1),
+    )
+    .slice(0, limit)
+    .map((s) => s.match);
+};
+
+// ----------------------------------------------------------------- urgency
+
+/** Anything that will not survive two days is today's problem. */
+const USE_TODAY_DAYS = 2;
+/** Past a fortnight nothing is urgent; a jar of soy sauce is not a deadline. */
+const NOT_URGENT_DAYS = 14;
+
+/**
+ * The urgency an ingredient arrives with, from how fast the thing actually goes off.
+ *
+ * Urgency is the single most valuable thing the user knows and the most tedious to ask for
+ * seventeen times, so the shelf life answers first and the user corrects. Anything the
+ * lexicon has never seen defaults to the middle: guessing "today" for an unknown puts food
+ * at the front of a plan on no evidence at all.
+ */
+export const defaultUrgency = (keepsDays?: number): 'use-today' | 'use-soon' | 'not-urgent' => {
+  if (keepsDays === undefined) return 'use-soon';
+  if (keepsDays <= USE_TODAY_DAYS) return 'use-today';
+  return keepsDays <= NOT_URGENT_DAYS ? 'use-soon' : 'not-urgent';
+};

@@ -1,5 +1,6 @@
 import { useSession } from '@/app/store';
 import { Blobs, Button, CompileCurtain, Glyph, Grain } from './primitives';
+import { Intake } from './screens/Intake';
 import { Landing } from './screens/Landing';
 import { Timeline } from './screens/Timeline';
 
@@ -17,13 +18,27 @@ export const App = () => {
 
       {screen === 'landing' ? <Landing /> : null}
 
-      {screen === 'timeline' && outcome?.ok ? (
-        <Timeline plan={outcome.plan} schedule={outcome.schedule} constraints={outcome.constraints} />
+      {screen === 'intake' ? <Intake /> : null}
+
+      {screen === 'timeline' ? (
+        outcome?.ok ? (
+          <Timeline
+            plan={outcome.plan}
+            schedule={outcome.schedule}
+            constraints={outcome.constraints}
+          />
+        ) : (
+          /*
+           * Recompiling can in principle produce a session that will not build — turn off
+           * enough of the kitchen and there is nothing left to cook. Rendering nothing at
+           * all was the old behaviour, and a blank page is the worst possible answer to
+           * "what happened to my session".
+           */
+          <DidNotCompile reason={outcome && !outcome.ok ? outcome.reason : undefined} />
+        )
       ) : null}
 
-      {screen !== 'landing' && screen !== 'timeline' ? (
-        <NotBuiltYet reason={outcome && !outcome.ok ? outcome.reason : undefined} />
-      ) : null}
+      {screen !== 'landing' && screen !== 'intake' && screen !== 'timeline' ? <NotBuiltYet /> : null}
 
       {/*
         The curtain is dismissed by its own sequence finishing, not by the compile: the
@@ -35,30 +50,58 @@ export const App = () => {
   );
 };
 
-/**
- * Everything past the timeline is still being built. This says so plainly rather than
- * showing a dead end — an honest empty state is worth more than a screen that looks broken.
- */
-const NotBuiltYet = ({ reason }: { reason?: string }) => {
+const DidNotCompile = ({ reason }: { reason?: string }) => {
+  const goTo = useSession((s) => s.goTo);
   const reset = useSession((s) => s.reset);
-  const startDemo = useSession((s) => s.startDemo);
+
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-[640px] flex-col justify-center gap-5 px-5 py-8">
+      <span className="text-tomato-ink">
+        <Glyph name="state-impossible" size={64} />
+      </span>
+      <h1 className="voice-display text-2xl">That one would not compile</h1>
+      <p className="text-md text-ink-soft">
+        {reason ?? 'Nothing in the registry fits that fridge and that kitchen together.'}
+      </p>
+      <div className="flex flex-wrap gap-3">
+        <Button variant="primary" onClick={() => goTo('intake')}>
+          Change the fridge
+        </Button>
+        <Button variant="secondary" onClick={reset}>
+          Back to the start
+        </Button>
+      </div>
+    </main>
+  );
+};
+
+/**
+ * Cooking mode and the shared session are still being built. This says so plainly rather
+ * than showing a dead end — an honest empty state is worth more than a screen that looks
+ * broken. The run sheet is what you follow in the meantime, and it is one step back.
+ */
+const NotBuiltYet = () => {
+  const reset = useSession((s) => s.reset);
+  const goTo = useSession((s) => s.goTo);
+  const outcome = useSession((s) => s.outcome);
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-[640px] flex-col justify-center gap-5 px-5 py-8">
       <span className="text-sage-ink">
-        <Glyph name={reason ? 'state-impossible' : 'state-compiling'} size={64} />
+        <Glyph name="state-compiling" size={64} />
       </span>
-      <h1 className="voice-display text-2xl">
-        {reason ? 'That one would not compile' : 'This part is still on the stove'}
-      </h1>
+      <h1 className="voice-display text-2xl">This part is still on the stove</h1>
       <p className="text-md text-ink-soft">
-        {reason ??
-          'The compiler, the timeline and the run sheet are working. What is not built yet is the screen that takes your own fridge as input — so for now the example session is the way in.'}
+        Cooking mode — the one that counts your timers down and re-plans when a step runs
+        long — is being built now. Until it lands, the run sheet on the session you compiled
+        is what to follow.
       </p>
       <div className="flex flex-wrap gap-3">
-        <Button variant="primary" onClick={startDemo}>
-          Compile the example session
-        </Button>
+        {outcome?.ok ? (
+          <Button variant="primary" onClick={() => goTo('timeline')}>
+            Back to the session
+          </Button>
+        ) : null}
         <Button variant="secondary" onClick={reset}>
           Back to the start
         </Button>

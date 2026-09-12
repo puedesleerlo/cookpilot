@@ -8,13 +8,18 @@ const root = document.getElementById('root');
 if (!root) throw new Error('#root is missing from index.html');
 
 /**
- * `#demo` compiles the example session on load.
+ * Two links, because two people ask for this differently.
  *
- * It is the link to send someone who asked what this does — they land on the compiled
- * timeline rather than on a landing page with a button they have to find. It is also the
- * only piece of routing in the app, because the rest of it is one session.
+ * `#demo` compiles the example session on load — the link to send someone who asked what
+ * this does, landing them on the timeline rather than on a page with a button to find.
+ * `#fridge` opens straight into their own. That is the whole of the routing; the rest of
+ * the app is one session.
  */
-if (window.location.hash === '#demo') useSession.getState().startDemo();
+const ENTRY: Record<string, () => void> = {
+  '#demo': () => useSession.getState().startDemo(),
+  '#fridge': () => useSession.getState().goTo('intake'),
+};
+ENTRY[window.location.hash]?.();
 createRoot(root).render(
   <StrictMode>
     <App />

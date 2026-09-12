@@ -790,3 +790,53 @@ Why: it is arithmetic the device can do in a few milliseconds. Routing it throug
      genuinely need a server: ingestion, search, and a session shared between two phones.
 Consequence: recompiling is cheap enough to be a live control rather than a button, which
      is what makes the time budget worth showing at all.
+
+## D-059 — Intake is a form, and the lexicon stays a dictionary
+Date: 2026-09-12
+Question: How does someone enter their own fridge?
+Choice: A combobox over the canonical lexicon, one term at a time, plus an explicit "add it
+        anyway" for what the lexicon has never heard of.
+Why: the consolidated delta deleted the free-text fallback parser, and this is exactly where
+     it would have grown back. Pointing `searchLexicon` at a sentence is a keyword slot
+     matcher wearing a lexicon's clothes: "chicken and rice" finds both, "chicken stock"
+     finds chicken, "cauliflower rice" finds rice, and the user gets a plan built on food
+     they do not have. Offering candidates a person picks is a different thing — the person
+     decides, and can decline all of them. The test named "is a lookup, not a parser" is
+     there to make regrowing it a failing build rather than a judgement call.
+Consequence: search ranks canonical names above synonyms. Without that, typing "chick"
+     offered *stock*, whose synonym "chicken stock" matched and whose canonical name is
+     shorter.
+
+## D-060 — No quantity field
+Date: 2026-09-12
+Question: Should intake ask how much of each thing there is?
+Choice: No.
+Why: nothing consumes it. Scoring matches on presence, the scheduler works in minutes, and
+     a plan does not change between four lemons and six. Asking for seventeen numbers that
+     change no output is its own kind of stub — it looks like input and behaves like
+     decoration. When something starts reading quantities, that is when to start asking.
+Revisit if: servings scaling ever needs to know whether there is enough, or the shopping
+     gap ("you are 200g short") gets built.
+
+## D-061 — The assumed kitchen holds a pot
+Date: 2026-09-12
+Question: The default equipment list was the two pans from §10. Is that the right default
+          for someone's own kitchen?
+Choice: No. Widened to what a small kitchen actually holds — pot, colander, grater,
+        measuring cup, jars, jug — with the blender the one deliberate omission.
+Why: a recipe needing equipment the kitchen does not have is not a candidate at all, so the
+     same fridge that compiles to six dishes compiled to two, silently, with a missing sieve
+     as the reason and no way to tell. Assuming someone owns a pot is a far smaller sin.
+     The blender stays off because plenty of kitchens genuinely lack one and the checklist
+     makes it one tap — and turning it on is usually worth a drink.
+
+## D-062 — "No plan" is a value, not an exception
+Date: 2026-09-12
+Question: What should `buildPlan` do when nothing in the registry can be made?
+Choice: Return null. Previously it built an empty `MealPlan`, which the schema rejects, so
+        a pure function three layers down threw a validation error into the render.
+Why: one ingredient and an ordinary kitchen was enough to trigger it, and what the user got
+     was a blank screen. Found by a test written for a different reason. `compileSession`
+     also wraps the whole compile in a catch now: it is the only place in the client that
+     runs unbounded logic over user input, and the one outcome it must never have is
+     nothing at all.

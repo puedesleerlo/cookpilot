@@ -254,7 +254,16 @@ const compiles = (chosen: PlanCandidate[], pantry: Ingredient[], constraints: Co
   );
 };
 
-export const buildPlan = (options: BuildPlanOptions): MealPlan => {
+/**
+ * Build a plan, or say that there is not one.
+ *
+ * Null rather than an empty plan, because a `MealPlan` with no dishes is not a thing the
+ * rest of the system can hold: the schema requires at least one, so returning "nothing"
+ * used to mean throwing a validation error out of a pure function, three layers below
+ * anyone who could do something about it. One ingredient and an ordinary kitchen was enough
+ * to trigger it, and what the user got was a blank screen.
+ */
+export const buildPlan = (options: BuildPlanOptions): MealPlan | null => {
   const { index, pantry, constraints, slackFactor = 1.4 } = options;
 
   const scored = index.all
@@ -306,6 +315,7 @@ export const buildPlan = (options: BuildPlanOptions): MealPlan => {
 
   // A plan with nothing in it helps nobody; take the best thing there is.
   if (chosen.length === 0 && scored.length > 0) take(scored[0]!);
+  if (chosen.length === 0) return null;
 
   return assemble(chosen, pantry, constraints, options.name);
 };

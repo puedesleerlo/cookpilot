@@ -21,7 +21,14 @@ type Props = {
   /** No lexicon entry matched. Kept, and flagged. */
   unrecognised?: boolean;
   onRemove?: () => void;
+  /**
+   * Makes the chip's body a control in its own right. With `onRemove` as well, the body
+   * becomes an inner button rather than wrapping one — a button inside a button is invalid
+   * markup and leaves screen readers announcing one control where there are two.
+   */
   onClick?: () => void;
+  /** The body control's accessible name, when tapping the chip does something specific. */
+  actionLabel?: string;
   /** Chips animate in as they are recognised; suppress for a list that is already settled. */
   settle?: boolean;
 };
@@ -35,12 +42,15 @@ export const Chip = ({
   unrecognised = false,
   onRemove,
   onClick,
+  actionLabel,
   settle = false,
 }: Props) => {
-  const Tag = onClick ? 'button' : 'span';
+  const nested = Boolean(onClick && onRemove);
+  const Tag = onClick && !nested ? 'button' : 'span';
+  const Body = nested ? 'button' : 'span';
   return (
     <Tag
-      {...(onClick ? { type: 'button' as const, onClick } : {})}
+      {...(onClick && !nested ? { type: 'button' as const, onClick } : {})}
       data-settle={settle || undefined}
       className={`inline-flex items-center gap-2 rounded-chip bg-cream py-2 pl-3 pr-4 text-sm
         font-ui font-semibold text-charcoal shadow-1 border-[1.5px]
@@ -48,19 +58,26 @@ export const Chip = ({
         ${onClick ? 'cursor-pointer hover:bg-cream-deep' : ''}
         ${settle ? 'motion-safe:animate-[chip-settle_var(--d-base)_var(--ease-settle)_both]' : ''}`}
     >
-      {icon ? (
-        <span className={urgent ? 'text-tomato' : unrecognised ? 'text-ink-faint' : 'text-sage-ink'}>
-          <Glyph name={icon} size={22} />
-        </span>
-      ) : null}
-      {children}
-      {urgent ? (
-        <span className="rounded-xs bg-tomato-wash px-2 text-xs font-bold text-tomato-ink">today</span>
-      ) : null}
-      {assumed ? <span className="text-xs italic text-ink-soft">assumed</span> : null}
-      {unrecognised ? (
-        <span className="rounded-xs bg-cream-sunk px-2 text-xs text-ink-soft">not sure</span>
-      ) : null}
+      <Body
+        {...(nested
+          ? { type: 'button' as const, onClick, 'aria-label': actionLabel }
+          : {})}
+        className="inline-flex items-center gap-2"
+      >
+        {icon ? (
+          <span className={urgent ? 'text-tomato' : unrecognised ? 'text-ink-faint' : 'text-sage-ink'}>
+            <Glyph name={icon} size={22} />
+          </span>
+        ) : null}
+        {children}
+        {urgent ? (
+          <span className="rounded-xs bg-tomato-wash px-2 text-xs font-bold text-tomato-ink">today</span>
+        ) : null}
+        {assumed ? <span className="text-xs italic text-ink-soft">assumed</span> : null}
+        {unrecognised ? (
+          <span className="rounded-xs bg-cream-sunk px-2 text-xs text-ink-soft">not sure</span>
+        ) : null}
+      </Body>
       {onRemove ? (
         <button
           type="button"

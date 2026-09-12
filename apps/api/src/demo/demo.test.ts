@@ -32,6 +32,7 @@ const pantry: Ingredient[] = DEMO_PANTRY.map(([name, urgency]) => {
 const constraints = demoConstraints();
 const index = buildIndex(loadSeedPacks().packs);
 const plan = buildPlan({ index, pantry, constraints });
+if (!plan) throw new Error('the §10 pantry must produce a plan');
 const result = compileSchedule({ plan, constraints });
 
 describe('the §10 demo scenario', () => {

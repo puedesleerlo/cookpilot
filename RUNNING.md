@@ -12,14 +12,21 @@
 | Database | Runs. Schema, migrations, seed (5 packs, 22 recipes). |
 | Gemini via Vertex | Works. Verified live against `gemini-3.5-flash-lite`. |
 | Recipe extraction | Works. 100% JSON-LD hit rate measured on 27 real pages. |
-| Your own fridge | **Not built.** The intake screen is the next thing; until then the example session is the way in. |
+| Your own fridge | **Works.** Search the lexicon, say what has to go today, correct the kitchen, compile. |
 | Cooking mode | **Not built.** The run sheet is what you follow for now. |
+| Voice intake | **Not built.** The structured form is the way in, by design — the free-text parser was deleted. |
 
 ### The demo, in one link
 
 <https://hackaton-508407.web.app/#demo> — or click **Try the example session** on the
 landing page. It compiles on the device: the §10 pantry, a 60-minute budget, two cooks, two
 burners and two pans, into three dishes, a sauce and two drinks in 59 minutes.
+
+<https://hackaton-508407.web.app/#fridge> goes straight to your own fridge instead. Type an
+ingredient, pick it from the list, tap a chip to say it has to go today. Six or seven things
+is enough. The kitchen and the crew are filled in as assumptions and marked as such — the
+blender is the one thing deliberately left off, because plenty of kitchens do not have one
+and it is what stands between you and a blended drink.
 
 The controls above the chart recompile live. Some things worth trying:
 
