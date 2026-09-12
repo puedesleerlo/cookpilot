@@ -70,6 +70,30 @@ export const toErrorBody = (
     };
   }
 
+  /**
+   * Some plugins throw a body rather than an Error. `@fastify/rate-limit`'s
+   * `errorResponseBuilder` result arrives here as a bare object carrying our own envelope,
+   * with no `statusCode` and no `message` — so without this branch a throttled request
+   * became a generic 500 and the client could not tell it apart from a crash.
+   */
+  const enveloped = err as { error?: { code?: unknown; message?: unknown } };
+  if (enveloped?.error && isErrorCode(enveloped.error.code)) {
+    const code = enveloped.error.code;
+    return {
+      status: DEFAULT_STATUS[code],
+      body: {
+        error: {
+          code,
+          message:
+            typeof enveloped.error.message === 'string'
+              ? enveloped.error.message
+              : 'That request could not be completed.',
+          requestId,
+        },
+      },
+    };
+  }
+
   // Fastify's own validation errors arrive with a `validation` array.
   const maybe = err as { validation?: { instancePath?: string; message?: string }[]; statusCode?: number };
   if (Array.isArray(maybe.validation)) {

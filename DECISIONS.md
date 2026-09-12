@@ -444,3 +444,56 @@ Why: Both invariants are *database* behaviours. A mock would assert that I remem
      suite usable on a machine without Docker, and the skip says how to fix itself.
 Revisit if: CI cannot run a service container; then the DB tests become a separate job, not
      a deleted one.
+
+## D-034 — Revocation is deleting the device row, checked on every request
+Date: 2026-09-12
+Question: Device tokens live 90 days. How are they revoked?
+Options: (a) short tokens plus refresh, (b) a revocation list, (c) check the device still
+         exists on every verification
+Choice: (c). `verifyDevice` verifies the signature *and* confirms the stored hash still
+        matches a live row.
+Why: The device row is already read to compare the hash, so the liveness check is free —
+     and without it a cryptographically valid token for a deleted device would be accepted,
+     which makes "delete the device" mean nothing. (a) adds a refresh flow to a product with
+     no accounts; (b) adds a list to maintain when a table already holds the answer.
+Revisit if: verification becomes hot enough that the per-request read matters; the fix is a
+     short cache, not removing the check.
+
+## D-035 — Expired and forged tokens return the same message
+Date: 2026-09-12
+Question: Should the 401 say which check failed?
+Options: (a) distinguish expired from invalid, (b) one message for both
+Choice: (b), and a test asserts the two messages are byte-identical.
+Why: "Expired" tells someone holding a stolen token that it was genuine and they need a
+     fresher one; "invalid" tells them to stop. That is a distinction worth nothing to a
+     legitimate client — which simply re-issues either way — and worth something to a
+     prober.
+Revisit if: support cannot diagnose a user's problem; the answer then is the request id in
+     the log, not a more specific message on the wire.
+
+## D-036 — Rate limiting is keyed on device, not on address
+Date: 2026-09-12
+Question: What is the rate limit key?
+Options: (a) IP address, (b) device, falling back to address when there is no token
+Choice: (b).
+Why: The product's whole premise is two people cooking together, which means two phones on
+     one wifi behind one address. Keying on address alone would make the second cook share
+     the first cook's budget and get throttled for someone else's activity. Device creation
+     keeps a tighter, address-keyed limit, because there is no device yet and farming
+     tokens is the thing worth throttling.
+Revisit if: abuse arrives from many devices behind one address, which needs a second limit
+     rather than a different key.
+
+## D-037 — Test files run sequentially because integration tests share one database
+Date: 2026-09-12
+Question: Two DB test files truncating between cases wiped each other's rows when run in
+          parallel. How is that fixed?
+Options: (a) scope each file's cleanup to its own ids, (b) a Postgres schema per test file,
+         (c) `fileParallelism: false`
+Choice: (c).
+Why: (a) is fragile — it holds until someone adds a case that forgets the prefix, and the
+     failure is a confusing cross-file one. (b) is proper isolation but complicates the
+     migration runner for a suite this size. (c) costs about five seconds on a suite that
+     runs in seven, and removes the entire class of failure rather than one instance of it.
+     The failure was also load-dependent, which is the worst kind to leave in.
+Revisit if: the suite gets slow enough that the five seconds matter; the answer then is (b).

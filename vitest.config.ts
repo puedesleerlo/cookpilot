@@ -19,6 +19,12 @@ export default defineConfig({
     },
   },
   test: {
+    /**
+     * Integration tests share one Postgres and truncate between cases, so two files
+     * running at once wipe each other's rows. The suite is seconds long; sequential files
+     * costs little and removes a whole class of flakiness that only shows up under load.
+     */
+    fileParallelism: false,
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./apps/web/src/test/setup.ts'],

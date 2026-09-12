@@ -1,7 +1,9 @@
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import { randomUUID } from 'node:crypto';
 import {
+  CreateDeviceRequestSchema,
   REQUEST_ID_HEADER,
   allRoutes,
   routes,
@@ -9,10 +11,12 @@ import {
   type ReadyResponse,
 } from '@kitchen/contracts';
 import { SCHEDULER_VERSION } from '@kitchen/scheduler';
-import { toErrorBody } from './errors';
+import { ApiError, toErrorBody } from './errors';
 import { createLogger } from './logging';
 import { describeEnv, type Env } from './config/env';
 import { buildOpenApi } from './openapi';
+import type { Database } from './db/client';
+import { bearerFrom, issueDevice, touchDevice, verifyDevice } from './auth/devices';
 
 /**
  * A dependency the instance needs before it can take traffic. Registered rather than
@@ -28,12 +32,28 @@ export type BuildOptions = {
   dependencies?: DependencyCheck[];
   /** Injected so tests can drive time without a real clock. */
   now?: () => number;
+  /** Absent in the unit tests that only exercise the routes needing no storage. */
+  db?: Database;
+  /** Signing key for device tokens. Required once `db` is present. */
+  jwtSecret?: string;
+  /** Lowered in tests so the limiter can be exercised without a thousand requests. */
+  rateLimits?: { globalPerMinute: number; deviceCreationPerHour: number };
 };
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    /** Set by `requireDevice`. Absent on unauthenticated routes. */
+    deviceId?: string;
+  }
+}
 
 export const buildServer = async ({
   env,
   dependencies = [],
   now = () => Date.now(),
+  db,
+  jwtSecret,
+  rateLimits = { globalPerMinute: 300, deviceCreationPerHour: 20 },
 }: BuildOptions): Promise<FastifyInstance> => {
   const startedAt = now();
 
@@ -53,6 +73,25 @@ export const buildServer = async ({
     origin: env.CORS_ORIGINS.length > 0 ? env.CORS_ORIGINS : true,
     credentials: true,
     exposedHeaders: [REQUEST_ID_HEADER],
+  });
+
+  /**
+   * Keyed on the device where there is one, and on the address otherwise. Keying purely on
+   * address would mean two cooks on the same wifi share a budget, which is exactly the
+   * situation this product is built for.
+   */
+  await app.register(rateLimit, {
+    global: true,
+    max: rateLimits.globalPerMinute,
+    timeWindow: '1 minute',
+    keyGenerator: (request: FastifyRequest) => request.deviceId ?? request.ip,
+    errorResponseBuilder: (request, context) => ({
+      error: {
+        code: 'rate_limited',
+        message: `Too many requests. Try again in ${Math.ceil(Number(context.ttl) / 1000)}s.`,
+        requestId: String(request.id),
+      },
+    }),
   });
 
   // Every response carries its id, so a screenshot of an error is enough to find the logs.
@@ -129,6 +168,52 @@ export const buildServer = async ({
     const ms = now();
     return { serverTimeMs: ms, iso: new Date(ms).toISOString() };
   });
+
+  // -------------------------------------------------------------- identity
+  if (db && jwtSecret) {
+    /**
+     * A route declares that it needs a device; it does not remember to check. A handler
+     * that forgets an `if` is a hole, and the holes are never in the handler anyone reviews.
+     */
+    const requireDevice = async (request: FastifyRequest): Promise<string> => {
+      const { deviceId } = await verifyDevice(db, jwtSecret, bearerFrom(request.headers.authorization));
+      request.deviceId = deviceId;
+      return deviceId;
+    };
+    app.decorate('requireDevice', requireDevice);
+
+    app.post(
+      routes.createDevice.path,
+      {
+        config: {
+          rateLimit: { max: rateLimits.deviceCreationPerHour, timeWindow: '1 hour' },
+        },
+      },
+      async (request, reply) => {
+        const parsed = CreateDeviceRequestSchema.safeParse(request.body ?? {});
+        if (!parsed.success) {
+          throw new ApiError('invalid_request', 'That request body is not valid.', {
+            details: parsed.error.issues.map((i) => ({
+              path: i.path.join('.') || '(root)',
+              message: i.message,
+            })),
+          });
+        }
+        const issued = await issueDevice(db, jwtSecret, now);
+        return reply.status(201).send({
+          deviceId: issued.deviceId,
+          token: issued.token,
+          expiresAt: issued.expiresAt.toISOString(),
+        });
+      },
+    );
+
+    app.get(routes.whoAmI.path, async (request) => {
+      const deviceId = await requireDevice(request);
+      await touchDevice(db, deviceId, new Date(now()));
+      return { deviceId };
+    });
+  }
 
   // -------------------------------------------------------------- openapi
   const spec = buildOpenApi(allRoutes());

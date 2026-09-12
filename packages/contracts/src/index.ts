@@ -95,6 +95,31 @@ export const TimeResponseSchema = z.object({
 });
 export type TimeResponse = z.infer<typeof TimeResponseSchema>;
 
+// ------------------------------------------------------------------ devices
+
+/**
+ * Identity is a device, not a person: no email, no password, nothing personal. The token's
+ * claims are a device id and two timestamps, and the server stores only its hash.
+ */
+export const CreateDeviceRequestSchema = z.object({
+  /** Optional, cosmetic, shown to the other cook. Never required, never validated as a name. */
+  displayName: z.string().max(40).optional(),
+});
+export type CreateDeviceRequest = z.infer<typeof CreateDeviceRequestSchema>;
+
+export const CreateDeviceResponseSchema = z.object({
+  deviceId: z.string(),
+  /** Present exactly once, in this response. The server keeps only a hash. */
+  token: z.string(),
+  expiresAt: z.string(),
+});
+export type CreateDeviceResponse = z.infer<typeof CreateDeviceResponseSchema>;
+
+export const WhoAmIResponseSchema = z.object({
+  deviceId: z.string(),
+});
+export type WhoAmIResponse = z.infer<typeof WhoAmIResponseSchema>;
+
 // ----------------------------------------------------------- route registry
 
 export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
@@ -152,6 +177,25 @@ export const routes = {
     response: TimeResponseSchema,
     errors: [],
     auth: false,
+  }),
+
+  createDevice: describeRoute({
+    method: 'POST',
+    path: '/v1/devices',
+    summary: 'Issue an anonymous device token. No account, no personal data.',
+    body: CreateDeviceRequestSchema,
+    response: CreateDeviceResponseSchema,
+    errors: ['rate_limited'],
+    auth: false,
+  }),
+
+  whoAmI: describeRoute({
+    method: 'GET',
+    path: '/v1/devices/me',
+    summary: 'Confirm a device token is still valid. Fails closed if the device was revoked.',
+    response: WhoAmIResponseSchema,
+    errors: ['unauthorized'],
+    auth: true,
   }),
 } as const;
 
