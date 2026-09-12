@@ -28,28 +28,50 @@ import {
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 
+/** The port the API takes locally, as RUNNING.md documents it. */
+const DEV_API_PORT = 8080;
+
 /**
- * Where the API is.
+ * Where the API is, as a pure decision so it can be tested.
  *
- * `VITE_API_URL` names it; empty means the page's own origin. One adjustment: when the
- * configured host is localhost but the page is being viewed from somewhere else, the API is
- * assumed to be on the same machine the page came from. That is exactly the situation of a
- * phone that has scanned a laptop's QR code on the kitchen wifi — the laptop's `localhost`
- * is not the phone's, but the laptop's address is the one the page just loaded from.
+ * `configured` is `VITE_API_URL`. Empty means the page's own origin in production — that
+ * is how a hosting rewrite in front of Cloud Run looks to the browser — and, in
+ * development, the API on port 8080 of whatever host the page came from, because that is
+ * the documented local setup and calling the dev server itself only ever yields a 404.
+ *
+ * One adjustment either way: when the API host is localhost but the page is being viewed
+ * from somewhere else, the API is assumed to be on the machine the page came from. That is
+ * exactly a phone that has scanned a laptop's QR code on the kitchen wifi — the laptop's
+ * `localhost` is not the phone's, but the laptop's address is the one the page just loaded
+ * from.
  */
-export const apiBaseUrl = (): string => {
-  const configured = (import.meta.env['VITE_API_URL'] as string | undefined)?.trim() ?? '';
-  if (!configured) return '';
-  if (typeof window === 'undefined') return configured.replace(/\/$/, '');
+export const resolveApiBase = (
+  configured: string | undefined,
+  page: { protocol: string; hostname: string } | null,
+  dev: boolean,
+): string => {
+  const raw = configured?.trim() ?? '';
+  if (!raw) {
+    return dev && page && page.hostname ? `${page.protocol}//${page.hostname}:${DEV_API_PORT}` : '';
+  }
+  if (!page) return raw.replace(/\/$/, '');
   try {
-    const url = new URL(configured);
-    const here = window.location.hostname;
-    if (LOCAL_HOSTS.has(url.hostname) && here && !LOCAL_HOSTS.has(here)) url.hostname = here;
+    const url = new URL(raw);
+    if (LOCAL_HOSTS.has(url.hostname) && page.hostname && !LOCAL_HOSTS.has(page.hostname)) {
+      url.hostname = page.hostname;
+    }
     return url.origin;
   } catch {
-    return configured.replace(/\/$/, '');
+    return raw.replace(/\/$/, '');
   }
 };
+
+export const apiBaseUrl = (): string =>
+  resolveApiBase(
+    import.meta.env['VITE_API_URL'] as string | undefined,
+    typeof window === 'undefined' ? null : window.location,
+    Boolean(import.meta.env.DEV),
+  );
 
 /** True when the page itself was opened on localhost, which a phone cannot follow. */
 export const servedFromLocalhost = (): boolean =>
@@ -172,7 +194,14 @@ export const call = async <T>(opts: CallOptions<T>, retried = false): Promise<T>
       const { code, message, requestId } = parsed.data.error;
       throw new ApiRequestError(code, message, res.status, requestId);
     }
-    throw new ApiRequestError('unexpected', `The server answered ${res.status}.`, res.status);
+    // The API always answers in its envelope. Anything else is a different server — the
+    // dev server, a hosting rewrite — which means the API is not where this page thinks.
+    throw new ApiRequestError(
+      'unexpected',
+      `Nothing at ${apiBaseUrl() || 'this origin'} answers like the kitchen server (it said ${res.status}). ` +
+        'Is the API running, and does VITE_API_URL point at it?',
+      res.status,
+    );
   }
 
   const parsed = opts.response.safeParse(json);

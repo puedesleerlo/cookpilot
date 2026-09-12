@@ -926,3 +926,22 @@ Why: an automatic start fires while someone is still typing their name, and the 
      start because one cook never joins is a session that gets abandoned.
 Revisit if: nobody ever uses the escape hatch. Then it is clutter.
 
+## D-065 — Vite reads the repository's `.env`, and an unconfigured dev client assumes port 8080
+Date: 2026-09-12
+Question: The first press of "Cook this together" answered "The server answered 404".
+Cause: Vite's `envDir` defaults to the package it runs in, `apps/web`, and the only `.env`
+       is at the repository root, next to `.env.example`, where `VITE_API_URL` is
+       documented. So the client shipped with no API URL, treated "none" as "this origin",
+       and the dev server answered its own 404 — without the API's error envelope, which
+       is why the message was a bare status code.
+Choice: `envDir: '../..'`, so the documented file is the one read; and in development an
+        unconfigured client assumes the API on port 8080 of whatever host the page came
+        from, which is the setup RUNNING.md describes. Production keeps "none means this
+        origin", which is what a hosting rewrite in front of Cloud Run looks like.
+Why both: the first makes the documentation true; the second makes a missing `.env` a
+     working setup rather than a bare 404 — and the 404 message now names the address it
+     tried and the variable to set, so the next person is not reading server logs.
+Consequence: only `VITE_*` names reach the bundle, so the provider secrets in the same
+     file do not; the bundle scanner still fails the build if one did.
+Revisit if: the API ever runs on a different port locally.
+
