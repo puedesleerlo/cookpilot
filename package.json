@@ -14,10 +14,12 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty",
-    "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "check": "pnpm scan:secrets && pnpm lint && pnpm typecheck && pnpm test",
     "packs:build": "node scripts/build-seed-packs.mjs && node scripts/build-registry-index.mjs",
     "design:build": "node scripts/build-design-canvas.mjs",
-    "scan:bundle": "node scripts/scan-bundle.mjs"
+    "scan:bundle": "node scripts/scan-bundle.mjs",
+    "scan:secrets": "node scripts/scan-secrets.mjs",
+    "secrets:gen": "node scripts/gen-secret-artifacts.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

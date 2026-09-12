@@ -275,3 +275,55 @@ Why: The boundary test caught this: `no-restricted-imports` matches the *literal
      and it would have been invisible in review.
 Revisit if: the workspace grows enough that `eslint-plugin-import-x`'s path-resolving
      `no-restricted-paths` becomes worth the dependency.
+
+## D-021 — `.env.example` and `infra/iam.sh` are generated, not maintained
+Date: 2026-09-12
+Question: Three things must agree — the inventory, the example env file, and the IAM
+          bindings. How are they kept in step?
+Options: (a) maintain all three by hand and review carefully, (b) generate two from the first
+Choice: (b). `scripts/gen-secret-artifacts.mjs` emits both from the inventory, and CI fails
+        if the committed copies are stale.
+Why: The two failure modes are silent and asymmetric. A secret in the inventory with no IAM
+     binding is a service that starts and then cannot read it. A binding with no inventory
+     entry is access nobody audits. Neither shows up in review, because nobody reads three
+     files side by side.
+Revisit if: the IAM needs shapes the generator cannot express; then it stops being generated
+     and starts being reviewed, deliberately.
+
+## D-022 — The secret scanner checks git-tracked, not file-exists
+Date: 2026-09-12
+Question: The first version flagged any `.env` on disk. Is that right?
+Options: (a) flag any `.env` present, (b) flag only a `.env` that git is tracking
+Choice: (b), via `git ls-files`.
+Why: (a) failed immediately on this machine — a correctly gitignored `.env` was present,
+     which is exactly what a working local setup looks like. A scanner that fails for every
+     developer with a configured environment gets disabled within a week, and then it is
+     protecting nothing. The risk is a *committed* secret, so the check asks git.
+Revisit if: never; this is the right question to ask.
+
+## D-023 — Heuristic secret shapes are skipped in documentation
+Date: 2026-09-12
+Question: `DECISIONS.md` describing what the scanner looks for tripped the scanner.
+Options: (a) exempt the file, (b) drop the heuristic, (c) split shapes into strict and heuristic
+Choice: (c). Unmistakable credentials — real prefixes and real lengths — are scanned
+        everywhere. Structural heuristics like `"type": "service_account"` are skipped in
+        `.md` and `.txt`.
+Why: (a) creates a hole that grows every time someone documents a shape. (b) loses a real
+     check. (c) keeps the check where credentials actually live, and accepts that prose
+     about a credential is not a credential. A real service-account key is a JSON file, not
+     a sentence in a decision log.
+Revisit if: someone starts pasting real keys into markdown, at which point the problem is
+     not the scanner.
+
+## D-024 — Startup dies on a missing secret rather than failing at first use
+Date: 2026-09-12
+Question: What should a service do when a required secret is absent?
+Options: (a) start, and fail the request that needs it, (b) refuse to open a listener
+Choice: (b). `requireSecrets` exits non-zero with a message naming each missing secret, its
+        description, and where an operator gets a value.
+Why: (a) turns a deploy-time mistake into a user-facing one and buries the cause under
+     whatever request happened to hit it first. It also lets a bad revision pass a health
+     check and take traffic. Failing at startup means the deploy fails, traffic never
+     shifts, and the message says exactly what to fix.
+Revisit if: a secret is genuinely needed by only one rare route; the answer then is to mark
+     it optional and have that route report itself unavailable, which the loader supports.

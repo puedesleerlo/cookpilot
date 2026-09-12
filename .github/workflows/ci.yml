@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the secret scan can see what was committed, not just the tip.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.7.1 }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # --- Secrets first. A leaked credential is worth knowing about before anything
+      # --- else runs, and this step costs seconds.
+      - name: Scan the working tree for credentials
+        run: node scripts/scan-secrets.mjs
+
+      - name: Check generated secret artifacts are current
+        run: |
+          node scripts/gen-secret-artifacts.mjs
+          git diff --exit-code .env.example infra/iam.sh \
+            || (echo "::error::.env.example or infra/iam.sh is stale. Run: node scripts/gen-secret-artifacts.mjs" && exit 1)
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Validate specs
+        run: |
+          npx --yes @fission-ai/openspec@1 validate --all --strict
+
+      - name: Build
+        run: pnpm build
+
+      # --- The last line of defence: nothing secret may reach the browser.
+      - name: Scan the client bundle
+        run: node scripts/scan-bundle.mjs apps/web/dist
