@@ -1,4 +1,4 @@
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import { randomUUID } from 'node:crypto';
@@ -17,6 +17,7 @@ import { describeEnv, type Env } from './config/env';
 import { buildOpenApi } from './openapi';
 import type { Database } from './db/client';
 import { bearerFrom, issueDevice, touchDevice, verifyDevice } from './auth/devices';
+import { registerSessionRoutes } from './sessions/routes';
 import { stageMetrics, totalSpendUsd } from './llm/gateway';
 
 /**
@@ -39,6 +40,8 @@ export type BuildOptions = {
   jwtSecret?: string;
   /** Lowered in tests so the limiter can be exercised without a thousand requests. */
   rateLimits?: { globalPerMinute: number; deviceCreationPerHour: number };
+  /** Join-code randomness. Injected so a test can force a collision. */
+  random?: () => number;
 };
 
 declare module 'fastify' {
@@ -55,11 +58,14 @@ export const buildServer = async ({
   db,
   jwtSecret,
   rateLimits = { globalPerMinute: 300, deviceCreationPerHour: 20 },
+  random,
 }: BuildOptions): Promise<FastifyInstance> => {
   const startedAt = now();
 
-  const app = Fastify({
-    loggerInstance: createLogger(env),
+  const app: FastifyInstance = Fastify({
+    // pino's own `Logger` type is wider than the one Fastify's instance is generic over;
+    // narrowing here keeps every route module typed against the plain `FastifyInstance`.
+    loggerInstance: createLogger(env) as FastifyBaseLogger,
     // Honour a caller-supplied id so a trace can span the client and the server.
     genReqId: (req) => {
       const supplied = req.headers[REQUEST_ID_HEADER];
@@ -214,6 +220,10 @@ export const buildServer = async ({
       await touchDevice(db, deviceId, new Date(now()));
       return { deviceId };
     });
+
+    // Sessions need both a device and somewhere to keep the log, so they live behind the
+    // same guard as identity rather than half-registering without it.
+    registerSessionRoutes(app, { db, now, requireDevice, ...(random ? { random } : {}) });
   }
 
   /**

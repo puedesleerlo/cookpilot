@@ -13,7 +13,7 @@
 | Gemini via Vertex | Works. Verified live against `gemini-3.5-flash-lite`. |
 | Recipe extraction | Works. 100% JSON-LD hit rate measured on 27 real pages. |
 | Your own fridge | **Works.** Search the lexicon, say what has to go today, correct the kitchen, compile. |
-| Cooking mode | **Not built.** The run sheet is what you follow for now. |
+| Cooking mode | **Works, on every phone.** Scan the host's code, pick your cook, follow your own steps with timers that count down together. Needs the API. |
 | Voice intake | **Not built.** The structured form is the way in, by design — the free-text parser was deleted. |
 
 ### The demo, in one link
@@ -37,6 +37,31 @@ The controls above the chart recompile live. Some things worth trying:
 | 2 cooks → 1 | 6 dishes become 3 — the skilled cook is the bottleneck, not the clock |
 | 2 cooks → 3 | the same 6 dishes, 5 minutes sooner |
 | Drinks → no | the cold brew and the agua fresca go, and nothing else changes |
+
+### Cooking together, on phones
+
+```bash
+docker compose up -d
+pnpm --filter @kitchen/api migrate       # applies 0001_add-shared-session
+pnpm --filter @kitchen/api dev           # API on :8080, on every interface
+pnpm dev                                 # web on :5173, on every interface — note the Network URL
+```
+
+Open the **Network** URL the dev server prints (not `localhost`; a phone cannot follow that)
+on the laptop, compile a session, and press **Cook this together**. Each phone scans the QR
+code, or opens the same URL and types the six letters under it. Pick which cook you are,
+say what to call you, and when everyone is in the host presses **Start cooking**.
+
+Each phone then shows its owner one step, a countdown to when the compiler expected it done,
+and the next step underneath. A screen that claimed no cook — the laptop on the counter —
+shows everyone's slide at once. Whatever is looking after itself on the stove is listed with
+its own timer on every device. Tapping **Done** writes to the session log and shows on the
+other phones within two seconds.
+
+What travels is the inputs and the log, never the schedule: every phone compiles the same
+timeline for itself and checks its hash against the host's. Timers count from the server's
+clock, so two phones agree to within a round trip. The API is required for this and for
+nothing else — the single-device demo still runs with it blocked.
 
 ## Run it locally
 

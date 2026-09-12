@@ -840,3 +840,89 @@ Why: one ingredient and an ordinary kitchen was enough to trigger it, and what t
      also wraps the whole compile in a catch now: it is the only place in the client that
      runs unbounded logic over user input, and the one outcome it must never have is
      nothing at all.
+
+## D-059 — Every device compiles its own timeline; the host's hash makes agreement a check
+Date: 2026-09-12
+Question: A phone scans a code. How does it get the timeline?
+Options: (a) the server sends the host's compiled schedule; (b) the server compiles and
+         sends its own; (c) every device compiles from the inputs and compares a hash.
+Choice: (c). The host sends `contentHash(schedule)` when it opens the session; each device
+        that joins compiles the same inputs and checks its own hash against it.
+Why: (a) syncs derived state, which is the one thing the sync model forbids — the moment a
+     schedule travels there are two of them. (b) is the right long-term shape but needs the
+     intake-to-constraints step to leave `apps/web` first (D-061). (c) costs a few
+     milliseconds on the phone and turns "byte-identical everywhere" from a sentence in
+     `project.md` into a check that runs on every join and says so when it fails.
+Consequence: a stale bundle on one phone shows up as a warning before anyone cooks from it,
+     not as two phones quietly disagreeing about minute fourteen.
+Revisit if: compiling ever takes longer than a phone's patience. Then (b).
+
+## D-060 — Polling every two seconds, not a socket
+Date: 2026-09-12
+Question: `@fastify/websocket` is installed and the architecture diagram says WebSocket.
+Choice: `GET /v1/sessions/:id/events?after=N` every two seconds, plus once on becoming
+        visible again. One request carries the new events, the roster, the status and the
+        server's time.
+Why: a phone in a kitchen sleeps, wakes, drops off the wifi and comes back, and a request
+     every two seconds survives all of that with no reconnect logic to get wrong. The
+     convergence spike (D-045) proved replay-since-seq under exactly this pattern. Four
+     phones is two requests a second, which is nothing. A phone's own tap never waits for
+     a poll — it is optimistic — so the two seconds are only ever someone else's tap.
+Cost: up to two seconds before another cook's Done shows on your phone.
+Revisit if: a session ever has more than ten devices, or an event needs sub-second
+     delivery. The store folds events by sequence number and does not care what carried them.
+
+## D-061 — The API stores inputs, crew, hash and log; it does not compile yet
+Date: 2026-09-12
+Question: The server is meant to be authoritative. Why store the host's hash rather than
+          compile on the server and compare against that?
+Answer: because the intake-to-constraints step — `crewFrom`, `equipmentFrom`,
+        `constraintsFrom` — lives in `apps/web/src/app/constraints.ts`, and nothing in a
+        package can reach it. A server compile needs that step in `packages/recipes` next
+        to `buildPlan`, with the web app's `compile.ts` becoming a thin wrapper, or the API
+        would carry a second implementation of it — the drift the workspace exists to
+        prevent.
+Choice: defer the move to the change that adds mid-session recompilation, which is the
+        first thing that genuinely needs a server-side schedule. Until then the server can
+        attribute a divergence (which device disagrees with the host) but not adjudicate
+        one, and the schema says so: `schedule_hash`, not a schedule.
+Revisit when: `task-running-long` lands.
+
+## D-062 — A cook is claimed under the session row lock
+Date: 2026-09-12
+Question: Two phones tap the same cook in the same instant. Who gets it?
+Options: (a) check then upsert; (b) a unique index on `(session_id, cook_id)`;
+         (c) check and upsert inside a transaction holding `SELECT ... FOR UPDATE` on the
+         session row.
+Choice: (c), `claimCook`. It is the pattern `appendEvent` already uses, so everything that
+        changes a session serialises on the same lock.
+Why: (a) lets both phones read "free" and the kitchen ends up with two people called Cook 1.
+     (b) works, but makes "changing your mind" a delete-then-insert with a window where the
+     device holds nothing, and needs another migration. (c) was one function away.
+Consequence: tested with two concurrent claims; exactly one succeeds.
+
+## D-063 — The client rewrites a localhost API host to the page's own host
+Date: 2026-09-12
+Question: `VITE_API_URL=http://localhost:8080`. A phone on the kitchen wifi loads the page
+          from `http://172.20.10.14:5173` and then tries to reach `localhost:8080` — its own.
+Options: (a) a Vite proxy under `/v1`; (b) edit `.env` per network; (c) if the configured
+         API host is localhost and the page was not loaded from localhost, use the page's
+         hostname.
+Choice: (c), in `apiBaseUrl()`, plus `server.host: true` so the page is reachable at all.
+Why: the API listens on every interface, and the laptop's address is the one the phone just
+     loaded the page from — it is the only address the phone provably has. (a) and (b) each
+     add a per-machine step that someone forgets on the night. Production is untouched: a
+     real `VITE_API_URL` is never localhost.
+Revisit if: the API is ever not on the same machine as the dev server.
+
+## D-064 — Starting is the host's call, enabled when everyone is in, with an escape hatch
+Date: 2026-09-12
+Question: "When all the participants join" — start automatically, or on a tap?
+Choice: the host's Start control is enabled the moment the last cook is claimed, and a
+        quieter "start with whoever's here" appears once anyone has joined.
+Why: an automatic start fires while someone is still typing their name, and the moment
+     worth having is the host tapping once and every phone in the kitchen flipping
+     together. The escape hatch is for the night a phone is flat: a session that cannot
+     start because one cook never joins is a session that gets abandoned.
+Revisit if: nobody ever uses the escape hatch. Then it is clutter.
+

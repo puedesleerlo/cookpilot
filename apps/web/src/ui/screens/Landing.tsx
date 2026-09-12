@@ -1,4 +1,5 @@
 import { useSession } from '@/app/store';
+import { useSync } from '@/app/sync';
 import { Button, Glyph } from '../primitives';
 
 /**
@@ -8,6 +9,7 @@ import { Button, Glyph } from '../primitives';
 export const Landing = () => {
   const goTo = useSession((s) => s.goTo);
   const startDemo = useSession((s) => s.startDemo);
+  const openJoin = useSync((s) => s.openJoin);
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-[1100px] flex-col justify-center px-5 py-8">
@@ -29,6 +31,9 @@ export const Landing = () => {
         </Button>
         <Button variant="secondary" size="lg" onClick={startDemo}>
           Try the example session
+        </Button>
+        <Button variant="quiet" size="lg" onClick={() => openJoin('')}>
+          Join someone&rsquo;s session
         </Button>
       </div>
 

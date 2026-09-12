@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Constraints, MealPlan, Schedule, Task } from '@kitchen/domain';
 import { useSession } from '@/app/store';
+import { useSync } from '@/app/sync';
 import { Button, Glyph, Stat } from '../primitives';
 import { allocateDishHues, dishHue } from '../theme';
 import { Controls } from '../timeline/Controls';
@@ -26,6 +27,8 @@ export const Timeline = ({ plan, schedule, constraints }: Props) => {
   const [open, setOpen] = useState<Task | null>(null);
   const reset = useSession((s) => s.reset);
   const goTo = useSession((s) => s.goTo);
+  const intake = useSession((s) => s.intake);
+  const host = useSync((s) => s.host);
 
   const hues = allocateDishHues(plan.dishes.map((d) => d.id));
   const m = schedule.metrics;
@@ -173,6 +176,26 @@ export const Timeline = ({ plan, schedule, constraints }: Props) => {
           </ul>
         </section>
       ) : null}
+
+      <section
+        aria-label="Cook it together"
+        className="flex flex-wrap items-center justify-between gap-4 rounded-md bg-sage-wash p-4"
+      >
+        <div className="max-w-measure">
+          <h2 className="text-sm font-bold">Cooking with someone?</h2>
+          <p className="mt-1 text-xs text-ink-soft">
+            Each phone scans a code, picks a cook, and gets its own steps with timers that count
+            down together.
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          icon="cook-1"
+          onClick={() => void host(intake, { ok: true, plan, schedule, constraints })}
+        >
+          Cook this together
+        </Button>
+      </section>
 
       <footer className="flex flex-wrap items-center gap-3 pb-4">
         <Button variant="secondary" onClick={() => goTo('intake')}>

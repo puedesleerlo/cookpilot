@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, gt, sql } from 'drizzle-orm';
+import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH } from '@kitchen/contracts';
 import type { Database } from './client';
 import { schedules, sessionEvents, sessionMembers, sessions } from './schema';
 
@@ -11,10 +12,10 @@ import { schedules, sessionEvents, sessionMembers, sessions } from './schema';
 
 /**
  * Six characters, no `0`/`O`, no `1`/`I`/`L`. People read these aloud across a kitchen, and
- * a code that has to be spelled twice is a code that gets typed wrong once.
+ * a code that has to be spelled twice is a code that gets typed wrong once. The alphabet is
+ * a wire fact — the client validates typed codes against it — so it lives in the contract.
  */
-export const JOIN_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-export const JOIN_CODE_LENGTH = 6;
+export { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH };
 
 export const generateJoinCode = (random: () => number): string =>
   Array.from({ length: JOIN_CODE_LENGTH }, () =>
@@ -63,17 +64,19 @@ export const appendEvent = async (db: Database, input: SessionEventInput): Promi
       .for('update');
     if (locked.length === 0) throw new Error(`session ${input.sessionId} does not exist`);
 
-    const [{ next }] = await tx
+    // An aggregate always yields one row; the guard is for the type, not the database.
+    const [counted] = await tx
       .select({ next: sql<number>`COALESCE(MAX(${sessionEvents.seq}), 0) + 1` })
       .from(sessionEvents)
       .where(eq(sessionEvents.sessionId, input.sessionId));
+    const next = Number(counted?.next ?? 1);
 
     const [row] = await tx
       .insert(sessionEvents)
       .values({
         id: input.id,
         sessionId: input.sessionId,
-        seq: Number(next),
+        seq: next,
         type: input.type,
         payload: input.payload ?? {},
         ...(input.taskId ? { taskId: input.taskId } : {}),
@@ -231,4 +234,82 @@ export const membersOf = async (db: Database, sessionId: string) =>
 export const sessionByJoinCode = async (db: Database, joinCode: string) => {
   const [row] = await db.select().from(sessions).where(eq(sessions.joinCode, joinCode)).limit(1);
   return row ?? null;
+};
+
+// ------------------------------------------------------------------ sessions
+
+export type NewSession = {
+  id: string;
+  joinCode: string;
+  hostDeviceId: string;
+  inputs: unknown;
+  crew: unknown;
+  scheduleHash: string;
+  schedulerVersion: string;
+  expiresAt: Date;
+};
+
+export const createSession = async (db: Database, session: NewSession): Promise<void> => {
+  await db.insert(sessions).values({ ...session, status: 'open' });
+};
+
+export const sessionById = async (db: Database, id: string) => {
+  const [row] = await db.select().from(sessions).where(eq(sessions.id, id)).limit(1);
+  return row ?? null;
+};
+
+/** Cooking has begun. Recorded once; the log carries the same fact as an event. */
+export const markSessionStarted = async (db: Database, id: string, at: Date): Promise<void> => {
+  await db.update(sessions).set({ status: 'cooking', startedAt: at }).where(eq(sessions.id, id));
+};
+
+export type ClaimResult = { ok: true } | { ok: false; holder: string };
+
+/**
+ * Claim a cook for a device.
+ *
+ * The check and the write happen under the same session-row lock `appendEvent` uses.
+ * Without it, two phones tapping the same cook in the same instant both read "free", both
+ * write, and the kitchen has two people called Cook 1 — which the interface would show and
+ * nobody could explain. A device that already holds a cook is moved, not duplicated.
+ */
+export const claimCook = async (
+  db: Database,
+  claim: { sessionId: string; deviceId: string; cookId: string; displayName: string; skill?: string },
+): Promise<ClaimResult> =>
+  db.transaction(async (tx) => {
+    const locked = await tx
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(eq(sessions.id, claim.sessionId))
+      .for('update');
+    if (locked.length === 0) throw new Error(`session ${claim.sessionId} does not exist`);
+
+    const members = await tx
+      .select()
+      .from(sessionMembers)
+      .where(eq(sessionMembers.sessionId, claim.sessionId));
+    const holder = members.find((m) => m.cookId === claim.cookId && m.deviceId !== claim.deviceId);
+    if (holder) return { ok: false, holder: holder.displayName };
+
+    await tx
+      .insert(sessionMembers)
+      .values({ ...claim, connected: true })
+      .onConflictDoUpdate({
+        target: [sessionMembers.sessionId, sessionMembers.deviceId],
+        set: {
+          cookId: claim.cookId,
+          displayName: claim.displayName,
+          connected: true,
+          lastSeenAt: new Date(),
+        },
+      });
+    return { ok: true };
+  });
+
+/** Postgres raises this on a unique-index collision; used to retry a join code. */
+export const isUniqueViolation = (err: unknown): boolean => {
+  if (typeof err !== 'object' || err === null) return false;
+  const e = err as { code?: string; cause?: { code?: string } };
+  return e.code === '23505' || e.cause?.code === '23505';
 };

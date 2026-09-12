@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AllergenSchema, CookSchema, IngredientSchema } from '@kitchen/domain';
 
 /**
  * The wire contract.
@@ -202,4 +203,208 @@ export const routes = {
 export type RouteName = keyof typeof routes;
 
 export const allRoutes = (): (RouteContract & { name: string })[] =>
-  Object.entries(routes).map(([name, contract]) => ({ name, ...(contract as RouteContract) }));
+  Object.entries({ ...routes, ...sessionRoutes }).map(([name, contract]) => ({
+    name,
+    ...(contract as RouteContract),
+  }));
+
+// ----------------------------------------------------------------- sessions
+
+/**
+ * A session, on the wire.
+ *
+ * What travels is the intake — exactly as the structured form fills it in — and the crew
+ * it compiled to. What never travels is the schedule: any device with these inputs and the
+ * same ordered log compiles the same timeline, so sending one would only create something
+ * for two phones to disagree about. The host does send a hash of the schedule it compiled,
+ * and every device that joins checks its own compile against it. Agreement is verified,
+ * not assumed.
+ */
+const answer = <T extends z.ZodTypeAny>(value: T) =>
+  z.object({ value, source: z.enum(['stated', 'assumed']) });
+
+export const SessionInputsSchema = z.object({
+  pantry: z.array(IngredientSchema).min(1),
+  timeBudgetMin: answer(z.number().int().positive()),
+  servings: answer(z.number().int().positive()),
+  mealCount: answer(z.number().int().positive()),
+  cookCount: answer(z.number().int().positive()),
+  equipment: answer(
+    z.array(z.object({ kind: z.string().min(1), count: z.number().int().nonnegative() })),
+  ),
+  restrictions: answer(z.array(AllergenSchema)),
+  style: answer(z.string()),
+  wantsBeverages: answer(z.boolean()),
+});
+export type SessionInputs = z.infer<typeof SessionInputsSchema>;
+
+/**
+ * Six characters, no `0`/`O`, no `1`/`I`/`L`. People read these aloud across a kitchen, and
+ * a code that has to be spelled twice is a code that gets typed wrong once. Defined here so
+ * the server generates from the same alphabet the client validates against.
+ */
+export const JOIN_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+export const JOIN_CODE_LENGTH = 6;
+export const JOIN_CODE_ALPHABET_RE = new RegExp(`^[${JOIN_CODE_ALPHABET}]{${JOIN_CODE_LENGTH}}$`);
+
+export const SessionStatusSchema = z.enum(['open', 'cooking', 'done']);
+export type SessionStatus = z.infer<typeof SessionStatusSchema>;
+
+export const SessionMemberSchema = z.object({
+  deviceId: z.string(),
+  /** Which cook in the compiled crew this device is. */
+  cookId: z.string(),
+  /** What they asked to be called. Cosmetic; the schedule knows them by `cookId`. */
+  displayName: z.string(),
+  isHost: z.boolean(),
+});
+export type SessionMember = z.infer<typeof SessionMemberSchema>;
+
+/**
+ * The event vocabulary. Small on purpose: every type here is something the fold on every
+ * device has to agree about, and every type added is a way for two phones to diverge.
+ */
+export const SessionEventTypeSchema = z.enum([
+  'member-joined',
+  'session-started',
+  'task-completed',
+]);
+export type SessionEventType = z.infer<typeof SessionEventTypeSchema>;
+
+export const SessionEventSchema = z.object({
+  id: z.string(),
+  /** Assigned by the server, unique per session, dense from 1. Never chosen by a client. */
+  seq: z.number().int().positive(),
+  type: SessionEventTypeSchema,
+  taskId: z.string().nullable(),
+  payload: z.record(z.string(), z.unknown()),
+  byDeviceId: z.string().nullable(),
+  /** Server clock at append, milliseconds since the epoch. */
+  atMs: z.number().int().nonnegative(),
+});
+export type SessionEvent = z.infer<typeof SessionEventSchema>;
+
+export const SessionViewSchema = z.object({
+  id: z.string(),
+  joinCode: z.string(),
+  status: SessionStatusSchema,
+  hostDeviceId: z.string(),
+  inputs: SessionInputsSchema,
+  crew: z.array(CookSchema).min(1),
+  scheduleHash: z.string(),
+  schedulerVersion: z.string(),
+  members: z.array(SessionMemberSchema),
+  /** Server clock when the host started cooking. Null while the lobby is open. */
+  startedAtMs: z.number().int().nonnegative().nullable(),
+  lastSeq: z.number().int().nonnegative(),
+  /** So a client re-anchors its clock on every response, not only on `/v1/time`. */
+  serverTimeMs: z.number().int().nonnegative(),
+  expiresAt: z.string(),
+});
+export type SessionView = z.infer<typeof SessionViewSchema>;
+
+export const CreateSessionRequestSchema = z.object({
+  inputs: SessionInputsSchema,
+  crew: z.array(CookSchema).min(1),
+  /** Content hash of the schedule the host compiled from `inputs`. */
+  scheduleHash: z.string().min(1),
+  schedulerVersion: z.string().min(1),
+});
+export type CreateSessionRequest = z.infer<typeof CreateSessionRequestSchema>;
+
+export const JoinSessionRequestSchema = z.object({
+  cookId: z.string().min(1),
+  displayName: z.string().trim().min(1).max(40),
+});
+export type JoinSessionRequest = z.infer<typeof JoinSessionRequestSchema>;
+
+export const SessionEventsQuerySchema = z.object({
+  /** Replay everything after this sequence number. Zero replays the whole log. */
+  after: z.coerce.number().int().nonnegative().default(0),
+});
+export type SessionEventsQuery = z.infer<typeof SessionEventsQuerySchema>;
+
+/** One poll carries everything that can change, so a phone needs one request per tick. */
+export const SessionEventsResponseSchema = z.object({
+  events: z.array(SessionEventSchema),
+  lastSeq: z.number().int().nonnegative(),
+  status: SessionStatusSchema,
+  startedAtMs: z.number().int().nonnegative().nullable(),
+  members: z.array(SessionMemberSchema),
+  serverTimeMs: z.number().int().nonnegative(),
+});
+export type SessionEventsResponse = z.infer<typeof SessionEventsResponseSchema>;
+
+export const AppendSessionEventRequestSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('session-started') }),
+  z.object({ type: z.literal('task-completed'), taskId: z.string().min(1) }),
+]);
+export type AppendSessionEventRequest = z.infer<typeof AppendSessionEventRequestSchema>;
+
+export const AppendSessionEventResponseSchema = z.object({
+  event: SessionEventSchema,
+  serverTimeMs: z.number().int().nonnegative(),
+});
+export type AppendSessionEventResponse = z.infer<typeof AppendSessionEventResponseSchema>;
+
+export const sessionRoutes = {
+  createSession: describeRoute({
+    method: 'POST',
+    path: '/v1/sessions',
+    summary: 'Open a shared session from a compiled intake. The caller becomes its host.',
+    body: CreateSessionRequestSchema,
+    response: SessionViewSchema,
+    errors: ['unauthorized', 'invalid_request', 'rate_limited'],
+    auth: true,
+  }),
+
+  sessionByCode: describeRoute({
+    method: 'GET',
+    path: '/v1/sessions/by-code/:code',
+    summary: 'Look a session up by its six-character join code, before joining it.',
+    response: SessionViewSchema,
+    errors: ['unauthorized', 'join_code_invalid', 'session_expired'],
+    auth: true,
+  }),
+
+  getSession: describeRoute({
+    method: 'GET',
+    path: '/v1/sessions/:id',
+    summary: 'The current view of a session. Members and the host only.',
+    response: SessionViewSchema,
+    errors: ['unauthorized', 'forbidden', 'session_not_found', 'session_expired'],
+    auth: true,
+  }),
+
+  joinSession: describeRoute({
+    method: 'POST',
+    path: '/v1/sessions/:id/join',
+    summary: 'Claim a cook in the crew and say what to call you.',
+    body: JoinSessionRequestSchema,
+    response: SessionViewSchema,
+    errors: ['unauthorized', 'invalid_request', 'session_not_found', 'session_expired', 'conflict'],
+    auth: true,
+  }),
+
+  sessionEvents: describeRoute({
+    method: 'GET',
+    path: '/v1/sessions/:id/events',
+    summary: 'Replay the ordered log after a sequence number, with the roster and the clock.',
+    query: SessionEventsQuerySchema,
+    response: SessionEventsResponseSchema,
+    errors: ['unauthorized', 'forbidden', 'session_not_found', 'session_expired'],
+    auth: true,
+  }),
+
+  appendSessionEvent: describeRoute({
+    method: 'POST',
+    path: '/v1/sessions/:id/events',
+    summary: 'Append to the log: the host starts the session, any member finishes a task.',
+    body: AppendSessionEventRequestSchema,
+    response: AppendSessionEventResponseSchema,
+    errors: ['unauthorized', 'forbidden', 'invalid_request', 'session_not_found', 'session_expired', 'conflict'],
+    auth: true,
+  }),
+} as const;
+
+export type SessionRouteName = keyof typeof sessionRoutes;

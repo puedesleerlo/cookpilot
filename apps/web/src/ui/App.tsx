@@ -1,7 +1,9 @@
 import { useSession } from '@/app/store';
+import { useSync } from '@/app/sync';
 import { Blobs, Button, CompileCurtain, Glyph, Grain } from './primitives';
 import { Intake } from './screens/Intake';
 import { Landing } from './screens/Landing';
+import { Shared } from './screens/Shared';
 import { Timeline } from './screens/Timeline';
 
 /** Screen routing. The store holds where we are; each screen owns its own layout. */
@@ -10,6 +12,22 @@ export const App = () => {
   const outcome = useSession((s) => s.outcome);
   const compiling = useSession((s) => s.compiling);
   const settle = useSession((s) => s.settle);
+  const shared = useSync((s) => s.phase !== 'idle');
+
+  /*
+   * A device in a shared session — hosting one from this timeline, or a phone that scanned
+   * a code — is in that flow and nothing else. The compiled session stays in its store
+   * underneath, so leaving lands the host back on the timeline it started from.
+   */
+  if (shared) {
+    return (
+      <>
+        <Blobs />
+        <Grain />
+        <Shared />
+      </>
+    );
+  }
 
   return (
     <>

@@ -55,6 +55,16 @@ export const sessions = pgTable(
     inputs: jsonb('inputs').notNull(),
     /** Which engine build the last compile used, so a divergence can be attributed. */
     schedulerVersion: text('scheduler_version').notNull(),
+    /** The crew as compiled — ids, names, skills. A device joining claims one of these. */
+    crew: jsonb('crew').notNull().default([]),
+    /**
+     * Content hash of the schedule the host compiled from `inputs`. Not the schedule: a
+     * device that joins compiles its own and compares, so "we agree byte for byte" is a
+     * check that runs rather than a sentence in a document.
+     */
+    scheduleHash: text('schedule_hash').notNull().default(''),
+    /** Server clock when the host started cooking. Every countdown is anchored to it. */
+    startedAt: timestamp('started_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   },

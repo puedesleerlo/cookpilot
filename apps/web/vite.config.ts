@@ -7,6 +7,11 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  server: {
+    // Listen on every interface: a phone that scans the QR code on a laptop's screen has to
+    // be able to load the page from the laptop's network address, not just from localhost.
+    host: true,
+  },
   build: {
     // The bundle scanner reads these; keep names stable so CI can grep them.
     sourcemap: false,
