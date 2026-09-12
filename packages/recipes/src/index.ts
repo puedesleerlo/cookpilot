@@ -9,3 +9,5 @@ export { extractJsonLd, extractMicrodata, extractStructured, parseIsoDuration, p
 export type { ExtractedRecipe, ExtractionOutcome } from './extract/jsonld';
 export { toRecipeIR, checkDuration } from './extract/to-ir';
 export type { ToIrResult, Correction } from './extract/to-ir';
+export { buildPlan, scoreCandidate, handsOnSplit } from './plan';
+export type { PlanCandidate, BuildPlanOptions } from './plan';

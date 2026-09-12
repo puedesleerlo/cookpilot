@@ -705,3 +705,88 @@ Fix: no-store on the catch-all, immutable only on `/assets/**`. Content-hashed a
      safe to cache forever precisely because their names change when they do.
 Why worth recording: the rule looked correct, the config validated, the deploy succeeded,
      and the behaviour was wrong. Only checking the live headers found it.
+
+## D-053 — Everything downstream of an overnight tail belongs to tomorrow
+Date: 2026-09-12
+Question: The cold brew's "strain out the grounds in the morning" failed placement, and
+          took the drink's portion, chill and label tasks down with it.
+Cause: only the long passive HOLD was marked overnight, so the strain step was still
+       checked against today's cook windows. At minute 727 nobody is in the kitchen —
+       correctly — so no cook was eligible and the task was dropped, which left its four
+       dependents unschedulable.
+Fix: once a dish crosses a tail long enough to outlive the session, every later step's
+     tasks are marked overnight too, not just the wait itself.
+Why worth recording: the model was right about the boundary and wrong about its extent.
+     "Overnight" is not a property of one step; it is a property of everything after it.
+
+## D-054 — Two washes, one pair of hands, same minute
+Date: 2026-09-12
+Question: The helper was double-booked on two two-minute rinses at minute 9.
+Cause: a task needing two dirty surfaces picks a washer per surface inside one placement
+       attempt, and each lookup only consulted `cookBusy` — which is not written until the
+       placement is committed. The second lookup could not see the first.
+Fix: the attempt carries its own claims map, consulted alongside `cookBusy` for both the
+     washes and the task itself.
+Revisit if: placement ever gains a second source of provisional assignments; it would need
+     to join the same map rather than start another one.
+
+## D-055 — The plan builder compiles its candidates instead of adding up minutes
+Date: 2026-09-12
+Question: How does the builder know a dish still fits?
+Options: (a) sum hands-on minutes against the kitchen's capacity, with a headroom factor;
+         (b) compile the provisional plan with the real scheduler and keep the dish only if
+         the session still lands inside the budget with nothing degraded.
+Choice: (b). The arithmetic is kept as a coarse pre-filter so hopeless candidates never
+        reach the compiler.
+Why: a sum of minutes was wrong in both directions at once. It cannot see the parallelism
+     two cooks and a phase split buy, so it refused a drink the kitchen had twenty idle
+     minutes for; and it cannot see the dependencies that serialise work, so plans that
+     added up fine still needed a dish cut at the last moment. Tuning the headroom factor
+     traded one failure for the other — 0.82 dropped a side, 0.95 dropped a drink. The
+     scheduler already answers the question exactly, in about two milliseconds.
+Consequence: `packages/recipes` may now import `@kitchen/scheduler`. The boundary moved
+     deliberately: `recipes -> scheduler -> domain` is acyclic, the scheduler is pure,
+     deterministic and browser-safe, so nothing that boundary protects is weakened. The
+     eslint rule was split rather than deleted, so recipes still cannot reach an app.
+Revisit if: plan search ever grows beyond a greedy pass over a handful of slots. At ~50
+     compiles a plan this is free; at ten thousand it would not be.
+
+## D-056 — The chart draws resources, and only the ones that can clash
+Date: 2026-09-12
+Question: Which rows belong on the timeline?
+Options: (a) one row per dish; (b) one row per cook and per piece of equipment; (c) (b) but
+         only where something is used more than once.
+Choice: (c).
+Why: a row per dish answers "what am I making", which the dish list already answers. The
+     thing only a chart can show is two people and two burners being busy at the same
+     minute — contention — and contention lives on resources. But drawn for every resource
+     it produced five identical storage-container rows holding one two-minute block each,
+     and pushed the two rows carrying the whole argument off the top of the screen. A row
+     with one block on it shows no contention; it just repeats the block.
+Consequence: the tools group also opens collapsed. Hands and heat are the argument; the
+     pans and boards are the evidence, one click away. Nothing is hidden — the run sheet
+     lists every task.
+Revisit if: a session ever has so few tasks that the chart looks empty.
+
+## D-057 — A block is never wider than its own minutes
+Date: 2026-09-12
+Question: A one-minute task is a sliver. Give it a minimum width?
+Choice: No. The floor is exactly one minute at the current scale.
+Why: a minimum width makes the chart lie twice — it draws a minute as though it were two,
+     and it pushes the block over whatever starts a minute later, which on a cook's row is
+     usually the very next thing they do. Blocks that overlap when the schedule does not
+     are worse than blocks that are small. Legibility is solved by hovering, which widens
+     the block to fit its name, and by the run sheet.
+Consequence: the scale is measured rather than fixed, so the attended session always fits
+     the width available and the slivers are as wide as they can honestly be.
+
+## D-058 — The timeline compiles in the browser
+Date: 2026-09-12
+Question: Does the client call the API to compile, or compile locally?
+Choice: Locally. The registry is bundled; the plan builder and scheduler are pure.
+Why: it is arithmetic the device can do in a few milliseconds. Routing it through a server
+     would add a round trip, an error path, an account and a reason for the demo to fail on
+     conference wifi — in exchange for nothing. The API earns its place on the things that
+     genuinely need a server: ingestion, search, and a session shared between two phones.
+Consequence: recompiling is cheap enough to be a live control rather than a button, which
+     is what makes the time budget worth showing at all.

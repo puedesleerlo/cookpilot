@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { TaskSchema } from './task';
+import { RecipeStepSchema } from './recipe';
 import { RecipeIngredientSchema } from './ingredient';
 import { AllergenSchema, DishKindSchema, MinuteSchema } from './primitives';
 
@@ -8,7 +9,14 @@ export const DishSchema = z.object({
   name: z.string().min(1),
   kind: DishKindSchema,
   servings: z.number().int().positive(),
-  tasks: z.array(TaskSchema),
+  /**
+   * The source steps, carried from the recipe. This is the task-graph compiler's INPUT;
+   * `tasks` below is its output, and is empty until it has run.
+   */
+  steps: z.array(RecipeStepSchema).default([]),
+  tasks: z.array(TaskSchema).default([]),
+  /** True for a dish that starts in the session and finishes hours later, e.g. a cold brew. */
+  overnight: z.boolean().default(false),
   sourcePackId: z.string().optional(),
   sourceRecipeId: z.string().optional(),
   /** Visible attribution for imported recipes. We never display their prose. */
@@ -50,6 +58,11 @@ export const MealPlanSchema = z.object({
   coverage: z.object({
     usedIngredientIds: z.array(z.string()),
     unusedIngredientIds: z.array(z.string()),
+    /**
+     * Both halves of the urgency story, because the used half cannot be recovered from the
+     * unused half: the scheduler sees the plan, never the pantry it was chosen from.
+     */
+    usedUrgentIngredientIds: z.array(z.string()).default([]),
     unusedUrgentIngredientIds: z.array(z.string()),
     assumedPantryIds: z.array(z.string()).default([]),
   }),

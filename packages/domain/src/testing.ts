@@ -108,6 +108,13 @@ export const demoConstraints = (over: Partialish<Constraints> = {}): Constraints
       someEquipment({ kind: 'burner', count: 2 }),
       someEquipment({ kind: 'frying-pan', count: 1 }),
       someEquipment({ kind: 'saucepan', count: 1 }),
+      // §10 names the burners and the two pans. A real kitchen with those also has a pot,
+      // a grater and a blender, and the demo recipes need all three -- without them the
+      // scheduler correctly reports tasks it cannot place, which is a fixture bug, not an
+      // engine bug.
+      someEquipment({ kind: 'pot', count: 1 }),
+      someEquipment({ kind: 'grater', count: 1 }),
+      someEquipment({ kind: 'blender', count: 1 }),
       someEquipment({ kind: 'cutting-board', count: 2 }),
       someEquipment({ kind: 'knife', count: 2 }),
       someEquipment({ kind: 'mixing-bowl', count: 3 }),

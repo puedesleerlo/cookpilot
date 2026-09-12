@@ -112,12 +112,28 @@ export default tseslint.config(
     },
   },
 
-  // ---- packages/contracts and packages/recipes: domain only. ----
+  // ---- packages/contracts: domain only. ----
   {
-    files: ['packages/contracts/**/*.ts', 'packages/recipes/**/*.ts'],
+    files: ['packages/contracts/**/*.ts'],
     rules: restrict(
       [{ group: ['@kitchen/scheduler', '@kitchen/contracts', '@kitchen/recipes', ...APPS] }],
       'This package may import @kitchen/domain and its own modules only.',
+    ),
+  },
+
+  /**
+   * ---- packages/recipes: domain and the scheduler. ----
+   *
+   * The plan builder does not guess whether a session fits any more -- it compiles the
+   * candidate plan and keeps it only if the schedule comes out inside the budget with
+   * nothing cut. That needs the scheduler, and `recipes -> scheduler -> domain` stays
+   * acyclic and browser-safe, so the properties this boundary protects are untouched.
+   */
+  {
+    files: ['packages/recipes/**/*.ts'],
+    rules: restrict(
+      [{ group: ['@kitchen/contracts', '@kitchen/recipes', ...APPS] }],
+      'packages/recipes may import @kitchen/domain, @kitchen/scheduler and its own modules only.',
     ),
   },
 
