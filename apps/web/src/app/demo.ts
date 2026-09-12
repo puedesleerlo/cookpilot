@@ -77,6 +77,6 @@ export const demoIntake = (): IntakeAnswers => ({
   cookCount: { value: 2, source: 'stated' },
   equipment: { value: [...DEMO_EQUIPMENT], source: 'stated' },
   restrictions: { value: [], source: 'stated' },
-  style: { value: 'balanced', source: 'stated' },
+  style: { value: 'asian', source: 'stated' },
   wantsBeverages: { value: true, source: 'stated' },
 });

@@ -11,7 +11,15 @@ import {
   IngredientCategorySchema,
 } from '@kitchen/domain';
 import { EQUIPMENT_GLYPH, GLYPH_NAMES, INGREDIENT_GLYPH, cookGlyph } from '@/ui/primitives';
-import { cookColor, dishHue, dishHueIndex, dishWash } from '@/ui/theme';
+import {
+  DISH_HUE_COUNT,
+  allocateDishHues,
+  blockStyle,
+  cookColor,
+  dishHue,
+  dishHueIndex,
+  dishWash,
+} from '@/ui/theme';
 
 const root = process.cwd();
 const TOKENS = path.join(root, 'apps/web/src/ui/tokens.css');
@@ -129,6 +137,24 @@ describe('timeline semantics are deterministic tokens', () => {
     expect(new Set(ids.map(dishHueIndex)).size).toBeGreaterThanOrEqual(4);
   });
 
+  it('gives every dish in a plan its own hue, so the legend cannot lie', () => {
+    const ids = ['dish:rice', 'dish:chicken', 'dish:salmon', 'dish:sauce', 'dish:coldbrew', 'dish:agua'];
+    const hues = allocateDishHues(ids);
+    expect(new Set(Object.values(hues)).size).toBe(ids.length);
+  });
+
+  it('allocates the same hues whatever order the plan arrives in', () => {
+    const ids = ['dish:d', 'dish:a', 'dish:c', 'dish:b'];
+    expect(allocateDishHues(ids)).toEqual(allocateDishHues([...ids].reverse()));
+  });
+
+  it('shares hues rather than inventing one when a plan outgrows the ramp', () => {
+    const many = Array.from({ length: DISH_HUE_COUNT + 3 }, (_, i) => `dish:${i}`);
+    const hues = Object.values(allocateDishHues(many));
+    expect(hues).toHaveLength(many.length);
+    for (const h of hues) expect(h).toBeLessThan(DISH_HUE_COUNT);
+  });
+
   it('draws cooks from a separate ramp so a cook never reads as a dish', () => {
     const cooks = new Set([0, 1, 2, 3].map(cookColor));
     const dishes = new Set([0, 1, 2, 3, 4, 5].map((i) => `var(--dish-${i})`));
@@ -143,6 +169,22 @@ describe('timeline semantics are deterministic tokens', () => {
 
   it('distinguishes the critical path by stroke, not colour alone', () => {
     expect(parseFloat(tokenValue('--block-critical-stroke-width'))).toBeGreaterThan(1);
+  });
+
+  it('gives every block treatment a mark that survives being read without colour', () => {
+    const hold = blockStyle('dish:a', 'hold', false);
+    const wash = blockStyle('dish:a', 'wash', false);
+    const critical = blockStyle('dish:a', 'active', true);
+    const plain = blockStyle('dish:a', 'active', false);
+
+    expect(hold.backgroundImage).toContain('repeating-linear-gradient');
+    expect(wash.borderStyle).toBe('dashed');
+    expect(critical.boxShadow).toContain('--block-critical-stroke');
+
+    // And the ordinary block carries none of them, so the marks mean something.
+    expect(plain.backgroundImage).toBeUndefined();
+    expect(plain.borderStyle).toBeUndefined();
+    expect(plain.boxShadow).toBeUndefined();
   });
 
   it('keeps hold blocks wide enough that the hatch does not moire', () => {
@@ -240,6 +282,12 @@ describe('typography', () => {
         uses.push(path.basename(file));
       }
     }
-    expect(uses.sort()).toEqual(['CompileCurtain.tsx']);
+    /*
+     * The monospace voice means "this is the machine talking": the compile stages, the
+     * time ruler and its list equivalent, the input hash, and the rationale tags the
+     * scheduler emits. It is not available for chrome, headings or body copy, which is
+     * what this list is here to keep true.
+     */
+    expect(uses.sort()).toEqual(['CompileCurtain.tsx', 'Gantt.tsx', 'RunSheet.tsx', 'Timeline.tsx']);
   });
 });

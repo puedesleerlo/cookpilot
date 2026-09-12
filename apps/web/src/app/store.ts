@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Allergen, Ingredient, Urgency } from '@kitchen/domain';
+import { compileSession, type CompileOutcome } from './compile';
 import { demoIntake } from './demo';
 
 /**
@@ -65,6 +66,10 @@ export const emptyIntake = (): IntakeAnswers => ({
 export type SessionState = {
   screen: Screen;
   intake: IntakeAnswers;
+  /** The last compile. Null until one has been run. */
+  outcome: CompileOutcome | null;
+  /** True while the compile curtain is up, which is theatre, not latency. */
+  compiling: boolean;
 
   goTo: (screen: Screen) => void;
   setPantry: (pantry: Ingredient[]) => void;
@@ -76,6 +81,13 @@ export type SessionState = {
     value: IntakeAnswers[K] extends Answer<infer V> ? V : never,
   ) => void;
   startDemo: () => void;
+  compile: () => void;
+  /** Change one answer and recompile on the spot, with no curtain. */
+  adjust: <K extends keyof IntakeAnswers>(
+    key: K,
+    value: IntakeAnswers[K] extends Answer<infer V> ? V : never,
+  ) => void;
+  settle: () => void;
   reset: () => void;
   canCompile: () => boolean;
 };
@@ -83,6 +95,8 @@ export type SessionState = {
 export const useSession = create<SessionState>((set, get) => ({
   screen: 'landing',
   intake: emptyIntake(),
+  outcome: null,
+  compiling: false,
 
   goTo: (screen) => set({ screen }),
 
@@ -109,9 +123,39 @@ export const useSession = create<SessionState>((set, get) => ({
   answer: (key, value) =>
     set((s) => ({ intake: { ...s.intake, [key]: { value, source: 'stated' as const } } })),
 
-  startDemo: () => set({ intake: demoIntake(), screen: 'crew' }),
+  startDemo: () => {
+    set({ intake: demoIntake() });
+    get().compile();
+  },
 
-  reset: () => set({ screen: 'landing', intake: emptyIntake() }),
+  /**
+   * Compile synchronously and show the result behind the curtain.
+   *
+   * The work takes single-digit milliseconds, so there is nothing to await and no spinner
+   * that would mean anything. The curtain is up for as long as it takes to read four
+   * stages, and `settle` takes it down — the schedule is already there underneath it.
+   */
+  compile: () => {
+    const outcome = compileSession(get().intake);
+    set({ outcome, compiling: true, screen: outcome.ok ? 'timeline' : 'intake' });
+  },
+
+  /**
+   * Recompiling is the product, not a refresh.
+   *
+   * Moving the time budget from an hour to half an hour is the single most convincing thing
+   * this app does: the plan is rebuilt, the schedule re-solved, and if it no longer fits the
+   * degradation ladder says out loud what it cut. It takes a few milliseconds, so it happens
+   * as you change the control rather than behind a button that says "recompile".
+   */
+  adjust: (key, value) => {
+    const intake = { ...get().intake, [key]: { value, source: 'stated' as const } };
+    set({ intake, outcome: compileSession(intake) });
+  },
+
+  settle: () => set({ compiling: false }),
+
+  reset: () => set({ screen: 'landing', intake: emptyIntake(), outcome: null, compiling: false }),
 
   /** Compiling needs food. Everything else has a defensible default. */
   canCompile: () => get().intake.pantry.length > 0,

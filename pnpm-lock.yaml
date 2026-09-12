@@ -187,6 +187,9 @@ importers:
       '@kitchen/domain':
         specifier: workspace:*
         version: link:../domain
+      '@kitchen/scheduler':
+        specifier: workspace:*
+        version: link:../scheduler
       idb:
         specifier: ^8.0.3
         version: 8.0.3
