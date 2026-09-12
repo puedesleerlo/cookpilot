@@ -27,9 +27,9 @@ rules:
     - Always name the deterministic fallback when a capability involves the LLM.
   specs:
     - Every requirement needs at least one scenario with observable, testable behaviour.
-    - Prefer concrete numbers over adjectives ("within 120 minutes", not "promptly").
+    - Prefer concrete numbers over adjectives, e.g. "within 120 minutes" not "promptly".
   design:
     - Required for any non-obvious algorithm. Show the data flow and the tie-breaking rules.
   tasks:
     - Order tasks so the suite is green after every group.
-    - The last group is always: validate, test, archive, commit.
+    - "The last group is always: validate, test, archive, commit."
