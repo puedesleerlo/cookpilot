@@ -1,0 +1,588 @@
+/*
+ * Makitra component classes (mk-*), vendored from @makitra/react 0.1.0 (kitchen_design_sys).
+ * Colours are tokens only; every literal lives in tokens.css. Do not edit by hand beyond
+ * that: product styling belongs in the components, not here.
+ *
+ * Visual direction inspired by "Ukrainian food and cuisine illustration" by Anna Riabchenko
+ * (Behance). Non-commercial use.
+ */
+
+/* ---- Base (zero specificity so product CSS always wins) ---------------- */
+
+:where(.mk-root, body.mk) {
+  background: var(--mk-bg);
+  color: var(--mk-text);
+  font-family: var(--mk-font-text);
+  font-size: var(--mk-text-md);
+  line-height: var(--mk-leading-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(.mk-root, body.mk) :where(h1, h2, h3, h4) {
+  margin: 0;
+  line-height: var(--mk-leading-snug);
+  text-wrap: balance;
+}
+
+:where(.mk-root, body.mk) :where(p) { margin: 0; text-wrap: pretty; }
+
+:where(.mk-root, body.mk) :where(a) {
+  color: var(--mk-link);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+:where(.mk-root, body.mk) :where(:focus-visible) {
+  outline: 3px solid var(--mk-focus);
+  outline-offset: 3px;
+}
+
+.mk-display {
+  font-family: var(--mk-font-display);
+  font-weight: 400;
+  line-height: var(--mk-leading-tight);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+/* Protest Guerrilla has no Cyrillic: Ukrainian display text switches to sharp, heavy Geologica */
+.mk-display:lang(uk) {
+  font-family: var(--mk-font-text);
+  font-weight: 800;
+  font-variation-settings: var(--mk-sharp);
+  letter-spacing: -0.01em;
+}
+
+.mk-native {
+  font-size: var(--mk-text-sm);
+  color: var(--mk-text-muted);
+  font-variation-settings: var(--mk-sharp);
+}
+
+.mk-num { font-variant-numeric: tabular-nums; }
+
+.mk-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.mk-motif { flex: none; }
+
+.mk-visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- Patch: a paper cut-out ground. Never put focusable things on it directly. */
+
+.mk-patch {
+  background: var(--patch, var(--mk-patch-soup));
+  color: var(--on-patch, var(--mk-on-patch-soup));
+  clip-path: var(--cut, var(--mk-cut-patch));
+}
+
+/* ---- Button ------------------------------------------------------------- */
+
+.mk-btn {
+  --btn-bg: var(--mk-sunken);
+  --btn-fg: var(--mk-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mk-space-2);
+  min-height: var(--mk-touch);
+  padding-inline: var(--mk-space-5);
+  border: 0;
+  border-radius: var(--mk-nick-sm);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font: inherit;
+  font-size: var(--mk-text-md);
+  font-weight: var(--mk-weight-bold);
+  font-variation-settings: var(--mk-sharp);
+  line-height: 1.1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--mk-duration-quick) var(--mk-ease-simmer),
+              transform var(--mk-duration-quick) var(--mk-ease-simmer);
+}
+.mk-btn:active { transform: translateY(1px) rotate(-0.4deg); }
+.mk-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.mk-btn .mk-icon { width: 1.25rem; height: 1.25rem; }
+
+.mk-btn--primary { --btn-bg: var(--mk-action); --btn-fg: var(--mk-on-action); }
+.mk-btn--primary:hover:not(:disabled) { --btn-bg: var(--mk-action-hover); }
+
+.mk-btn--secondary { --btn-bg: transparent; box-shadow: inset 0 0 0 2px var(--mk-line-strong); }
+.mk-btn--secondary:hover:not(:disabled) { --btn-bg: var(--mk-sunken); }
+
+.mk-btn--quiet { --btn-bg: transparent; --btn-fg: var(--mk-link); padding-inline: var(--mk-space-3); }
+.mk-btn--quiet:hover:not(:disabled) { --btn-bg: var(--mk-sunken); }
+
+.mk-btn--danger { --btn-bg: transparent; --btn-fg: var(--mk-danger); box-shadow: inset 0 0 0 2px currentColor; }
+
+.mk-btn--lg { min-height: 3.75rem; padding-inline: var(--mk-space-6); font-size: var(--mk-text-lg); }
+
+.mk-btn--icon { padding: 0; width: var(--mk-touch); border-radius: var(--mk-nick-md); }
+.mk-btn--icon .mk-icon { width: 1.5rem; height: 1.5rem; }
+.mk-btn--icon[aria-pressed="true"] { --btn-bg: var(--mk-enamel); --btn-fg: var(--mk-plum-900); }
+.mk-btn--icon[aria-pressed="true"] .mk-icon { fill: currentColor; }
+
+/* ---- Tag (static) and chip (toggle) ------------------------------------ */
+
+.mk-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mk-space-1);
+  padding: 0.2rem 0.55rem 0.25rem;
+  border-radius: var(--mk-nick-xs);
+  background: var(--tag-bg, var(--mk-sunken));
+  color: var(--tag-fg, var(--mk-text));
+  font-size: var(--mk-text-sm);
+  font-weight: var(--mk-weight-medium);
+  font-variation-settings: var(--mk-sharp);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.mk-tag .mk-icon { width: 1rem; height: 1rem; stroke-width: 2.6; }
+.mk-tag--success { --tag-bg: var(--mk-success-bg); --tag-fg: var(--mk-success); }
+.mk-tag--warning { --tag-bg: var(--mk-warning-bg); --tag-fg: var(--mk-warning); }
+.mk-tag--danger  { --tag-bg: var(--mk-danger-bg);  --tag-fg: var(--mk-danger); }
+
+.mk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mk-space-2);
+  min-height: 2.5rem;
+  padding-inline: var(--mk-space-4);
+  border: 0;
+  border-radius: var(--mk-nick-pill);
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--mk-line-strong);
+  color: var(--mk-text);
+  font: inherit;
+  font-size: var(--mk-text-sm);
+  font-weight: var(--mk-weight-medium);
+  font-variation-settings: var(--mk-sharp);
+  cursor: pointer;
+  position: relative;
+}
+/* 48px hit area without a 48px-tall chip */
+.mk-chip::after { content: ""; position: absolute; inset: -4px 0; }
+.mk-chip .mk-icon { width: 1rem; height: 1rem; stroke-width: 2.8; display: none; }
+.mk-chip[aria-pressed="true"] {
+  background: var(--mk-selected);
+  color: var(--mk-on-selected);
+  box-shadow: none;
+}
+.mk-chip[aria-pressed="true"] .mk-icon { display: block; }
+
+/* ---- Field ---------------------------------------------------------------- */
+
+.mk-field { display: grid; gap: var(--mk-space-2); }
+
+.mk-field__label {
+  font-size: var(--mk-text-sm);
+  font-weight: var(--mk-weight-bold);
+  font-variation-settings: var(--mk-sharp);
+}
+
+.mk-field__control {
+  min-height: var(--mk-touch);
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 var(--mk-space-4);
+  border: 2px solid var(--mk-line-strong);
+  border-radius: var(--mk-nick-sm);
+  background: var(--mk-surface);
+  color: var(--mk-text);
+  font: inherit;
+  font-size: var(--mk-text-md);
+}
+.mk-field__control::placeholder { color: var(--mk-text-muted); opacity: 1; }
+.mk-field__control:focus-visible { outline: 3px solid var(--mk-focus); outline-offset: 1px; border-color: var(--mk-text); }
+
+.mk-field__help { font-size: var(--mk-text-sm); color: var(--mk-text-muted); }
+
+.mk-field--error .mk-field__control { border-color: var(--mk-danger); }
+.mk-field--error .mk-field__help { color: var(--mk-danger); font-weight: var(--mk-weight-medium); }
+
+.mk-search { position: relative; }
+.mk-search .mk-icon { position: absolute; left: var(--mk-space-4); top: 50%; translate: 0 -50%; color: var(--mk-text-muted); pointer-events: none; }
+.mk-search .mk-field__control { padding-left: 3.25rem; border-radius: var(--mk-nick-md); }
+
+/* ---- Checkbox (ingredient, shopping item) --------------------------------- */
+
+.mk-check {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-3);
+  min-height: var(--mk-touch);
+  cursor: pointer;
+  position: relative;
+}
+.mk-check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.mk-check__box {
+  display: grid;
+  place-items: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  flex: none;
+  box-sizing: border-box;
+  border: 2px solid var(--mk-line-strong);
+  border-radius: var(--mk-nick-xs);
+  color: transparent;
+  transition: transform var(--mk-duration-base) var(--mk-ease-stamp);
+}
+.mk-check__box .mk-icon { width: 1.125rem; height: 1.125rem; stroke-width: 3; }
+.mk-check input:checked + .mk-check__box {
+  background: var(--mk-success);
+  border-color: var(--mk-success);
+  color: var(--mk-on-success);
+  transform: rotate(-4deg) scale(1.06);
+}
+.mk-check input:focus-visible + .mk-check__box { outline: 3px solid var(--mk-focus); outline-offset: 2px; }
+.mk-check__text { flex: 1; min-width: 0; }
+.mk-check input:checked ~ .mk-check__text { color: var(--mk-text-muted); text-decoration: line-through 2px; }
+
+/* ---- Switch ---------------------------------------------------------------- */
+
+.mk-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mk-space-4);
+  min-height: var(--mk-touch);
+  cursor: pointer;
+  position: relative;
+}
+.mk-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.mk-switch__track {
+  order: 2;
+  flex: none;
+  width: 3.25rem;
+  height: 1.875rem;
+  box-sizing: border-box;
+  padding: 3px;
+  border-radius: var(--mk-nick-pill);
+  background: var(--mk-line-strong);
+  transition: background-color var(--mk-duration-base) var(--mk-ease-simmer);
+}
+.mk-switch__track::before {
+  content: "";
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 55% 45% 50% 50% / 50% 55% 45% 50%;
+  background: var(--mk-paper);
+  transition: translate var(--mk-duration-base) var(--mk-ease-stamp);
+}
+.mk-switch input:checked + .mk-switch__track { background: var(--mk-success); }
+.mk-switch input:checked + .mk-switch__track::before { translate: 1.375rem 0; }
+.mk-switch input:focus-visible + .mk-switch__track { outline: 3px solid var(--mk-focus); outline-offset: 2px; }
+
+/* ---- Segmented control (radio group) ------------------------------------ */
+
+.mk-segmented {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  border: 0;
+  margin: 0;
+  border-radius: var(--mk-nick-md);
+  background: var(--mk-sunken);
+}
+.mk-segmented label { position: relative; }
+.mk-segmented input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.mk-segmented span {
+  display: grid;
+  place-items: center;
+  min-height: 2.5rem;
+  padding-inline: var(--mk-space-4);
+  border-radius: var(--mk-nick-sm);
+  font-size: var(--mk-text-sm);
+  font-weight: var(--mk-weight-bold);
+  font-variation-settings: var(--mk-sharp);
+  color: var(--mk-text-muted);
+  cursor: pointer;
+}
+.mk-segmented input:checked + span { background: var(--mk-selected); color: var(--mk-on-selected); }
+.mk-segmented input:focus-visible + span { outline: 3px solid var(--mk-focus); outline-offset: 2px; }
+
+/* ---- Stepper (servings) --------------------------------------------------- */
+
+.mk-stepper {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--mk-nick-md);
+  background: var(--mk-sunken);
+}
+.mk-stepper .mk-btn--icon { --btn-bg: transparent; }
+.mk-stepper .mk-btn--icon:hover:not(:disabled) { --btn-bg: var(--mk-line); }
+.mk-stepper__value {
+  min-width: 5.5rem;
+  text-align: center;
+  font-weight: var(--mk-weight-bold);
+  font-variant-numeric: tabular-nums;
+  font-variation-settings: var(--mk-sharp);
+}
+
+/* ---- Recipe card ---------------------------------------------------------- */
+
+.mk-recipe-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border-radius: var(--mk-nick-md);
+  background: var(--mk-surface);
+  overflow: hidden;
+}
+.mk-recipe-card:has(.mk-recipe-card__link:focus-visible) { outline: 3px solid var(--mk-focus); outline-offset: 3px; }
+.mk-recipe-card__art {
+  aspect-ratio: 4 / 3;
+  max-width: 100%;
+  display: grid;
+  place-items: center;
+  --cut: var(--mk-cut-patch);
+}
+.mk-recipe-card__art svg { width: 70%; height: auto; }
+.mk-recipe-card__body { display: grid; gap: var(--mk-space-1); padding: var(--mk-space-4) var(--mk-space-4) var(--mk-space-5); }
+.mk-recipe-card__title { font-size: var(--mk-text-xl); }
+.mk-recipe-card__link { color: inherit; text-decoration: none; }
+.mk-recipe-card__link:focus-visible { outline: none; }
+.mk-recipe-card__link::after { content: ""; position: absolute; inset: 0; }
+.mk-recipe-card__save { position: absolute; top: var(--mk-space-3); right: var(--mk-space-3); z-index: 1; --btn-bg: var(--mk-paper-bright); --btn-fg: var(--mk-plum-900); }
+
+.mk-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mk-space-1) var(--mk-space-4);
+  margin: var(--mk-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--mk-text-sm);
+  color: var(--mk-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.mk-meta li { display: inline-flex; align-items: center; gap: 0.375rem; }
+.mk-meta .mk-icon { width: 1.125rem; height: 1.125rem; }
+
+/* ---- Ingredient list ------------------------------------------------------ */
+
+.mk-ingredients { margin: 0; padding: 0; list-style: none; }
+.mk-ingredients li + li { border-top: 1px solid var(--mk-line); }
+.mk-ingredients .mk-check__text { display: flex; justify-content: space-between; gap: var(--mk-space-3); }
+.mk-qty {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--mk-weight-bold);
+  font-variation-settings: var(--mk-sharp);
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* ---- Method step ---------------------------------------------------------- */
+
+.mk-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--mk-space-2) var(--mk-space-4);
+  align-items: start;
+}
+.mk-step__n {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  background: var(--mk-marigold);
+  color: var(--mk-plum-900);
+  clip-path: var(--mk-cut-plate);
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-xl);
+  line-height: 1;
+}
+.mk-step__text { font-size: var(--mk-text-lg); line-height: 1.45; padding-top: 0.35rem; }
+.mk-step__actions { grid-column: 2; display: flex; flex-wrap: wrap; gap: var(--mk-space-2); }
+
+/* ---- Timer ---------------------------------------------------------------- */
+
+.mk-timer {
+  display: grid;
+  justify-items: center;
+  gap: var(--mk-space-4);
+}
+.mk-timer__dial { position: relative; width: min(15rem, 100%); aspect-ratio: 1; max-width: 100%; }
+.mk-timer__dial svg { width: 100%; height: 100%; display: block; rotate: -90deg; }
+.mk-timer__track { fill: none; stroke: var(--mk-sunken); stroke-width: 14; }
+.mk-timer__fill {
+  fill: none;
+  stroke: var(--mk-paprika);
+  stroke-width: 14;
+  stroke-linejoin: miter;
+  transition: stroke-dashoffset 1s linear;
+}
+.mk-timer__readout {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+.mk-timer__time {
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-5xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.mk-timer__label { font-size: var(--mk-text-sm); color: var(--mk-text-muted); }
+.mk-timer[data-state="done"] .mk-timer__fill { stroke: var(--mk-garden); }
+
+/* ---- Pantry row ------------------------------------------------------------ */
+
+.mk-pantry { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--mk-space-2); }
+.mk-pantry-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--mk-space-3);
+  padding: var(--mk-space-3) var(--mk-space-4);
+  border-radius: var(--mk-nick-md);
+  background: var(--mk-surface);
+}
+.mk-pantry-row__jar { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; --cut: var(--mk-cut-plate); }
+.mk-pantry-row__jar .mk-icon { width: 1.25rem; height: 1.25rem; }
+.mk-pantry-row__name { font-weight: var(--mk-weight-medium); line-height: 1.3; }
+.mk-pantry-row__amount { display: block; font-size: var(--mk-text-sm); color: var(--mk-text-muted); font-variant-numeric: tabular-nums; }
+
+/* ---- Toast ------------------------------------------------------------------ */
+
+.mk-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-3);
+  padding: var(--mk-space-2) var(--mk-space-2) var(--mk-space-2) var(--mk-space-4);
+  border-radius: var(--mk-nick-md);
+  background: var(--mk-inverse);
+  color: var(--mk-on-inverse);
+  font-size: var(--mk-text-sm);
+  font-weight: var(--mk-weight-medium);
+}
+.mk-toast__text { flex: 1; }
+.mk-toast .mk-btn--quiet { --btn-fg: var(--mk-on-inverse-accent); }
+.mk-toast .mk-btn--quiet:hover { --btn-bg: transparent; text-decoration: underline; }
+
+/* ---- Tab bar ---------------------------------------------------------------- */
+
+.mk-tabbar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: var(--mk-space-2) var(--mk-space-2) var(--mk-space-3);
+  background: var(--mk-surface);
+}
+.mk-tabbar a {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 3.5rem;
+  padding-top: 4px;
+  color: var(--mk-text-muted);
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: var(--mk-weight-medium);
+  font-variation-settings: var(--mk-sharp);
+}
+.mk-tabbar__icon { display: grid; place-items: center; width: 3.5rem; height: 2rem; border-radius: var(--mk-nick-md); }
+.mk-tabbar a[aria-current="page"] { color: var(--mk-text); font-weight: var(--mk-weight-bold); }
+.mk-tabbar a[aria-current="page"] .mk-tabbar__icon { background: var(--mk-selected); color: var(--mk-on-selected); }
+
+/* ---- Empty state ------------------------------------------------------------ */
+
+.mk-empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--mk-space-3);
+  padding: var(--mk-space-6) var(--mk-space-4);
+  text-align: center;
+}
+.mk-empty__art { width: 8rem; height: auto; }
+.mk-empty__title { font-size: var(--mk-text-2xl); }
+.mk-empty p { max-width: 30ch; color: var(--mk-text-muted); }
+
+/* ---- Cook mode: a fixed night-kitchen scope, in both themes ------------------ */
+
+.mk-cook {
+  --mk-bg: var(--mk-night-bg);
+  --mk-surface: var(--mk-night-surface);
+  --mk-sunken: var(--mk-night-sunken);
+  --mk-text: var(--mk-paper);
+  --mk-text-muted: var(--mk-night-text-muted);
+  --mk-line: var(--mk-night-line);
+  --mk-line-strong: var(--mk-night-line-strong);
+  --mk-action: var(--mk-night-action);
+  --mk-action-hover: var(--mk-night-action-hover);
+  --mk-on-action: var(--mk-night-bg);
+  --mk-link: var(--mk-night-action-hover);
+  --mk-focus: var(--mk-night-focus);
+  background: var(--mk-bg);
+  color: var(--mk-text);
+}
+.mk-cook .mk-step__text { font-size: var(--mk-text-xl); line-height: 1.35; }
+
+/* Compact card for two-up grids on phones */
+.mk-recipe-card--compact .mk-recipe-card__body { padding: var(--mk-space-3) var(--mk-space-3) var(--mk-space-4); }
+.mk-recipe-card--compact .mk-recipe-card__title { font-size: var(--mk-text-lg); }
+.mk-recipe-card--compact .mk-recipe-card__save { top: var(--mk-space-1); right: var(--mk-space-1); }
+.mk-recipe-card--compact .mk-meta { margin-top: 0; }
+
+/* ==========================================================================
+   Additions for @makitra/react (react/)
+   Appended only. Nothing above this line was changed.
+   ========================================================================== */
+
+/* Tab bar items as <button>s (single-page apps): same look as .mk-tabbar a */
+.mk-tabbar button {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 3.5rem;
+  margin: 0;
+  padding: 4px 0 0;
+  border: 0;
+  background: transparent;
+  color: var(--mk-text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: var(--mk-weight-medium);
+  font-variation-settings: var(--mk-sharp);
+  text-decoration: none;
+  cursor: pointer;
+}
+.mk-tabbar button[aria-current="page"] { color: var(--mk-text); font-weight: var(--mk-weight-bold); }
+.mk-tabbar button[aria-current="page"] .mk-tabbar__icon { background: var(--mk-selected); color: var(--mk-on-selected); }
+
+/* Recipe card opened by a <button> instead of a link */
+button.mk-recipe-card__link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Dish art supplied as an image file rather than inline SVG */
+.mk-recipe-card__art img { display: block; width: 70%; height: auto; }
+
+/* Chip group: a wrapping row of filter chips */
+.mk-chip-group { display: flex; flex-wrap: wrap; gap: var(--mk-space-2); }

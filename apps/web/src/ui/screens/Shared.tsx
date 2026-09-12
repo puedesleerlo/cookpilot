@@ -1,5 +1,5 @@
 import { useSync } from '@/app/sync';
-import { Button, Glyph } from '../primitives';
+import { Button, Display, Glyph, Motif, Patch } from '../primitives';
 import { Cooking } from '../cooking/Cooking';
 import { Join } from '../cooking/Join';
 import { Lobby } from '../cooking/Lobby';
@@ -27,9 +27,22 @@ export const Shared = () => {
     default:
       return (
         <main className="grid min-h-dvh place-items-center px-5">
-          <p role="status" className="text-sm text-ink-soft">
-            Talking to the kitchen…
-          </p>
+          <div className="flex flex-col items-center gap-4 text-center">
+            <span aria-hidden="true" className="relative grid h-[7rem] w-[7rem] place-items-center">
+              <Patch
+                tone="dough"
+                cut="plate"
+                className="absolute inset-0 [rotate:-6deg] motion-safe:animate-[mk-stamp_var(--d-slow)_var(--mk-ease-stamp)_both]"
+              />
+              <span className="relative text-plum-900">
+                <Glyph name="pot" size={52} strokeWidth={2} />
+              </span>
+              <Motif name="spark" className="absolute -right-5 -top-3 w-[2.25rem]" m1="var(--mk-paprika)" />
+            </span>
+            <p role="status" className="text-md font-medium text-muted [font-variation-settings:var(--mk-sharp)]">
+              Talking to the kitchen…
+            </p>
+          </div>
         </main>
       );
   }
@@ -39,12 +52,22 @@ const Failed = () => {
   const error = useSync((s) => s.error);
   const leave = useSync((s) => s.leave);
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[640px] flex-col justify-center gap-5 px-5 py-8">
-      <span className="text-tomato-ink">
-        <Glyph name="state-impossible" size={64} />
-      </span>
-      <h1 className="voice-display text-2xl">That did not work</h1>
-      <p className="text-md text-ink-soft">{error ?? 'The shared session is no longer reachable.'}</p>
+    <main className="mx-auto flex min-h-dvh max-w-[640px] flex-col justify-center gap-6 px-5 py-8">
+      <div aria-hidden="true" className="relative h-[9rem] w-[10rem]">
+        <Patch
+          tone="soup"
+          cut="burst"
+          className="absolute inset-0 motion-safe:animate-[mk-stamp_var(--d-slow)_var(--mk-ease-stamp)_both]"
+        />
+        <span className="absolute inset-0 grid place-items-center text-paper">
+          <Glyph name="state-impossible" size={64} strokeWidth={2.2} />
+        </span>
+        <Motif name="poppy" className="absolute -bottom-3 -right-8 w-[4.5rem] rotate-12" m1="var(--mk-plum-900)" />
+      </div>
+      <Display as="h1" className="text-[length:var(--mk-text-3xl)] sm:text-[length:var(--mk-text-4xl)]">
+        That did not work
+      </Display>
+      <p className="max-w-measure text-md text-muted">{error ?? 'The shared session is no longer reachable.'}</p>
       <div className="flex flex-wrap gap-3">
         <Button variant="primary" onClick={leave}>
           Back

@@ -2,25 +2,27 @@ import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 
 /**
- * A QR code, drawn in the page's own ink.
+ * A QR code, drawn in the page's own ink on a square of bright paper.
  *
- * The generator paints in black on white; those are swapped for `currentColor` on nothing,
- * so the code sits on the cream ground like everything else and takes its colour from the
- * text around it. A scanner does not care, and the rest of the screen does.
+ * The generator paints black modules on a white ground; the ground is dropped so the paper
+ * square underneath shows through, and the modules take `currentColor` (plum ink). Ink on
+ * bright paper is well past what a phone camera needs. The four-module quiet zone is part of
+ * the drawing itself, and the square is never rotated or cut, so the decoration around it
+ * can be as loud as it likes without costing a scan.
  */
 const inherit = (svg: string): string =>
   svg
     .replace(/fill="#[0-9a-f]{6}"/gi, 'fill="none"')
     .replace(/stroke="#[0-9a-f]{6}"/gi, 'stroke="currentColor"');
 
-type Props = { text: string; label: string; size?: number };
+type Props = { text: string; label: string; size?: number; className?: string };
 
-export const Qr = ({ text, label, size = 224 }: Props) => {
+export const Qr = ({ text, label, size = 224, className = '' }: Props) => {
   const [svg, setSvg] = useState('');
 
   useEffect(() => {
     let live = true;
-    QRCode.toString(text, { type: 'svg', margin: 1, errorCorrectionLevel: 'M' })
+    QRCode.toString(text, { type: 'svg', margin: 4, errorCorrectionLevel: 'M' })
       .then((drawn) => {
         if (live) setSvg(inherit(drawn));
       })
@@ -38,7 +40,7 @@ export const Qr = ({ text, label, size = 224 }: Props) => {
       aria-label={label}
       data-testid="qr"
       style={{ width: size, height: size }}
-      className="max-w-full rounded-md bg-cream p-2 text-charcoal shadow-1 [&>svg]:h-full [&>svg]:w-full"
+      className={`aspect-square max-w-full flex-none bg-paper-bright text-charcoal [&>svg]:block [&>svg]:h-full [&>svg]:w-full ${className}`}
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );

@@ -7,6 +7,10 @@ import { useSession } from '@/app/store';
  * live controls sitting next to the result they change — pull the hour down to forty
  * minutes and the chart redraws with whatever had to give. That loop *is* the product; a
  * form behind a "recompile" button would hide the only thing worth showing.
+ *
+ * Drawn as a board of paper dials: each question wears its own cut tag, the answers sit in
+ * a bright well, and the one you picked is plum and knocked a few degrees off true, the way
+ * a pressed stamp lands.
  */
 
 const TIME = [30, 45, 60, 90];
@@ -18,47 +22,61 @@ export const Controls = () => {
   const adjust = useSession((s) => s.adjust);
 
   return (
-    <div className="flex flex-wrap items-end gap-x-6 gap-y-3 rounded-md bg-cream-deep p-4">
-      <Group label="Time you have">
-        {TIME.map((n) => (
-          <Pick key={n} on={intake.timeBudgetMin.value === n} onClick={() => adjust('timeBudgetMin', n)}>
-            {n}m
-          </Pick>
-        ))}
-      </Group>
+    <div className="relative rounded-nick-lg bg-sunken px-4 pb-6 pt-5 sm:px-6">
+      <div className="mb-5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+        <h2 className="voice-display text-xl sm:text-2xl">Change your mind</h2>
+        <p className="text-sm text-muted">Tap an answer and the plan below redraws.</p>
+      </div>
 
-      <Group label="People cooking">
-        {COOKS.map((n) => (
-          <Pick key={n} on={intake.cookCount.value === n} onClick={() => adjust('cookCount', n)}>
-            {n}
-          </Pick>
-        ))}
-      </Group>
+      <div className="flex flex-wrap gap-x-6 gap-y-5">
+        <Group label="Time you have" tag="bg-marigold -rotate-2">
+          {TIME.map((n) => (
+            <Pick key={n} on={intake.timeBudgetMin.value === n} onClick={() => adjust('timeBudgetMin', n)}>
+              {n}m
+            </Pick>
+          ))}
+        </Group>
 
-      <Group label="Servings each">
-        {SERVINGS.map((n) => (
-          <Pick key={n} on={intake.servings.value === n} onClick={() => adjust('servings', n)}>
-            {n}
-          </Pick>
-        ))}
-      </Group>
+        <Group label="People cooking" tag="bg-enamel rotate-1">
+          {COOKS.map((n) => (
+            <Pick key={n} on={intake.cookCount.value === n} onClick={() => adjust('cookCount', n)}>
+              {n}
+            </Pick>
+          ))}
+        </Group>
 
-      <Group label="Drinks">
-        <Pick on={intake.wantsBeverages.value} onClick={() => adjust('wantsBeverages', true)}>
-          yes
-        </Pick>
-        <Pick on={!intake.wantsBeverages.value} onClick={() => adjust('wantsBeverages', false)}>
-          no
-        </Pick>
-      </Group>
+        <Group label="Servings each" tag="bg-garden-100 -rotate-1">
+          {SERVINGS.map((n) => (
+            <Pick key={n} on={intake.servings.value === n} onClick={() => adjust('servings', n)}>
+              {n}
+            </Pick>
+          ))}
+        </Group>
+
+        <Group label="Drinks" tag="bg-cornflower-100 rotate-2">
+          <Pick on={intake.wantsBeverages.value} onClick={() => adjust('wantsBeverages', true)}>
+            yes
+          </Pick>
+          <Pick on={!intake.wantsBeverages.value} onClick={() => adjust('wantsBeverages', false)}>
+            no
+          </Pick>
+        </Group>
+      </div>
     </div>
   );
 };
 
-const Group = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <fieldset className="border-0 p-0">
-    <legend className="mb-1 p-0 text-xs text-ink-soft">{label}</legend>
-    <div className="flex gap-1">{children}</div>
+const Group = ({ label, tag, children }: { label: string; tag: string; children: React.ReactNode }) => (
+  <fieldset className="m-0 min-w-0 border-0 p-0">
+    <legend className="mb-2 p-0">
+      {/* The legend is not focusable, so it can wear a scissor cut. */}
+      <span
+        className={`inline-block px-3 py-1 text-sm font-bold text-plum-900 [clip-path:var(--mk-cut-tag)] [font-variation-settings:var(--mk-sharp)] ${tag}`}
+      >
+        {label}
+      </span>
+    </legend>
+    <div className="flex gap-1 rounded-nick-md bg-surface p-1">{children}</div>
   </fieldset>
 );
 
@@ -75,9 +93,9 @@ const Pick = ({
     type="button"
     onClick={onClick}
     aria-pressed={on}
-    className={`min-h-[44px] min-w-[44px] rounded-xs border-[1.5px] px-3 text-sm font-bold
-      transition-colors duration-fast
-      ${on ? 'border-tomato-deep bg-cream text-tomato-ink shadow-1' : 'border-line bg-cream/50 text-ink-soft hover:border-line-strong hover:text-charcoal'}`}
+    className={`min-h-touch min-w-touch rounded-nick-sm px-3 text-md font-bold [font-variation-settings:var(--mk-sharp)]
+      transition-[transform,background-color,color] duration-base ease-stamp active:translate-y-px
+      ${on ? '-rotate-3 bg-selected text-on-selected' : 'text-ink hover:-rotate-2 hover:bg-sunken'}`}
   >
     {children}
   </button>

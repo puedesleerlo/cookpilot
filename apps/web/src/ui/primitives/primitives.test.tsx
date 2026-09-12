@@ -1,14 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button, Card, Chip, CompileCurtain, COMPILE_STAGES, Field, Glyph, ProgressRail, Toggle } from './index';
+import { Button, Card, Chip, CompileCurtain, COMPILE_STAGES, Display, Field, Glyph, MakitraRoot, Motif, Patch, ProgressRail, Toggle } from './index';
 
 describe('Button', () => {
-  it('meets the 44px hit target at the default size and 56px in cooking mode', () => {
+  it("meets Makitra's 48px touch target at the default size and 60px in cooking mode", () => {
     const { rerender } = render(<Button>Compile the session</Button>);
-    expect(screen.getByRole('button').className).toContain('min-h-[44px]');
+    expect(screen.getByRole('button').className).toContain('min-h-[48px]');
     rerender(<Button size="lg">Done</Button>);
-    expect(screen.getByRole('button').className).toContain('min-h-[56px]');
+    expect(screen.getByRole('button').className).toContain('min-h-[60px]');
+  });
+
+  it('renders Makitra button classes, so one primary reads as the action', () => {
+    render(<Button variant="primary">Start cooking</Button>);
+    expect(screen.getByRole('button').className).toMatch(/\bmk-btn\b.*\bmk-btn--primary\b/);
   });
 
   it('has an accessible name from its content', () => {
@@ -51,6 +56,35 @@ describe('Card', () => {
   it('uses a non-uniform radius token rather than a plain rounded rect', () => {
     render(<Card>Chicken and bok choy</Card>);
     expect(screen.getByTestId('card').className).toMatch(/rounded-(sm|md|lg)/);
+  });
+});
+
+describe('Makitra surfaces', () => {
+  it('wraps screens in the Makitra root', () => {
+    render(<MakitraRoot data-testid="root">x</MakitraRoot>);
+    expect(screen.getByTestId('root').className).toContain('mk-root');
+  });
+
+  it('cuts a patch from its category tokens and hides decorative motifs', () => {
+    const { container } = render(
+      <Patch tone="dough" cut="plate" data-testid="patch">
+        <Motif name="beet" />
+      </Patch>,
+    );
+    const patch = screen.getByTestId('patch');
+    expect(patch.style.getPropertyValue('--patch')).toBe('var(--mk-patch-dough)');
+    expect(patch.style.getPropertyValue('--cut')).toBe('var(--mk-cut-plate)');
+    expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('names a motif when it carries meaning', () => {
+    render(<Motif name="leaf" title="Fresh herbs" />);
+    expect(screen.getByRole('img', { name: 'Fresh herbs' })).toBeInTheDocument();
+  });
+
+  it('sets display type in the display face', () => {
+    render(<Display as="h1">Borshch</Display>);
+    expect(screen.getByRole('heading', { name: 'Borshch' }).className).toContain('mk-display');
   });
 });
 

@@ -4,17 +4,18 @@ import { Glyph, type GlyphName } from './Glyph';
 type Variant = 'primary' | 'secondary' | 'quiet' | 'danger';
 type Size = 'md' | 'lg';
 
+/** Makitra's button classes. One primary per screen; the label says what happens. */
 const VARIANT: Record<Variant, string> = {
-  primary: 'bg-tomato-deep text-cream border-0 shadow-2 hover:brightness-110',
-  secondary: 'bg-cream text-charcoal border-[1.5px] border-line-strong shadow-1 hover:bg-cream-deep',
-  quiet: 'bg-transparent text-tomato-ink border-0 underline underline-offset-4 hover:text-charcoal',
-  danger: 'bg-cream text-danger border-[1.5px] border-danger shadow-1 hover:bg-tomato-wash',
+  primary: 'mk-btn--primary',
+  secondary: 'mk-btn--secondary',
+  quiet: 'mk-btn--quiet',
+  danger: 'mk-btn--danger',
 };
 
-/** `lg` is the cooking-mode size: a 56px target you can hit with wet hands. */
+/** `md` is Makitra's 48px touch target; `lg` is the cooking-mode 60px, for wet hands. */
 const SIZE: Record<Size, string> = {
-  md: 'min-h-[44px] px-5 py-3 text-sm',
-  lg: 'min-h-[56px] px-6 py-4 text-md',
+  md: 'min-h-[48px]',
+  lg: 'mk-btn--lg min-h-[60px]',
 };
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -33,15 +34,8 @@ export const Button = ({
   type = 'button',
   ...rest
 }: Props) => (
-  <button
-    type={type}
-    className={`inline-flex items-center justify-center gap-2 rounded-sm font-ui font-bold
-      transition-[filter,background-color] duration-fast ease-out
-      disabled:cursor-not-allowed disabled:opacity-50
-      ${VARIANT[variant]} ${SIZE[size]} ${className}`}
-    {...rest}
-  >
-    {icon ? <Glyph name={icon} size={size === 'lg' ? 26 : 20} /> : null}
+  <button type={type} className={`mk-btn ${VARIANT[variant]} ${SIZE[size]} ${className}`} {...rest}>
+    {icon ? <Glyph name={icon} size={size === 'lg' ? 26 : 22} strokeWidth={2} /> : null}
     {children}
   </button>
 );

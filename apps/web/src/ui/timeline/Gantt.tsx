@@ -80,7 +80,7 @@ export const Gantt = ({ schedule, onPick, hues, activeTaskId }: Props) => {
   const donePx = schedule.makespanMin * pxPerMin;
 
   return (
-    <div ref={ref} className="overflow-x-auto overscroll-x-contain rounded-md bg-cream-deep">
+    <div ref={ref} className="overflow-x-auto overscroll-x-contain rounded-md bg-[color:var(--block-ground)]">
       <div style={{ width: labelPx + chartPx + 16 }} className="min-w-full p-2">
         <Ruler
           ticks={ticks}
@@ -98,13 +98,13 @@ export const Gantt = ({ schedule, onPick, hues, activeTaskId }: Props) => {
           const open = !collapsible || showTools;
           return (
           <section key={group.group} aria-label={group.label}>
-            <h3 className="sticky left-0 z-10 mt-3 w-fit px-1 text-xs font-bold text-ink-faint">
+            <h3 className="sticky left-0 z-10 mt-3 w-fit px-1 text-xs font-bold text-muted">
               {collapsible ? (
                 <button
                   type="button"
                   onClick={() => setShowTools((v) => !v)}
                   aria-expanded={open}
-                  className="hover:text-charcoal"
+                  className="hover:text-ink"
                 >
                   {group.label} · {group.rows.length} rows {open ? '−' : '+'}
                 </button>
@@ -116,17 +116,17 @@ export const Gantt = ({ schedule, onPick, hues, activeTaskId }: Props) => {
               <div key={row.lane.id} className="flex items-stretch">
                 <div
                   style={{ width: labelPx }}
-                  className="sticky left-0 z-10 flex flex-none items-center bg-cream-deep pr-3 text-xs font-semibold text-ink-soft"
+                  className="sticky left-0 z-10 flex flex-none items-center bg-[color:var(--block-ground)] pr-3 text-xs font-semibold text-ink"
                 >
                   <span className="truncate">{row.lane.label}</span>
                 </div>
                 <div
-                  className="relative my-1 h-8 flex-none rounded-xs bg-cream/60"
+                  className="relative my-1 h-8 flex-none rounded-xs bg-[color:var(--block-lane)]"
                   style={{ width: chartPx }}
                 >
                   <span
                     aria-hidden="true"
-                    className="absolute inset-y-0 bg-cream-sunk/50"
+                    className="absolute inset-y-0 bg-[color:var(--block-after-fill)]"
                     style={{ left: donePx, width: Math.max(0, chartPx - donePx) }}
                   />
                   <Gridlines ticks={ticks} pxPerMin={pxPerMin} />
@@ -154,7 +154,7 @@ export const Gantt = ({ schedule, onPick, hues, activeTaskId }: Props) => {
 const Gridlines = ({ ticks, pxPerMin }: { ticks: number[]; pxPerMin: number }) => (
   <div aria-hidden="true" className="absolute inset-0">
     {ticks.map((t) => (
-      <span key={t} className="absolute top-0 h-full w-px bg-line/70" style={{ left: t * pxPerMin }} />
+      <span key={t} className="absolute top-0 h-full w-px bg-[color:var(--block-grid)]" style={{ left: t * pxPerMin }} />
     ))}
   </div>
 );
@@ -177,31 +177,31 @@ type RulerProps = {
  */
 const Ruler = ({ ticks, budgetPx, donePx, doneMin, chartPx, pxPerMin, labelPx }: RulerProps) => (
   <div className="flex items-end">
-    <div style={{ width: labelPx }} className="sticky left-0 z-10 flex-none bg-cream-deep" />
+    <div style={{ width: labelPx }} className="sticky left-0 z-10 flex-none bg-[color:var(--block-ground)]" />
     <div className="relative h-6 flex-none" style={{ width: chartPx }}>
       {ticks.map((t) => (
         <span
           key={t}
-          className="voice-compiler absolute bottom-0 text-xs text-ink-faint"
+          className="voice-compiler absolute bottom-0 text-xs text-muted"
           style={{ left: t * pxPerMin, transform: 'translateX(-50%)' }}
         >
           {t % 10 === 0 ? t : '·'}
         </span>
       ))}
       <span
-        className="absolute -top-1 bottom-0 w-px bg-sage-deep"
+        className="absolute -top-1 bottom-0 w-px bg-[color:var(--block-free-line)]"
         style={{ left: donePx }}
         aria-hidden="true"
       />
       <span
-        className="voice-compiler absolute -top-1 whitespace-nowrap text-xs font-bold text-sage-ink"
+        className="voice-compiler absolute -top-1 whitespace-nowrap text-xs font-bold text-[color:var(--block-free-line)]"
         style={{ left: donePx - 6, transform: 'translateX(-100%)' }}
       >
         hands free · {doneMin}m
       </span>
       {budgetPx <= chartPx ? (
         <span
-          className="absolute bottom-0 top-0 w-px bg-tomato"
+          className="absolute bottom-0 top-0 w-px bg-[color:var(--block-budget-line)]"
           style={{ left: budgetPx }}
           aria-hidden="true"
         />
@@ -257,7 +257,7 @@ const BlockChip = ({ block, dishName, hueIndex, active, onPick }: ChipProps) => 
         ${wide || hovered ? 'text-left' : 'text-center'}
         ${active ? 'z-20 shadow-2' : ''}`}
     >
-      <span className="voice-ui block truncate font-semibold text-charcoal">
+      <span className="voice-ui block truncate font-semibold text-ink">
         {wide || hovered ? task.name : block.widthPx >= 24 ? `${minutes}m` : ''}
       </span>
     </button>

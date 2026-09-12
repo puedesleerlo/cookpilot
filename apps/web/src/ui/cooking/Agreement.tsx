@@ -13,15 +13,23 @@ export const Agreement = () => {
   const agreement = useSync((s) => s.agreement);
   if (agreement !== 'different') return null;
   return (
-    <p role="alert" className="flex items-start gap-3 rounded-md bg-orange-wash p-4 text-sm">
-      <span className="flex-none text-orange-ink">
-        <Glyph name="state-impossible" size={28} />
+    <div role="alert" className="relative flex items-start gap-4 overflow-hidden rounded-nick-lg bg-warning-bg p-4 pr-5 text-ink">
+      <span aria-hidden="true" className="relative grid h-8 w-8 flex-none place-items-center">
+        <span className="absolute inset-0 bg-marigold [clip-path:var(--mk-cut-burst)] [rotate:-8deg]" />
+        <span className="relative text-charcoal">
+          <Glyph name="state-impossible" size={30} strokeWidth={2} />
+        </span>
       </span>
-      <span>
-        This device compiled a different timeline from the host&rsquo;s. That usually means one
-        of you is on an older version of the app — reload both and try again before cooking
-        from it.
+      <span className="min-w-0">
+        <span className="block text-md font-bold text-warning [font-variation-settings:var(--mk-sharp)]">
+          Timelines disagree
+        </span>
+        <span className="mt-1 block text-sm">
+          This device compiled a different timeline from the host&rsquo;s. That usually means one
+          of you is on an older version of the app — reload both and try again before cooking
+          from it.
+        </span>
       </span>
-    </p>
+    </div>
   );
 };

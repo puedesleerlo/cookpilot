@@ -1,6 +1,6 @@
 import { useSession } from '@/app/store';
 import { useSync } from '@/app/sync';
-import { Blobs, Button, CompileCurtain, Glyph, Grain } from './primitives';
+import { Backdrop, Button, CompileCurtain, Display, Glyph, Grain, MakitraRoot, Motif, Patch } from './primitives';
 import { Intake } from './screens/Intake';
 import { Landing } from './screens/Landing';
 import { Recipes } from './screens/Recipes';
@@ -25,17 +25,17 @@ export const App = () => {
    */
   if (shared) {
     return (
-      <>
-        <Blobs />
+      <MakitraRoot>
+        <Backdrop />
         <Grain />
         <Shared />
-      </>
+      </MakitraRoot>
     );
   }
 
   return (
-    <>
-      <Blobs />
+    <MakitraRoot>
+      <Backdrop />
       <Grain />
 
       {screen === 'landing' ? <Landing /> : null}
@@ -83,7 +83,7 @@ export const App = () => {
         finished animating.
       */}
       <CompileCurtain active={compiling} onDone={settle} />
-    </>
+    </MakitraRoot>
   );
 };
 
@@ -92,12 +92,16 @@ const DidNotCompile = ({ reason }: { reason?: string }) => {
   const reset = useSession((s) => s.reset);
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[640px] flex-col justify-center gap-5 px-5 py-8">
-      <span className="text-tomato-ink">
-        <Glyph name="state-impossible" size={64} />
-      </span>
-      <h1 className="voice-display text-2xl">That one would not compile</h1>
-      <p className="text-md text-ink-soft">
+    <main className="mx-auto flex min-h-dvh max-w-[680px] flex-col justify-center gap-6 px-5 py-8">
+      <div aria-hidden="true" className="relative h-[160px] w-[176px]">
+        <Patch tone="soup" cut="burst" className="absolute inset-0 motion-safe:animate-[mk-stamp_var(--d-slow)_var(--mk-ease-stamp)_both]" />
+        <span className="absolute inset-0 grid place-items-center text-paper">
+          <Glyph name="state-impossible" size={72} strokeWidth={2.2} />
+        </span>
+        <Motif name="poppy" className="absolute -bottom-3 right-[-40px] w-[80px] rotate-12" m1="var(--mk-plum-900)" />
+      </div>
+      <Display as="h1" className="text-3xl sm:text-4xl">That one would not compile</Display>
+      <p className="max-w-measure text-md text-muted">
         {reason ?? 'Nothing in the registry fits that fridge and that kitchen together.'}
       </p>
       <div className="flex flex-wrap gap-3">
@@ -123,12 +127,16 @@ const NotBuiltYet = () => {
   const outcome = useSession((s) => s.outcome);
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[640px] flex-col justify-center gap-5 px-5 py-8">
-      <span className="text-sage-ink">
-        <Glyph name="state-compiling" size={64} />
-      </span>
-      <h1 className="voice-display text-2xl">This part is still on the stove</h1>
-      <p className="text-md text-ink-soft">
+    <main className="mx-auto flex min-h-dvh max-w-[680px] flex-col justify-center gap-6 px-5 py-8">
+      <div aria-hidden="true" className="relative h-[160px] w-[176px]">
+        <Patch tone="dough" cut="plate" className="absolute inset-0 motion-safe:animate-[mk-stamp_var(--d-slow)_var(--mk-ease-stamp)_both]" />
+        <span className="absolute inset-0 grid place-items-center text-plum-900">
+          <Glyph name="state-compiling" size={72} strokeWidth={2.2} />
+        </span>
+        <Motif name="spark" className="absolute right-[-32px] -top-4 w-[56px]" m1="var(--mk-paprika)" />
+      </div>
+      <Display as="h1" className="text-3xl sm:text-4xl">This part is still on the stove</Display>
+      <p className="max-w-measure text-md text-muted">
         Cooking mode — the one that counts your timers down and re-plans when a step runs
         long — is being built now. Until it lands, the run sheet on the session you compiled
         is what to follow.

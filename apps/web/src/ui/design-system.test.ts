@@ -76,15 +76,30 @@ describe('colour exists only as tokens', () => {
   it('exposes each colour to Tailwind through the same custom property', () => {
     const tailwind = readFileSync(path.join(root, 'apps/web/tailwind.config.js'), 'utf8');
     expect(tailwind).toContain("tomato: 'var(--c-tomato)'");
-    expect(tokensCss).toMatch(/--c-tomato:\s*#e2553d/i);
+    expect(tailwind).toContain("paprika: 'var(--mk-paprika)'");
+    expect(tokensCss).toMatch(/--mk-paprika:\s*#F0360C/i);
+    expect(resolved('--c-tomato')).toBe(resolved('--mk-paprika'));
+  });
+
+  it('finds no colour literal in the vendored Makitra component classes either', () => {
+    const css = readFileSync(path.join(root, 'apps/web/src/ui/makitra.css'), 'utf8');
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(css).not.toMatch(/\b(rgba?|hsla?)\(/);
   });
 });
 
 describe('shape language avoids perfect geometry', () => {
-  it.each(['--r-xs', '--r-sm', '--r-md', '--r-lg', '--r-chip'])('%s is non-uniform', (token) => {
-    const corners = tokenValue(token).split(/\s+/);
+  it.each(['--r-xs', '--r-sm', '--r-md', '--r-lg', '--r-chip'])('%s is a scissor nick, not a die cut', (token) => {
+    // Makitra nicks may carry elliptical radii after a slash; the horizontal set is what varies.
+    const corners = resolved(token).split('/')[0]!.trim().split(/\s+/);
     expect(corners).toHaveLength(4);
     expect(new Set(corners).size).toBeGreaterThan(1);
+  });
+
+  it('has no elevation: paper lies flat on the table', () => {
+    for (const e of ['--e-1', '--e-3', '--mk-elevation']) expect(tokenValue(e)).toBe('none');
+    // The chart's open-block lift is a hard offset edge with zero blur, not a shadow.
+    expect(tokenValue('--e-2')).toMatch(/^0 \d+px 0 var\(--mk-[a-z0-9-]+\)$/);
   });
 });
 
@@ -229,9 +244,32 @@ describe('contrast is measured, not eyeballed', () => {
     expect(contrast(resolved(fg), resolved(bg))).toBeGreaterThanOrEqual(3);
   });
 
-  it('keeps tomato out of body copy, where it would fail', () => {
-    expect(contrast(resolved('--c-tomato'), resolved(CREAM))).toBeLessThan(4.5);
+  it('keeps paprika out of body copy, where it would fail', () => {
+    expect(contrast(resolved('--mk-paprika'), resolved(CREAM))).toBeLessThan(4.5);
     expect(tokensCss).toContain('large-text only');
+  });
+
+  it.each([
+    ['--mk-text', '--mk-surface'],
+    ['--mk-text-muted', '--mk-surface'],
+    ['--mk-on-action', '--mk-action'],
+    ['--mk-link', '--mk-bg'],
+    ['--mk-success', '--mk-success-bg'],
+    ['--mk-warning', '--mk-warning-bg'],
+    ['--mk-danger', '--mk-danger-bg'],
+    ['--mk-on-patch-dough', '--mk-patch-dough'],
+    ['--mk-on-patch-preserve', '--mk-patch-preserve'],
+    ['--mk-on-patch-cellar', '--mk-patch-cellar'],
+    ['--mk-paper', '--mk-night-bg'],
+    ['--mk-night-text-muted', '--mk-night-bg'],
+  ])('Makitra role %s on %s reaches 4.5:1', (fg, bg) => {
+    expect(contrast(resolved(fg), resolved(bg))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('keeps the chart quiet: every dish tint is pale enough to read ink on at 10:1', () => {
+    for (let i = 0; i < DISH_HUE_COUNT; i++) {
+      expect(contrast(resolved('--c-charcoal'), resolved(`--dish-${i}-wash`))).toBeGreaterThanOrEqual(10);
+    }
   });
 
   it('uses an off-palette focus colour so focus never reads as decoration', () => {
@@ -253,18 +291,17 @@ describe('motion respects user preference', () => {
 });
 
 describe('typography', () => {
-  it('self-hosts the family so it survives offline', () => {
-    expect(tokensCss).toContain("src: url('../assets/fonts/recursive-latin.woff2')");
-    expect(statSync(path.join(root, 'apps/web/src/assets/fonts/recursive-latin.woff2')).size).toBeGreaterThan(50_000);
+  it('self-hosts both Makitra families so they survive offline', () => {
+    for (const file of ['geologica-latin.woff2', 'protest-guerrilla-latin.woff2']) {
+      expect(tokensCss).toContain(`src: url('../assets/fonts/makitra/${file}')`);
+      expect(statSync(path.join(root, 'apps/web/src/assets/fonts/makitra', file)).size).toBeGreaterThan(10_000);
+    }
   });
 
-  it('defines three voices that differ by axis, not only weight', () => {
-    const display = tokenValue('--v-display');
-    const ui = tokenValue('--v-ui');
-    const compiler = tokenValue('--v-compiler');
-    expect(new Set([display, ui, compiler]).size).toBe(3);
-    expect(compiler).toContain("'MONO' 1");
-    expect(display).toContain("'CASL' 1");
+  it('sets display in Protest Guerrilla and everything else in Geologica', () => {
+    expect(tokenValue('--mk-font-display')).toMatch(/^'Protest Guerrilla'/);
+    expect(tokenValue('--mk-font-text')).toMatch(/^'Geologica'/);
+    expect(tokensCss).toMatch(/\.voice-display[\s\S]*?text-transform: uppercase/);
   });
 
   it('sets timer numerals large, heavy and tabular', () => {

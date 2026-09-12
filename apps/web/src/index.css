@@ -1,6 +1,8 @@
 /* Tokens first: @import must precede other rules, and Tailwind's base layer
-   needs the custom properties to already exist when it resolves them. */
+   needs the custom properties to already exist when it resolves them.
+   Then Makitra's component classes (mk-*), which product utilities always override. */
 @import './ui/tokens.css';
+@import './ui/makitra.css';
 
 @tailwind base;
 @tailwind components;

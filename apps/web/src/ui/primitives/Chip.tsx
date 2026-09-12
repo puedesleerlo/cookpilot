@@ -52,10 +52,11 @@ export const Chip = ({
     <Tag
       {...(onClick && !nested ? { type: 'button' as const, onClick } : {})}
       data-settle={settle || undefined}
-      className={`inline-flex items-center gap-2 rounded-chip bg-cream py-2 pl-3 pr-4 text-sm
-        font-ui font-semibold text-charcoal shadow-1 border-[1.5px]
-        ${assumed ? 'border-dashed border-line-strong' : 'border-line-strong'}
-        ${onClick ? 'cursor-pointer hover:bg-cream-deep' : ''}
+      className={`inline-flex min-h-[44px] items-center gap-2 rounded-nick-md py-1 pl-2 pr-3 text-sm
+        font-ui font-semibold text-ink [font-variation-settings:var(--mk-sharp)]
+        ${urgent ? 'bg-paprika-100' : unrecognised ? 'bg-sunken' : 'bg-surface'}
+        ${assumed ? 'border-2 border-dashed border-edge' : 'border-2 border-transparent'}
+        ${onClick ? 'cursor-pointer transition-transform duration-fast ease-stamp hover:-rotate-1 active:translate-y-px' : ''}
         ${settle ? 'motion-safe:animate-[chip-settle_var(--d-base)_var(--ease-settle)_both]' : ''}`}
     >
       <Body
@@ -65,18 +66,25 @@ export const Chip = ({
         className="inline-flex items-center gap-2"
       >
         {icon ? (
-          <span className={urgent ? 'text-tomato' : unrecognised ? 'text-ink-faint' : 'text-sage-ink'}>
-            <Glyph name={icon} size={22} />
+          <span
+            aria-hidden="true"
+            className={`grid h-[32px] w-[32px] flex-none place-items-center rounded-nick-sm ${
+              urgent
+                ? 'bg-paprika-600 text-paper'
+                : unrecognised
+                  ? 'bg-flour-deep text-muted'
+                  : 'bg-garden-100 text-garden-700'
+            }`}
+          >
+            <Glyph name={icon} size={22} strokeWidth={1.9} />
           </span>
         ) : null}
         {children}
         {urgent ? (
-          <span className="rounded-xs bg-tomato-wash px-2 text-xs font-bold text-tomato-ink">today</span>
+          <span className="mk-tag [--tag-bg:var(--mk-paprika-600)] [--tag-fg:var(--mk-paper)]">today</span>
         ) : null}
-        {assumed ? <span className="text-xs italic text-ink-soft">assumed</span> : null}
-        {unrecognised ? (
-          <span className="rounded-xs bg-cream-sunk px-2 text-xs text-ink-soft">not sure</span>
-        ) : null}
+        {assumed ? <span className="text-xs italic text-muted">assumed</span> : null}
+        {unrecognised ? <span className="mk-tag mk-tag--warning">not sure</span> : null}
       </Body>
       {onRemove ? (
         <button
@@ -86,10 +94,10 @@ export const Chip = ({
             onRemove();
           }}
           aria-label={`Remove ${label ?? (typeof children === 'string' ? children : 'this')}`}
-          className="ml-1 grid h-6 w-6 place-items-center rounded-full text-ink-soft hover:bg-cream-sunk hover:text-charcoal"
+          className="-my-1 ml-1 grid h-[40px] w-[40px] place-items-center rounded-nick-sm text-muted hover:bg-sunken hover:text-ink"
         >
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <path d="M3.6 3.4 12.2 12.6M12.4 3.6 3.4 12.4" />
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" aria-hidden="true">
+            <path d="M3.5 3.5 12.5 12.5M12.5 3.5 3.5 12.5" />
           </svg>
         </button>
       ) : null}

@@ -14,6 +14,10 @@ import { Glyph, INGREDIENT_GLYPH } from '../primitives';
  * The escape hatch matters as much as the list. Anything the lexicon has never heard of can
  * still be added, verbatim and flagged — a fridge is not obliged to contain only things we
  * have written down.
+ *
+ * Drawn as Makitra's search field, with the matches on a dark label-maker strip: the one
+ * ground on this screen nothing else uses, so the list reads as lying over the table
+ * without a shadow to hold it up.
  */
 
 type Props = {
@@ -72,93 +76,113 @@ export const IngredientSearch = ({ onAdd, taken }: Props) => {
   };
 
   return (
-    <div className="relative">
-      <label htmlFor={id} className="text-xs font-bold text-ink-soft">
+    <div>
+      <label
+        htmlFor={id}
+        className="mb-2 block text-md font-bold text-ink [font-variation-settings:var(--mk-sharp)]"
+      >
         What is in there?
       </label>
-      <input
-        id={id}
-        ref={inputRef}
-        role="combobox"
-        aria-expanded={options.length > 0}
-        aria-controls={`${id}-list`}
-        aria-autocomplete="list"
-        autoComplete="off"
-        value={query}
-        placeholder="chicken, bok choy, half a lemon…"
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setActive(0);
-          setNote('');
-        }}
-        onKeyDown={onKeyDown}
-        className="mt-1 min-h-[56px] w-full rounded-sm border-[1.5px] border-line-strong bg-cream px-4 py-3
-          font-ui text-md text-charcoal placeholder:text-ink-faint"
-      />
 
-      {options.length > 0 ? (
-        <ul
-          id={`${id}-list`}
-          role="listbox"
-          aria-label="Matching ingredients"
-          className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-sm border-[1.5px]
-            border-line-strong bg-cream shadow-2"
-        >
-          {options.map((option, i) => {
-            const isVerbatim = option === 'verbatim';
-            const name = isVerbatim ? typed : option.entry.canonicalName;
-            return (
-              <li key={isVerbatim ? '__verbatim' : option.entry.canonicalName} role="none">
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={i === active}
-                  onMouseEnter={() => setActive(i)}
-                  onClick={() => take(option)}
-                  className={`flex min-h-[44px] w-full items-center gap-3 px-3 py-2 text-left text-sm
-                    ${i === active ? 'bg-cream-deep' : 'bg-cream'}
-                    ${!isVerbatim && held.has(option.entry.canonicalName) ? 'text-ink-soft' : ''}`}
-                >
-                  <span className={isVerbatim ? 'text-ink-faint' : 'text-sage-ink'}>
-                    <Glyph
-                      name={isVerbatim ? 'state-empty' : INGREDIENT_GLYPH[option.entry.category]}
-                      size={22}
-                    />
-                  </span>
-                  {isVerbatim ? (
-                    <span>
-                      Add <strong>{typed}</strong> anyway
-                      <span className="block text-xs text-ink-soft">
-                        Kept as you typed it. It will not match a recipe, but it will not be
-                        turned into something else either.
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="flex-1">
-                      <span className="font-semibold">{name}</span>
-                      {option.matched !== name ? (
-                        <span className="ml-2 text-xs text-ink-soft">you said {option.matched}</span>
-                      ) : null}
-                    </span>
-                  )}
-                  {!isVerbatim && held.has(option.entry.canonicalName) ? (
+      <div className="relative">
+        <div className="mk-search">
+          <svg viewBox="0 0 24 24" className="mk-icon !left-5" aria-hidden="true">
+            <polygon points="10.5,3.5 15.4,5.5 17.5,10.5 15.4,15.4 10.5,17.5 5.6,15.4 3.5,10.5 5.6,5.5" />
+            <path d="M15.8 15.8l4.7 4.7" />
+          </svg>
+          <input
+            id={id}
+            ref={inputRef}
+            role="combobox"
+            aria-expanded={options.length > 0}
+            aria-controls={`${id}-list`}
+            aria-autocomplete="list"
+            autoComplete="off"
+            value={query}
+            placeholder="chicken, bok choy, half a lemon…"
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setActive(0);
+              setNote('');
+            }}
+            onKeyDown={onKeyDown}
+            className="mk-field__control min-h-[64px] !rounded-nick-lg !pl-[3.75rem] text-md"
+          />
+        </div>
+
+        <p className="mt-2 min-h-[1.5em] text-xs text-muted" role="status">
+          {note || (options.length > 0 ? 'Pick as many as you like. Esc closes the list.' : '')}
+        </p>
+
+        {options.length > 0 ? (
+          <ul
+            id={`${id}-list`}
+            role="listbox"
+            aria-label="Matching ingredients"
+            className="absolute left-0 right-0 top-full z-30 mt-1 flex flex-col gap-1 rounded-nick-lg bg-plum-900 p-2
+              text-paper [--mk-focus:var(--mk-night-focus)]"
+          >
+            {options.map((option, i) => {
+              const isVerbatim = option === 'verbatim';
+              const name = isVerbatim ? typed : option.entry.canonicalName;
+              const have = !isVerbatim && held.has(option.entry.canonicalName);
+              return (
+                <li key={isVerbatim ? '__verbatim' : option.entry.canonicalName} role="none">
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={i === active}
+                    onMouseEnter={() => setActive(i)}
+                    onClick={() => take(option)}
+                    className={`flex min-h-touch w-full items-center gap-3 rounded-nick-md px-2 py-2 text-left text-sm
+                      transition-colors duration-fast
+                      ${i === active ? 'bg-mk-plum' : 'bg-transparent'}
+                      ${have ? 'text-night-muted' : 'text-paper'}`}
+                  >
                     <span
-                      aria-label="already in the fridge"
-                      className="flex-none rounded-xs bg-sage-wash px-2 text-xs font-bold text-sage-ink"
+                      aria-hidden="true"
+                      className={`grid h-[40px] w-[40px] flex-none place-items-center [clip-path:var(--mk-cut-plate)]
+                        ${isVerbatim ? 'bg-flour-deep text-plum-900' : have ? 'bg-enamel text-plum-900' : 'bg-garden-100 text-garden-700'}`}
                     >
-                      added
+                      <Glyph
+                        name={isVerbatim ? 'state-empty' : INGREDIENT_GLYPH[option.entry.category]}
+                        size={24}
+                      />
                     </span>
-                  ) : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
-
-      <p className="mt-1 min-h-[1.2em] text-xs text-ink-soft" role="status">
-        {note || (options.length > 0 ? 'Pick as many as you like. Esc closes the list.' : '')}
-      </p>
+                    {isVerbatim ? (
+                      <span>
+                        Add <strong>{typed}</strong> anyway
+                        <span className="block text-xs text-night-muted">
+                          Kept as you typed it. It will not match a recipe, but it will not be
+                          turned into something else either.
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="flex-1">
+                        <span className="font-semibold [font-variation-settings:var(--mk-sharp)]">{name}</span>
+                        {option.matched !== name ? (
+                          <span className="ml-2 text-xs text-night-muted">you said {option.matched}</span>
+                        ) : null}
+                      </span>
+                    )}
+                    {have ? (
+                      <span
+                        aria-label="already in the fridge"
+                        className="mk-tag flex-none -rotate-3 [--tag-bg:var(--mk-enamel)] [--tag-fg:var(--mk-plum-900)]"
+                      >
+                        <svg viewBox="0 0 24 24" className="mk-icon" aria-hidden="true">
+                          <polyline points="4.5,12.5 9.5,17.5 19.5,6.5" />
+                        </svg>
+                        added
+                      </span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+      </div>
     </div>
   );
 };

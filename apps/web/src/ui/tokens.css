@@ -1,115 +1,317 @@
 /*
- * The token layer. Every colour, size, radius and duration in Kitchen Compiler is
- * defined here once. Components reference tokens; a hex literal anywhere under src/ui
- * outside this file is a test failure.
+ * The token layer. Every colour, size, radius and duration in Kitchen Compiler is defined
+ * here once. Components reference tokens; a hex literal anywhere under src/ui outside this
+ * file is a test failure.
  *
- * Contrast ratios in the comments are measured against --c-cream and are enforced by
- * src/ui/contrast.test.ts. Where a token is marked "large text only" it is because it
- * clears 3:1 but not 4.5:1, and using it for body copy would quietly fail WCAG AA.
+ * The system is Makitra (@makitra/react 0.1.0, the "Makitra Kitchen" Claude Design
+ * project): flat cut-paper shapes, colours sampled from a Ukrainian table, and type you can
+ * read from the stove. Visual direction inspired by "Ukrainian food and cuisine
+ * illustration" by Anna Riabchenko (Behance). Non-commercial use.
+ *
+ * Two layers live here:
+ *   --mk-*   Makitra, names verbatim from upstream. New work styles against these.
+ *   --c-* and friends   the product's original token names, now pointing into Makitra so
+ *            nothing that still says `bg-cream` or `text-tomato-ink` falls off the palette.
+ *
+ * Contrast ratios in the comments are measured against paper (--mk-paper) and enforced by
+ * design-system.test.ts. Where a token is marked "large text only" it clears 3:1 but not
+ * 4.5:1, and using it for body copy would quietly fail WCAG AA.
  */
 
+/* Geologica and Protest Guerrilla, self-hosted. Both SIL Open Font License 1.1. */
 @font-face {
-  font-family: 'Recursive';
-  font-style: oblique 0deg 15deg;
-  font-weight: 300 1000;
+  font-family: 'Geologica';
+  font-style: normal;
+  font-weight: 300 800;
   font-display: swap;
-  src: url('../assets/fonts/recursive-latin.woff2') format('woff2-variations');
+  src: url('../assets/fonts/makitra/geologica-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
     U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
     U+FEFF, U+FFFD;
 }
+@font-face {
+  font-family: 'Geologica';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url('../assets/fonts/makitra/geologica-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Protest Guerrilla';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/makitra/protest-guerrilla-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Protest Guerrilla';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/makitra/protest-guerrilla-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 :root {
+  /* ================================================================ Makitra */
+
+  /* ---- Pigments: raw colours sampled from the reference. */
+  --mk-paprika: #F0360C;        /* soup, flame, brand — 3.6:1, shapes and 24px+ display only */
+  --mk-paprika-600: #CF2E08;    /* action fill — 4.69:1 with paper */
+  --mk-paprika-700: #B02504;    /* links, hover — 6.1:1 on paper */
+  --mk-paprika-100: #FAD6C8;
+  --mk-carrot: #FF7301;
+  --mk-marigold: #F79F2B;       /* potato, sunflower oil */
+  --mk-marigold-100: #FBE3B8;
+  --mk-enamel: #FEBDD0;         /* the pink enamel pot */
+  --mk-enamel-100: #FFD9E2;
+  --mk-garden: #27844C;         /* dill, cabbage, cucumbers */
+  --mk-garden-700: #1E6B3D;
+  --mk-garden-100: #DCEBD3;
+  --mk-plum: #573D5A;           /* pepper grinder, bowl rims */
+  --mk-plum-100: #E7DDE8;
+  --mk-plum-900: #241A26;       /* ink */
+  --mk-cornflower: #3380FF;     /* the chef's coat */
+  --mk-cornflower-700: #1F5FCC;
+  --mk-cornflower-100: #D9E6FB;
+  --mk-beet: #A3123A;
+  --mk-beet-100: #F8D3DA;
+  --mk-paper: #FBF3DF;
+  --mk-paper-bright: #FFFAEE;
+  --mk-flour: #F2E4C4;
+  --mk-flour-deep: #E9D6AE;
+
+  /* ---- Semantic roles: day kitchen */
+  --mk-bg: var(--mk-paper);
+  --mk-surface: var(--mk-paper-bright);
+  --mk-sunken: var(--mk-flour);
+  --mk-text: var(--mk-plum-900);
+  --mk-text-muted: #6E5B72;           /* 5.58:1 on paper */
+  --mk-text-faint: #97849A;           /* large text and hairlines only */
+  --mk-line: #E6D5B1;                 /* dividers only, never a control edge */
+  --mk-line-strong: #8C7890;          /* control edges — 3.65:1 */
+  --mk-action: var(--mk-paprika-600);
+  --mk-action-hover: var(--mk-paprika-700);
+  --mk-on-action: var(--mk-paper);
+  --mk-link: var(--mk-paprika-700);
+  --mk-selected: var(--mk-plum);
+  --mk-on-selected: var(--mk-paper);
+  --mk-inverse: var(--mk-plum-900);
+  --mk-on-inverse: var(--mk-paper);
+  --mk-on-inverse-accent: var(--mk-enamel);
+  --mk-on-success: var(--mk-paper);
+  --mk-focus: var(--mk-cornflower-700);
+  --mk-scrim: rgb(36 26 38 / 0.55);
+
+  --mk-success: var(--mk-garden-700);
+  --mk-success-bg: var(--mk-garden-100);
+  --mk-warning: #7A4500;
+  --mk-warning-bg: var(--mk-marigold-100);
+  --mk-danger: var(--mk-beet);
+  --mk-danger-bg: var(--mk-beet-100);
+  --mk-info: var(--mk-cornflower-700);
+
+  /* ---- Night kitchen. Cook mode (.mk-cook) stays in these whatever the page does. */
+  --mk-night-bg: #1D1620;
+  --mk-night-surface: #2A2030;
+  --mk-night-sunken: #3B2F40;
+  --mk-night-text-muted: #BCAABB;
+  --mk-night-line: #3B2F40;
+  --mk-night-line-strong: #8E7B90;
+  --mk-night-action: #FF5A2E;
+  --mk-night-action-hover: #FF7A55;
+  --mk-night-focus: #7FAEFF;
+
+  /* ---- Patches: category grounds for illustrations and banners. Pair with the on-colour. */
+  --mk-patch-soup: var(--mk-paprika);
+  --mk-on-patch-soup: var(--mk-paper);      /* large text only */
+  --mk-patch-preserve: var(--mk-enamel);
+  --mk-on-patch-preserve: var(--mk-plum-900);
+  --mk-patch-garden: var(--mk-garden);
+  --mk-on-patch-garden: var(--mk-paper);    /* large text only */
+  --mk-patch-dough: var(--mk-marigold);
+  --mk-on-patch-dough: var(--mk-plum-900);
+  --mk-patch-drink: var(--mk-cornflower);
+  --mk-on-patch-drink: var(--mk-plum-900);
+  --mk-patch-cellar: var(--mk-plum);
+  --mk-on-patch-cellar: var(--mk-paper);
+
+  /* ---- Type */
+  --mk-font-display: 'Protest Guerrilla', 'Geologica', sans-serif;
+  --mk-font-text: 'Geologica', 'Segoe UI', system-ui, sans-serif;
+  --mk-font-code: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --mk-text-xs: 0.8125rem;   /* 13 */
+  --mk-text-sm: 0.875rem;    /* 14 */
+  --mk-text-md: 1.0625rem;   /* 17 */
+  --mk-text-lg: 1.3125rem;   /* 21 */
+  --mk-text-xl: 1.6875rem;   /* 27 */
+  --mk-text-2xl: 2.0625rem;  /* 33 */
+  --mk-text-3xl: 2.625rem;   /* 42 */
+  --mk-text-4xl: 3.25rem;    /* 52 */
+  --mk-text-5xl: 4.0625rem;  /* 65 */
+
+  --mk-leading-tight: 1.05;
+  --mk-leading-snug: 1.25;
+  --mk-leading-body: 1.55;
+
+  --mk-weight-regular: 400;
+  --mk-weight-medium: 520;
+  --mk-weight-bold: 680;
+
+  --mk-sharp: 'SHRP' 100;    /* Geologica's sharp terminals — labels and buttons */
+
+  /* ---- Space: 4px base */
+  --mk-space-1: 0.25rem;
+  --mk-space-2: 0.5rem;
+  --mk-space-3: 0.75rem;
+  --mk-space-4: 1rem;
+  --mk-space-5: 1.5rem;
+  --mk-space-6: 2rem;
+  --mk-space-7: 3rem;
+  --mk-space-8: 4rem;
+  --mk-space-9: 6rem;
+
+  --mk-touch: 3rem;          /* 48px minimum target — wet or floury hands */
+
+  /* ---- Shape. Nicks: uneven radii for controls. Cuts: polygons for patches, never focusable. */
+  --mk-nick-xs: 4px 3px 5px 3px;
+  --mk-nick-sm: 9px 6px 10px 7px / 7px 9px 6px 10px;
+  --mk-nick-md: 16px 11px 18px 10px / 11px 16px 10px 18px;
+  --mk-nick-lg: 28px 18px 32px 16px / 20px 30px 16px 28px;
+  --mk-nick-pill: 999px;
+
+  --mk-cut-patch: polygon(1% 5%, 36% 0%, 97% 3%, 100% 55%, 97% 100%, 34% 97%, 0% 100%, 2% 44%);
+  --mk-cut-plate: polygon(8% 12%, 30% 1%, 70% 0%, 93% 10%, 100% 44%, 95% 84%, 70% 100%, 26% 98%, 4% 86%, 0% 48%);
+  --mk-cut-tag: polygon(0% 8%, 100% 0%, 97% 100%, 3% 94%);
+  --mk-cut-edge-bottom: polygon(0 0, 100% 0, 100% calc(100% - 14px), 86% 100%, 69% calc(100% - 9px), 50% 100%, 33% calc(100% - 13px), 15% 100%, 0 calc(100% - 7px));
+  --mk-cut-edge-top: polygon(0 9px, 14% 0, 31% 12px, 52% 2px, 70% 13px, 88% 1px, 100% 8px, 100% 100%, 0 100%);
+  --mk-cut-burst: polygon(50% 0%, 61% 30%, 93% 12%, 72% 42%, 100% 55%, 68% 62%, 82% 96%, 50% 72%, 22% 98%, 31% 63%, 0% 58%, 27% 41%, 6% 12%, 39% 30%);
+  --mk-cut-shard: polygon(4% 18%, 58% 0%, 100% 34%, 88% 100%, 22% 86%);
+
+  /* ---- Elevation: none. Separate objects by colour, like paper on a table. */
+  --mk-elevation: none;
+
+  /* ---- Motion */
+  --mk-ease-simmer: cubic-bezier(0.3, 0.7, 0.2, 1);
+  --mk-ease-stamp: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --mk-duration-quick: 120ms;
+  --mk-duration-base: 200ms;
+  --mk-duration-slow: 320ms;
+
+  /* ========================================= product names, pointing into Makitra */
+
   /* ---------------------------------------------------------------- ground */
-  --c-cream: #fdf8f0;
-  --c-cream-deep: #f5eadb;   /* recessed surfaces, lane backgrounds */
-  --c-cream-sunk: #ece0cd;   /* the ruler strip, pressed states */
-  --c-line: #e0d3c0;
-  --c-line-strong: #cdbba1;
+  --c-cream: var(--mk-paper);
+  --c-cream-deep: var(--mk-flour);        /* recessed surfaces, lane backgrounds */
+  --c-cream-sunk: var(--mk-flour-deep);   /* the ruler strip, pressed states */
+  --c-line: var(--mk-line);
+  --c-line-strong: var(--mk-line-strong);
 
   /* ------------------------------------------------------------------ ink */
-  --c-charcoal: #2e2a26;     /* 13.5:1 — body text */
-  --c-ink-soft: #6b625a;     /* 5.6:1  — secondary text */
-  --c-ink-faint: #9a8f83;    /* large text and hairlines only */
+  --c-charcoal: var(--mk-plum-900);       /* 15:1 — body text */
+  --c-ink-soft: var(--mk-text-muted);     /* 5.6:1 — secondary text */
+  --c-ink-faint: var(--mk-text-faint);    /* large text and hairlines only */
 
   /* --------------------------------------------------------------- accents */
   /* Base hues carry 3:1+ — fills, strokes and large text. Never body copy. */
-  --c-tomato: #e2553d;       /* 3.6:1 large-text only */
-  --c-sage: #7c9473;         /* 3.1:1 fills and strokes only */
-  --c-orange: #e8944a;       /* 2.3:1 fills and strokes only */
-  --c-plum: #8c6a9b;         /* 4.3:1 */
-  --c-teal: #4e8a8b;         /* 3.7:1 large-text only */
-  --c-mustard: #c9a227;      /* 2.3:1 fills and strokes only */
+  --c-tomato: var(--mk-paprika);          /* 3.6:1 large-text only */
+  --c-sage: var(--mk-garden);             /* 4.2:1 fills, strokes, large text */
+  --c-orange: var(--mk-marigold);         /* fills and strokes only */
+  --c-plum: var(--mk-plum);               /* 8.4:1 */
+  --c-teal: var(--mk-cornflower-700);     /* 5.3:1 */
+  --c-mustard: var(--mk-beet);            /* 7.0:1 */
 
-  /* "ink" variants are the same hue darkened until body text is legal on cream. */
-  --c-tomato-ink: #b8371f;   /* 5.5:1 */
-  --c-sage-ink: #4f6247;     /* 6.3:1 */
-  --c-orange-ink: #a65f22;   /* 4.6:1 */
-  --c-plum-ink: #6e4f7d;     /* 6.5:1 */
-  --c-teal-ink: #3a6b6c;     /* 5.7:1 */
-  --c-mustard-ink: #8a6e14;  /* 4.6:1 */
+  /* "ink" variants: the same hue, legal as body text on paper. */
+  --c-tomato-ink: var(--mk-paprika-700);  /* 6.1:1 */
+  --c-sage-ink: var(--mk-garden-700);     /* 5.9:1 */
+  --c-orange-ink: var(--mk-warning);      /* 7.1:1 */
+  --c-plum-ink: var(--mk-plum);           /* 8.4:1 */
+  --c-teal-ink: var(--mk-cornflower-700); /* 5.3:1 */
+  --c-mustard-ink: var(--mk-beet);        /* 7.0:1 */
 
-  /* "deep" variants are fills that carry cream text at 4.5:1+. */
-  --c-tomato-deep: #c43f29;  /* cream on this: 4.9:1 */
-  --c-sage-deep: #4f6247;    /* cream on this: 6.3:1 */
+  /* "deep" variants: fills that carry paper text at 4.5:1+. */
+  --c-tomato-deep: var(--mk-paprika-600); /* paper on this: 4.7:1 */
+  --c-sage-deep: var(--mk-garden-700);    /* paper on this: 5.9:1 */
 
-  /* Washed tints for block fills, where charcoal text sits on top at 10:1+. */
-  --c-tomato-wash: #f8dbd0;
-  --c-sage-wash: #e6e6da;
-  --c-orange-wash: #f9e6d2;
-  --c-plum-wash: #e9dee1;
-  --c-teal-wash: #dee4de;
-  --c-mustard-wash: #f4e9cc;
+  /* Washed tints for block fills, where ink sits on top at 10:1+. */
+  --c-tomato-wash: var(--mk-paprika-100);
+  --c-sage-wash: var(--mk-garden-100);
+  --c-orange-wash: var(--mk-marigold-100);
+  --c-plum-wash: var(--mk-plum-100);
+  --c-teal-wash: var(--mk-cornflower-100);
+  --c-mustard-wash: var(--mk-beet-100);
 
   /* ------------------------------------------------------------ semantics */
-  --c-danger: var(--c-tomato-ink);
-  --c-warning: var(--c-orange-ink);
-  --c-success: var(--c-sage-ink);
-  --c-focus: #1f5f8f;        /* deliberately off-palette: focus must not read as decoration */
+  --c-danger: var(--mk-danger);
+  --c-warning: var(--mk-warning);
+  --c-success: var(--mk-success);
+  --c-focus: var(--mk-focus);             /* cornflower: focus must not read as decoration */
 
   /* --------------------------------------------------- timeline semantics */
-  /* Dish hue rotation. dishHue() in theme.ts allocates from these, by id hash. */
-  --dish-0: var(--c-tomato);
-  --dish-1: var(--c-sage);
-  --dish-2: var(--c-orange);
-  --dish-3: var(--c-plum);
-  --dish-4: var(--c-teal);
-  --dish-5: var(--c-mustard);
-  --dish-0-wash: var(--c-tomato-wash);
-  --dish-1-wash: var(--c-sage-wash);
-  --dish-2-wash: var(--c-orange-wash);
-  --dish-3-wash: var(--c-plum-wash);
-  --dish-4-wash: var(--c-teal-wash);
-  --dish-5-wash: var(--c-mustard-wash);
+  /*
+   * The chart is read, not admired, so it stays quiet: each dish is a soft tint of a
+   * Makitra pigment with a muted edge of the same hue. Ink sits on every tint at 11:1+.
+   * dishHue() in theme.ts allocates from these, by id hash.
+   *
+   * The tints are spread for telling apart, not for loudness: hues sit roughly evenly round
+   * the wheel (apricot, butter, mint, sky, lilac, rose) at one low chroma, and the neighbours
+   * that would otherwise blur (apricot/rose, lilac/sky) are split by lightness instead. The
+   * nearest pair is still about 5 OKLab units apart, and none of them is the soap grey.
+   */
+  --dish-0: #C2764E;          /* paprika, softened — edge and swatch */
+  --dish-1: #5C8E67;          /* garden */
+  --dish-2: #B5934A;          /* marigold */
+  --dish-3: #806994;          /* plum */
+  --dish-4: #5187AB;          /* cornflower */
+  --dish-5: #B66C86;          /* enamel */
+  --dish-0-wash: #F9CFB9;     /* apricot   11.7:1 */
+  --dish-1-wash: #CCEBD1;     /* mint      13.1:1 */
+  --dish-2-wash: #F7E9BE;     /* butter    13.9:1 */
+  --dish-3-wash: #DFD0EE;     /* lilac     11.5:1 */
+  --dish-4-wash: #C9E8FD;     /* sky       13.1:1 */
+  --dish-5-wash: #FED7E3;     /* rose      12.8:1 */
 
   /* Cook colours come from a separate ramp so a cook never reads as a dish. */
-  --cook-0: var(--c-tomato-deep);
-  --cook-1: var(--c-teal-ink);
-  --cook-2: var(--c-plum-ink);
-  --cook-3: var(--c-mustard-ink);
+  --cook-0: var(--mk-paprika-600);
+  --cook-1: var(--mk-cornflower-700);
+  --cook-2: var(--mk-plum);
+  --cook-3: var(--mk-garden-700);
 
   /* Block treatments. */
-  --block-hold-fill: var(--c-cream-deep);
-  --block-hold-hatch: var(--c-line-strong);
-  --block-critical-stroke: var(--c-tomato);
+  --block-hold-fill: var(--mk-flour);
+  --block-hold-hatch: var(--mk-line-strong);
+  --block-critical-stroke: var(--mk-plum);
   --block-critical-stroke-width: 2.5px;
-  --block-wash-fill: #dfe7ec;      /* the one cool note in the palette: soap */
-  --block-wash-stroke: #7e97a6;
-  --block-done-fill: var(--c-cream-sunk);
+  --block-wash-fill: #E4E6E9;      /* the one grey: soap, no hue to mistake for a dish */
+  --block-wash-stroke: #555F69;    /* dark enough that its dashes survive the 40% edge mix */
+  --block-done-fill: var(--mk-flour-deep);
   --block-done-opacity: 0.45;
+
+  /* The sheet the chart is drawn on: a bright page, a paper lane per row, faint five-minute
+     rules, and the stretch after the last hands come free dimmed rather than coloured. */
+  --block-ground: var(--mk-paper-bright);
+  --block-lane: var(--mk-paper);
+  --block-grid: var(--mk-line);
+  --block-after-fill: color-mix(in srgb, var(--mk-plum-900) 7%, transparent);
+  --block-budget-line: var(--mk-beet);
+  --block-free-line: var(--mk-garden-700);
   --block-min-width: 26px;         /* below this the hold hatch moirés */
 
   /* ---------------------------------------------------------------- type */
-  --f-display: 'Recursive', ui-rounded, 'Trebuchet MS', system-ui, sans-serif;
-  --f-ui: 'Recursive', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --f-compiler: 'Recursive', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+  --f-display: var(--mk-font-display);
+  --f-ui: var(--mk-font-text);
+  --f-compiler: var(--mk-font-code);
 
-  /* The three voices, as variation settings. */
-  --v-display: 'MONO' 0, 'CASL' 1, 'slnt' 0, 'CRSV' 0.5;
-  --v-ui: 'MONO' 0, 'CASL' 0.3, 'slnt' 0, 'CRSV' 0;
-  --v-compiler: 'MONO' 1, 'CASL' 0, 'slnt' 0, 'CRSV' 0;
-
-  /* Major third from 16px. */
+  /* Major third from 16px: a little larger than Makitra's 17px body, read at the stove. */
   --t-xs: 0.8rem;
   --t-sm: 1rem;
   --t-md: 1.25rem;
@@ -137,28 +339,32 @@
   --s-9: 96px;
 
   /* --------------------------------------------------------------- shape */
-  /* Non-uniform on purpose: nothing in this interface is a perfect rounded rect. */
-  --r-xs: 7px 10px 8px 9px;
-  --r-sm: 11px 15px 12px 14px;
-  --r-md: 18px 25px 20px 23px;
-  --r-lg: 28px 38px 31px 35px;
+  /* Scissor nicks: nothing in this interface is a perfect rounded rect. */
+  --r-xs: var(--mk-nick-xs);
+  --r-sm: var(--mk-nick-sm);
+  --r-md: var(--mk-nick-md);
+  --r-lg: var(--mk-nick-lg);
   --r-chip: 14px 20px 15px 19px;
   --r-blob: 42% 58% 46% 54% / 55% 44% 56% 45%;
   --r-blob-alt: 63% 37% 55% 45% / 38% 57% 43% 62%;
 
-  --stroke-hand: 1.6px;
+  --stroke-hand: 2.2px;
 
   /* ------------------------------------------------------------ elevation */
-  --e-1: 0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%);
-  --e-2: 0 2px 0 var(--c-line), 0 8px 20px rgb(46 42 38 / 9%);
-  --e-3: 0 3px 0 var(--c-line-strong), 0 18px 40px rgb(46 42 38 / 14%);
+  /* Makitra has none: paper lies flat on the table. Kept as names so old classes resolve. */
+  --e-1: none;
+  /* The one exception, and it is not a shadow: the chart's hovered or open block lifts as a
+     hard ink edge under the paper, no blur. Without it the block you opened looks like any
+     other, and the critical path already owns the inset stroke. */
+  --e-2: 0 3px 0 var(--mk-plum-900);
+  --e-3: none;
 
   /* --------------------------------------------------------------- motion */
   --d-fast: 120ms;
-  --d-base: 240ms;
-  --d-slow: 420ms;
-  --ease-settle: cubic-bezier(0.22, 1.3, 0.36, 1);   /* the chip overshoot */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --d-base: 200ms;
+  --d-slow: 320ms;
+  --ease-settle: var(--mk-ease-stamp);
+  --ease-out: var(--mk-ease-simmer);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -168,34 +374,39 @@
     --d-slow: 1ms;
     --ease-settle: linear;
     --ease-out: linear;
+    --mk-duration-quick: 0ms;
+    --mk-duration-base: 0ms;
+    --mk-duration-slow: 0ms;
   }
 }
 
 /* ----------------------------------------------------------------- voices */
 
+/* Protest Guerrilla, uppercase: dish names, screen titles and big numbers, 27px and up. */
 .voice-display {
   font-family: var(--f-display);
-  font-variation-settings: var(--v-display);
-  font-weight: 800;
-  letter-spacing: -0.015em;
-  line-height: 1.05;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: var(--mk-leading-tight);
+  text-transform: uppercase;
 }
 
+/* Geologica with sharp terminals: labels, buttons, body. */
 .voice-ui {
   font-family: var(--f-ui);
-  font-variation-settings: var(--v-ui);
+  font-variation-settings: var(--mk-sharp);
 }
 
+/* The machine talking: compile stages, the time ruler, hashes, scheduler rationale. */
 .voice-compiler {
   font-family: var(--f-compiler);
-  font-variation-settings: var(--v-compiler);
   font-weight: 500;
   letter-spacing: 0.01em;
 }
 
 .voice-numeral {
   font-family: var(--f-ui);
-  font-variation-settings: var(--v-ui);
+  font-variation-settings: var(--mk-sharp);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -204,43 +415,73 @@
 /* ------------------------------------------------------------------ base */
 
 html {
-  background: var(--c-cream);
+  background: var(--mk-bg);
   color-scheme: light;
 }
 
 body {
   margin: 0;
-  background: var(--c-cream);
-  color: var(--c-charcoal);
+  background: var(--mk-bg);
+  color: var(--mk-text);
   font-family: var(--f-ui);
-  font-variation-settings: var(--v-ui);
   font-size: var(--t-sm);
-  line-height: 1.55;
+  line-height: var(--mk-leading-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 /* A focus ring that is offset from the control and does not rely on hue alone. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 3px solid var(--c-focus);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: 3px solid var(--mk-focus);
+  outline-offset: 3px;
 }
 
 ::selection {
-  background: var(--c-tomato-wash);
-  color: var(--c-charcoal);
+  background: var(--mk-enamel);
+  color: var(--mk-plum-900);
 }
 
-/* The one entrance animation: a chip settling in as it is recognised. */
+/* A chip settling in as it is recognised. */
 @keyframes chip-settle {
   from {
     opacity: 0;
-    transform: translateY(6px) scale(0.94);
+    transform: translateY(6px) scale(0.94) rotate(-2deg);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+
+/*
+ * A paper cut-out stamped onto the table: the one-shot entrance for patches and display
+ * type. Use through `motion-safe:` so reduced motion lands on the final state. Nothing
+ * loops — only a running timer moves on its own.
+ */
+@keyframes mk-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(0.6) rotate(var(--stamp-from, -8deg));
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.06) rotate(calc(var(--stamp-to, 0deg) + 1deg));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(var(--stamp-to, 0deg));
+  }
+}
+
+/* A strip of paper sliding in from one side. */
+@keyframes mk-slide {
+  from {
+    opacity: 0;
+    transform: translateX(var(--slide-from, -24px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
