@@ -497,3 +497,51 @@ Why: (a) is fragile — it holds until someone adds a case that forgets the pref
      runs in seven, and removes the entire class of failure rather than one instance of it.
      The failure was also load-dependent, which is the worst kind to leave in.
 Revisit if: the suite gets slow enough that the five seconds matter; the answer then is (b).
+
+## D-038 — Model strings live in one config module with per-stage env overrides
+Date: 2026-09-12
+Question: Where do model identifiers live?
+Options: (a) at each call site, (b) one constant, (c) one config module, per stage, each
+         overridable by environment variable
+Choice: (c), with a test asserting no model string exists anywhere else.
+Why: Model deprecation is a scheduling problem. Gemini 2.5 shuts down in October 2026;
+     with (a) or (b) the fix is a code change, a review and a deploy, and finding every
+     occurrence means grepping. With (c) it is an environment variable on an existing
+     revision. The test matters as much as the module — it is what stops the next model
+     string being written inline by someone in a hurry.
+Revisit if: never.
+
+## D-039 — The forbidden-model test constructs the string it forbids
+Date: 2026-09-12
+Question: The test asserting no `gemini-2.5-` string exists failed on itself.
+Options: (a) exclude test files from the check, (b) exclude this one file, (c) build the
+         needle from parts so the file does not contain it
+Choice: (c).
+Why: (a) is the wrong exclusion: a test pinning a retired model is exactly the same outage
+     as production code pinning one, and tests are where stale model strings linger longest.
+     (b) works but is a special case that invites more. (c) keeps the check total.
+Revisit if: the same trick is needed in several files; then it becomes a shared helper.
+
+## D-040 — Constrained decoding plus Zod, not one or the other
+Date: 2026-09-12
+Question: `responseJsonSchema` constrains generation. Is Zod validation still needed?
+Options: (a) trust constrained decoding, (b) keep both gates
+Choice: (b), and a test demonstrates why: a response of `{answer: "ok", count: -5}` is
+        shape-valid and fails the refinement that `count` must not be negative.
+Why: Constrained decoding guarantees the JSON *shape*. It cannot know that a step's active
+     minutes must not exceed its duration, or that a chill must follow within two hours.
+     Those are the constraints that matter here, they live in Zod refinements, and they are
+     exactly the ones a shape-only guarantee misses.
+Revisit if: never. They check different things.
+
+## D-041 — The cache key is a hash of stage, model and input
+Date: 2026-09-12
+Question: What identifies a cached stage response?
+Options: (a) the input, (b) a hash of the input, (c) a hash of stage, model and input
+Choice: (c).
+Why: Including the model means changing model invalidates the cache — which is what you
+     want, since the reason for changing model was to get different output; without it a
+     model upgrade would silently keep serving the old one's answers. Hashing rather than
+     storing the input means the cache table never holds a readable pantry or transcript,
+     which matters because those are the two things this product is told in confidence.
+Revisit if: cache hit rates need diagnosing; add a coarse non-identifying label, not the input.

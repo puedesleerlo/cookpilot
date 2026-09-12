@@ -1,4 +1,4 @@
-import { redact } from './config';
+import { redact } from '../config/redact';
 
 /**
  * An in-application record of every stage run. You will need it: when a schedule looks

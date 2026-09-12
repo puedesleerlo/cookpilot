@@ -17,6 +17,7 @@ import { describeEnv, type Env } from './config/env';
 import { buildOpenApi } from './openapi';
 import type { Database } from './db/client';
 import { bearerFrom, issueDevice, touchDevice, verifyDevice } from './auth/devices';
+import { stageMetrics, totalSpendUsd } from './llm/gateway';
 
 /**
  * A dependency the instance needs before it can take traffic. Registered rather than
@@ -214,6 +215,18 @@ export const buildServer = async ({
       return { deviceId };
     });
   }
+
+  /**
+   * Per-provider spend, so a cost surprise is something you notice rather than something
+   * you find on an invoice. Internal, and deliberately not under /v1 — it is not part of
+   * the client contract.
+   */
+  app.get('/internal/metrics', async () => ({
+    llm: {
+      totalSpendUsd: Number(totalSpendUsd().toFixed(6)),
+      stages: stageMetrics().map((m) => ({ ...m, costUsd: Number(m.costUsd.toFixed(6)) })),
+    },
+  }));
 
   // -------------------------------------------------------------- openapi
   const spec = buildOpenApi(allRoutes());
