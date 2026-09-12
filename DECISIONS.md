@@ -593,3 +593,21 @@ Why: (a) is the convention and it is the wrong default for a crawler nobody aske
      translation escapes everything first and re-enables only the two wildcards robots
      actually defines.
 Revisit if: never.
+
+## D-045 — Ran the delta's named sync spike as soon as persistence landed
+Date: 2026-09-12
+Question: The delta names one risk explicitly — the two-phone sync demo is gated behind
+          changes 22 and 23, late in the plan — and says to spike convergence on fake data
+          as soon as change 5 lands. Do it now or wait?
+Choice: Now. `apps/api/src/db/convergence.spike.test.ts`, committed outside the OpenSpec
+        change flow as a spike rather than as a spec'd capability.
+Result: Both properties hold against a real Postgres. Two clients polling at different
+        moments converge on identical state; a client that drops for nine events and
+        reconnects reaches exactly the state of one that never dropped; eight concurrent
+        appends from two devices produce one agreed order, 1 through 8.
+Why a trivial fold rather than the scheduler: the question is whether the *transport*
+        preserves order and replay, not whether the engine is deterministic — that is
+        settled by the engine's own tests later. The fold is deliberately order-sensitive,
+        and a fourth test proves it, because a spike that cannot fail proves nothing.
+Consequence: the architecture's riskiest assumption is now evidence rather than hope, and
+        it was cheap to check. Changes 22 and 23 build on a mechanism already exercised.
