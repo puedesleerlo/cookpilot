@@ -232,6 +232,18 @@ export const buildServer = async ({
   const spec = buildOpenApi(allRoutes());
   app.get('/openapi.json', async () => spec);
 
-  app.log.info(describeEnv(env), 'api configured');
+  if (!db || !jwtSecret) {
+    // Loud, because the first real boot of this service had exactly this gap: the identity
+    // routes existed, were tested through the harness, and were absent in production.
+    app.log.warn(
+      { db: Boolean(db), jwtSecret: Boolean(jwtSecret) },
+      'identity routes are NOT registered: buildServer was called without db and jwtSecret',
+    );
+  }
+
+  app.log.info(
+    { ...describeEnv(env), identityRoutes: Boolean(db && jwtSecret) },
+    'api configured',
+  );
   return app;
 };

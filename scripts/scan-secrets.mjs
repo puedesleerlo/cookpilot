@@ -92,8 +92,33 @@ if (trackedFiles) {
   }
 }
 
-for (const file of walk(ROOT)) {
+/**
+ * What can actually reach the repository: tracked files, plus untracked files git is not
+ * ignoring. A gitignored `.env` is where credentials are *supposed* to live, and flagging
+ * it on every run is how a scanner gets switched off. The tracked-`.env` check above is
+ * the one that matters for that file.
+ *
+ * Outside a git checkout, fall back to walking the tree.
+ */
+const scanSet = (() => {
+  try {
+    const listed = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      maxBuffer: 32 * 1024 * 1024,
+    })
+      .split('\n')
+      .filter(Boolean)
+      .map((f) => path.join(ROOT, f));
+    return listed.length > 0 ? listed : null;
+  } catch {
+    return null;
+  }
+})();
+
+for (const file of scanSet ?? walk(ROOT)) {
   if (!TEXT.test(file)) continue;
+  if (!existsSync(file)) continue;
   const rel = path.relative(ROOT, file);
   if (EXEMPT.includes(rel)) continue;
   scanned++;
@@ -129,4 +154,7 @@ if (findings.length > 0) {
   process.exit(1);
 }
 
-console.log(`scan-secrets: clean — ${scanned} files scanned, no credentials found.`);
+console.log(
+  `scan-secrets: clean — ${scanned} files scanned` +
+    `${scanSet ? ' (tracked and unignored only)' : ''}, no credentials found.`,
+);

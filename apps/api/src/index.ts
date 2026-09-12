@@ -30,7 +30,15 @@ const main = async (): Promise<void> => {
   // it reports rather than crashing, so a Postgres blip does not restart a healthy process.
   const database = createDb(secrets.get('DATABASE_URL'));
 
-  const app = await buildServer({ env, dependencies: [databaseCheck(database)] });
+  const app = await buildServer({
+    env,
+    dependencies: [databaseCheck(database)],
+    // Without these the identity routes silently do not exist. They were exercised through
+    // the test harness, which passes them, and not through this path -- so the gap only
+    // showed up on the first real boot.
+    db: database.db,
+    jwtSecret: secrets.get('JWT_SECRET'),
+  });
 
   for (const signal of ['SIGTERM', 'SIGINT'] as const) {
     process.on(signal, () => {

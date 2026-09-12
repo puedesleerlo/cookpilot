@@ -10,6 +10,8 @@ import {
   allRoutes,
 } from '@kitchen/contracts';
 import { SCHEDULER_VERSION } from '@kitchen/scheduler';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { buildServer, type DependencyCheck } from './server';
 import { ConfigError, parseEnv } from './config/env';
 import { ApiError, toErrorBody } from './errors';
@@ -212,6 +214,25 @@ describe('logs never contain secrets', () => {
     logger.error(`failed using ${syntheticAnthropicKey}`);
     expect(JSON.stringify(lines())).not.toContain(syntheticAnthropicKey);
     expect(JSON.stringify(lines())).toContain('[redacted]');
+  });
+});
+
+describe('the entry point wires what the server needs', () => {
+  /**
+   * A regression guard for a real gap: `buildServer` registers the identity routes only
+   * when handed `db` and `jwtSecret`, the test harness always passes them, and `index.ts`
+   * did not. Everything passed, and `POST /v1/devices` was a 404 on the first real boot.
+   */
+  it('passes db and jwtSecret to buildServer', () => {
+    const src = readFileSync(path.join(process.cwd(), 'apps/api/src/index.ts'), 'utf8');
+    const call = /buildServer\(\{[\s\S]*?\}\)/.exec(src)?.[0] ?? '';
+    expect(call).toContain('db:');
+    expect(call).toContain('jwtSecret:');
+  });
+
+  it('says so loudly when identity routes are not registered', async () => {
+    const src = readFileSync(path.join(process.cwd(), 'apps/api/src/server.ts'), 'utf8');
+    expect(src).toContain('identity routes are NOT registered');
   });
 });
 

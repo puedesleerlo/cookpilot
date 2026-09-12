@@ -611,3 +611,46 @@ Why a trivial fold rather than the scheduler: the question is whether the *trans
         and a fourth test proves it, because a spike that cannot fail proves nothing.
 Consequence: the architecture's riskiest assumption is now evidence rather than hope, and
         it was cheap to check. Changes 22 and 23 build on a mechanism already exercised.
+
+## D-046 — Real credentials configured; the scanner now scans what can reach the repo
+Date: 2026-09-12
+Context: Live Brave and ElevenLabs keys and a GCP project were supplied for local work.
+Actions and findings:
+  - `.env` written, gitignored, confirmed untracked. Both keys verified live: Brave returns
+    real results; ElevenLabs reports the creator tier with convai read access.
+  - **The project ID is `hackaton-508407`, not `hackaton`** — the latter is the display
+    name. `gcloud config` also pointed at a different project entirely (`ep-modeling`),
+    which is what the ADC quota project still says.
+  - `GOOGLE_CLOUD_QUOTA_PROJECT` is set in `.env` rather than running
+    `gcloud auth application-default set-quota-project`, so this repo does not reach out
+    and change global developer config.
+  - **`aiplatform.googleapis.com` is not enabled** on that project; a real
+    `generateContent` call returns `SERVICE_DISABLED`. Only `generativelanguage`
+    (AI Studio) is on, which the delta rules out for shipping. Left for the owner to
+    enable: it is their billing account, and the app runs on deterministic paths without it.
+
+## D-047 — The scanner now scans only what git could take
+Date: 2026-09-12
+Question: The credential scanner flagged `.env` — the file credentials are supposed to
+          live in.
+Options: (a) exempt `.env` by name, (b) scan only files git could take
+Choice: (b) — `git ls-files --cached --others --exclude-standard`, falling back to a full
+        walk outside a checkout. The separate check for a *tracked* `.env` stays.
+Why: The scanner's question is "did a credential reach the repository". A gitignored file
+     has not, by definition. Flagging it every run is noise, and a noisy scanner gets
+     switched off, at which point it protects nothing. A test now plants the same key twice
+     — once gitignored, once tracked — and asserts only the tracked one is a finding.
+Revisit if: a deployment path ever ships ignored files, which would make the premise false.
+
+## D-048 — The first real boot found a wiring gap the tests could not
+Date: 2026-09-12
+Question: `POST /v1/devices` returned 404 against the real configuration, despite 18
+          passing identity tests.
+Cause: `buildServer` registers the identity routes only when handed `db` and `jwtSecret`.
+       The test harness always passes them. `index.ts` did not.
+Fix: wire them in `index.ts`; log a warning at startup when they are absent; add a
+     source-level regression test asserting the entry point passes both.
+Why worth recording: every test was green and the feature did not exist in production. The
+     harness had quietly become the only caller that configured the server correctly. The
+     lesson is not "write more unit tests" — it is that a composition root needs its own
+     check, because nothing else exercises it.
