@@ -100,9 +100,16 @@ export const registerPipelineRoutes = (app: FastifyInstance, deps: PipelineDeps)
       reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
     };
 
-    // The client going away mid-run is ordinary; stop writing into a closed socket.
+    /*
+     * The client going away mid-run is ordinary; stop writing into a closed socket.
+     *
+     * Watch the *response*, not the request. `request.raw` emits `close` when the request
+     * body has finished being read — which for a POST is immediately — so listening there
+     * suppressed every progress event before the first one was sent, and the stream
+     * delivered nothing but the final result.
+     */
     let gone = false;
-    request.raw.on('close', () => {
+    reply.raw.on('close', () => {
       gone = true;
     });
 
