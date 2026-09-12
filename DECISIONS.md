@@ -391,3 +391,56 @@ Why: A test written to assert redaction failed, and the reason was worse than th
      credential while someone works out why a provider call is failing. The protection
      looked complete and had a hole in the most likely path.
 Revisit if: never. Both passes are needed.
+
+## D-030 — `appendEvent` takes a row lock, and the unique index stays anyway
+Date: 2026-09-12
+Question: How is `session_events.seq` assigned safely under concurrency?
+Options: (a) a sequence per session, (b) `MAX(seq)+1` and let the unique index catch races,
+         (c) `MAX(seq)+1` under `SELECT ... FOR UPDATE` on the session row, index retained
+Choice: (c).
+Why: This was verified rather than assumed. With the lock removed, twelve concurrent
+     appends produce `duplicate key value violates unique constraint
+     session_events_session_seq_key`; with it, they serialise and all twelve succeed. So
+     (b) is *safe* but turns an ordinary concurrent append into a client-visible error, and
+     under two phones tapping "done" at once that is not rare. (a) means a schema object
+     per session, which does not fit a table that gets truncated and reseeded.
+     The index is kept regardless: it is what makes the invariant true even if this
+     function is ever bypassed. The lock is for correctness under load; the index is for
+     correctness full stop.
+Revisit if: append throughput per session ever matters, which for a cooking session it
+     will not.
+
+## D-031 — The recipe search vector is maintained by a trigger, not by the application
+Date: 2026-09-12
+Question: Who keeps `recipes.search_vector` current?
+Options: (a) the application writes it alongside the row, (b) a database trigger
+Choice: (b), with a GIN index over it.
+Why: An application that has to remember will eventually forget — on the ingestion path, or
+     on a backfill script, or in a migration that touches `ir` directly. The symptom is a
+     recipe that exists, looks fine, and cannot be found, which is close to undiagnosable
+     from outside. A trigger cannot be bypassed by a writer who did not know about it.
+Revisit if: the weighting needs to vary per query, which is a ranking concern and belongs
+     in the query, not the column.
+
+## D-032 — Migrations are a release step, never run at boot
+Date: 2026-09-12
+Question: When are migrations applied?
+Options: (a) on instance startup, (b) as an explicit release step before traffic shifts
+Choice: (b). `src/db/migrate.ts` is a command; nothing calls it during boot.
+Why: Cloud Run starts several instances at once. If each migrated, they would race, and
+     the losers' failures would read as a broken deploy rather than a lost race. Worse, a
+     migration that fails halfway does so under live traffic. As a release step it fails
+     the deploy, before any traffic shifts, with one clear error.
+Revisit if: never.
+
+## D-033 — Integration tests run against a real Postgres, and skip loudly without one
+Date: 2026-09-12
+Question: How are the database invariants tested?
+Options: (a) mock the driver, (b) an in-memory substitute, (c) a real Postgres, skipped when absent
+Choice: (c) — `docker compose up -d`, and a warning naming the command when it is missing.
+Why: Both invariants are *database* behaviours. A mock would assert that I remembered to
+     write the mock; an in-memory substitute would not have the unique index or the row
+     lock, which is the entire thing under test. Skipping rather than failing keeps the
+     suite usable on a machine without Docker, and the skip says how to fix itself.
+Revisit if: CI cannot run a service container; then the DB tests become a separate job, not
+     a deleted one.

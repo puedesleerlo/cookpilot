@@ -2,6 +2,7 @@ import process from 'node:process';
 import { buildServer } from './server';
 import { ConfigError, parseEnv } from './config/env';
 import { envResolver, requireSecrets } from './config/loader';
+import { createDb, databaseCheck } from './db/client';
 
 /**
  * Entry point.
@@ -23,14 +24,21 @@ const main = async (): Promise<void> => {
     return die(err instanceof ConfigError ? err.message : String(err));
   }
 
-  await requireSecrets('api', envResolver(process.env), die);
+  const secrets = await requireSecrets('api', envResolver(process.env), die);
 
-  const app = await buildServer({ env });
+  // Opening the pool does not connect; readiness is what discovers a broken database, and
+  // it reports rather than crashing, so a Postgres blip does not restart a healthy process.
+  const database = createDb(secrets.get('DATABASE_URL'));
+
+  const app = await buildServer({ env, dependencies: [databaseCheck(database)] });
 
   for (const signal of ['SIGTERM', 'SIGINT'] as const) {
     process.on(signal, () => {
       app.log.info({ signal }, 'shutting down');
-      void app.close().then(() => process.exit(0));
+      void app
+        .close()
+        .then(() => database.close())
+        .then(() => process.exit(0));
     });
   }
 

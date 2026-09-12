@@ -1,0 +1,34 @@
+# Local development: one command to a working environment.
+#
+#   docker compose up -d
+#   pnpm --filter @kitchen/api migrate
+#   pnpm --filter @kitchen/api seed
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: kc
+      POSTGRES_PASSWORD: kc
+      POSTGRES_DB: kc
+    ports: ['55432:5432']
+    volumes: ['kc-pgdata:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U kc']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ['56379:6379']
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes: ['kc-redisdata:/data']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  kc-pgdata:
+  kc-redisdata:
