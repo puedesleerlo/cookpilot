@@ -37,6 +37,8 @@ class FakeServer {
   down = false;
   /** Answer the next authenticated request with 401 once, as a reset database would. */
   rejectNextToken = false;
+  /** A server booted without a database: no device or session routes, only the rest. */
+  noSessions = false;
   calls: string[] = [];
 
   now(): number {
@@ -87,6 +89,7 @@ class FakeServer {
     const query = parsed.searchParams;
     this.calls.push(`${method} ${path}${parsed.search}`);
     if (this.down) throw new TypeError('Failed to fetch');
+    if (this.noSessions) return this.error(404, 'not_found', `No route for ${method} ${path}.`);
     const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : {};
 
     if (method === 'POST' && path === '/v1/devices') {
@@ -250,6 +253,15 @@ describe('hosting', () => {
     await state().host(demoIntake(), compiled);
     expect(state().phase).toBe('error');
     expect(state().error).toMatch(/Could not reach/);
+  });
+
+  it('says a server without a database cannot host a session, in words', async () => {
+    // Deployed without Postgres, the API boots without identity or session routes at all.
+    server.noSessions = true;
+    await state().host(demoIntake(), compiled);
+    expect(state().phase).toBe('error');
+    expect(state().error).toMatch(/no database behind it/);
+    expect(state().error).not.toMatch(/No route/);
   });
 
   it('measures the server clock rather than trusting its own', async () => {

@@ -49,8 +49,20 @@ const writeResume = (resume: Resume | null): void => {
   }
 };
 
-const describe = (err: unknown): string =>
-  err instanceof ApiRequestError || err instanceof Error ? err.message : 'Something went wrong.';
+/**
+ * Every route this store calls exists only on a server that keeps sessions — one with a
+ * database. A server without one answers `not_found` for all of them, which is a fact about
+ * the server, not a broken link, and is said as such.
+ */
+const NO_SESSIONS =
+  'This server cannot keep a shared session; it has no database behind it. Cooking together ' +
+  'works against an API that has one — locally, that is `docker compose up` and the API ' +
+  'started with DATABASE_URL set.';
+
+const describe = (err: unknown): string => {
+  if (isApiError(err, 'not_found')) return NO_SESSIONS;
+  return err instanceof ApiRequestError || err instanceof Error ? err.message : 'Something went wrong.';
+};
 
 /** Failures after which there is no session left to be in. */
 const isGone = (err: unknown): boolean =>

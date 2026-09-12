@@ -63,6 +63,12 @@ timeline for itself and checks its hash against the host's. Timers count from th
 clock, so two phones agree to within a round trip. The API is required for this and for
 nothing else — the single-device demo still runs with it blocked.
 
+**It needs an API with a database.** Sessions, devices and the log live in Postgres, and an
+API booted without `DATABASE_URL` registers none of those routes; the app says so when you
+press the button. A deployed API on Cloud Run without Cloud SQL or Neon behind it therefore
+hosts the pipeline but not shared sessions — giving it a database is a cost decision, not a
+code change.
+
 ## Run it locally
 
 ```bash
