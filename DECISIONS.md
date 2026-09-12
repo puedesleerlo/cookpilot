@@ -654,3 +654,54 @@ Why worth recording: every test was green and the feature did not exist in produ
      harness had quietly become the only caller that configured the server correctly. The
      lesson is not "write more unit tests" — it is that a composition root needs its own
      check, because nothing else exercises it.
+
+## D-049 — Firebase Hosting for the client is not the Firebase the delta removed
+Date: 2026-09-12
+Question: The consolidated delta says "Firebase is removed". The client is now deployed on
+          Firebase Hosting. Is that a contradiction?
+Answer: No, and the distinction is worth stating. The delta struck Firebase as a **backend**
+        — Firestore for data, Functions for logic — because the architecture is Cloud Run,
+        Postgres and Redis. Firebase Hosting is a CDN for static bytes: no state, no data,
+        no logic, nothing the delta replaced. The API still goes to Cloud Run.
+Why it was the right host here: the GCP project already existed, the bytes are static, and
+        it needed no new vendor, no new secret and no new bill.
+Revisit if: anyone proposes Firestore, Firebase Auth or Functions. Those are the things the
+        delta removed, and they stay removed.
+
+## D-050 — Deploy through the REST API with ADC, not the Firebase CLI
+Date: 2026-09-12
+Question: The Firebase CLI's session had expired and needs an interactive browser reauth.
+Options: (a) ask for the reauth, (b) generate a CI token, (c) deploy via the Hosting REST
+         API using Application Default Credentials
+Choice: (c) — `scripts/deploy-hosting.mjs`.
+Why: (a) blocks on a human for every deploy and cannot run in CI. (b) creates a long-lived
+     credential, which is one more secret to hold and rotate for a job that ADC already
+     authorises. (c) works unattended, needs no new secret, and is the same path CI will
+     take — so the deploy that runs in CI is the deploy that was tested here, not a second
+     implementation of it.
+Revisit if: Hosting adds a feature only the CLI exposes.
+
+## D-051 — The deploy refuses to run if the bundle scan fails
+Date: 2026-09-12
+Question: Where does the last check on a leaked secret go?
+Choice: Inside the deploy script, before its first mutating call.
+Why: Publishing to a CDN is irreversible in the way that matters — a secret that reaches it
+     has been fetched, cached and logged by other people's infrastructure, whatever is
+     deleted afterwards. CI runs the same scan, but CI is not the only thing that deploys;
+     a person running the script at 2am is, and that is exactly when the check is worth
+     having. It costs about a second.
+Revisit if: never.
+
+## D-052 — Hosting headers match the request path, not the resolved file
+Date: 2026-09-12
+Question: The first deploy served `index.html` with `max-age=3600` despite a rule setting
+          no-store on `/index.html`.
+Cause: Firebase matches header globs against the **request** path. With an SPA rewrite,
+       the shell is served at `/`, `/intake`, and every other route — none of which is
+       `/index.html`. The rule matched nothing and the CDN default applied.
+Consequence had it shipped: a redeploy would have taken up to an hour to reach anyone,
+       which for a demo is the difference between showing this build and the last one.
+Fix: no-store on the catch-all, immutable only on `/assets/**`. Content-hashed assets are
+     safe to cache forever precisely because their names change when they do.
+Why worth recording: the rule looked correct, the config validated, the deploy succeeded,
+     and the behaviour was wrong. Only checking the live headers found it.

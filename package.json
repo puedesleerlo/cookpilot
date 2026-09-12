@@ -19,7 +19,9 @@
     "design:build": "node scripts/build-design-canvas.mjs",
     "scan:bundle": "node scripts/scan-bundle.mjs",
     "scan:secrets": "node scripts/scan-secrets.mjs",
-    "secrets:gen": "node scripts/gen-secret-artifacts.mjs"
+    "secrets:gen": "node scripts/gen-secret-artifacts.mjs",
+    "deploy:web": "pnpm --filter @kitchen/web build && node scripts/deploy-hosting.mjs",
+    "deploy:web:dry": "node scripts/deploy-hosting.mjs --dry-run"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
