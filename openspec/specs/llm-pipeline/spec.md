@@ -23,19 +23,6 @@ The client SHALL NOT be reachable from `src/scheduler`.
 - **WHEN** the model does not respond within the configured timeout
 - **THEN** the request is aborted and the deterministic fallback is used
 
-### Requirement: The application works with no API key
-
-Where `VITE_ANTHROPIC_API_KEY` is unset, every stage SHALL use its deterministic fallback
-and the application SHALL remain fully usable.
-
-#### Scenario: No key means no call
-- **WHEN** no API key is configured
-- **THEN** no network request is attempted and each stage reports `source: 'fallback'`
-
-#### Scenario: The demo compiles without a key
-- **WHEN** the demo scenario is compiled with no API key
-- **THEN** it produces a complete schedule from seed packs and deterministic stages
-
 ### Requirement: The model never makes a scheduling decision
 
 LLM stages SHALL only extract, normalize, rank candidates and prettify prose. Task
@@ -49,24 +36,6 @@ ordering, resource allocation, cook assignment and degradation SHALL be computed
 #### Scenario: The boundary is enforced by lint
 - **WHEN** a file under `src/llm` imports from `@/scheduler`
 - **THEN** `npm run lint` fails
-
-### Requirement: Stage L3 normalizes recipe text into RecipeIR
-
-Stage L3 SHALL accept pasted or fetched recipe text and return a validated `RecipeIR`.
-Where the model is unavailable or its output cannot be repaired, the system SHALL fall back
-to a deterministic parser driven by a cooking-verb rule table.
-
-#### Scenario: Structured text becomes a schedulable recipe
-- **WHEN** L3 is given a recipe with an ingredient list and numbered steps
-- **THEN** it returns a `RecipeIR` whose steps carry durations, an active/passive split and equipment
-
-#### Scenario: The deterministic parser handles the common shape
-- **WHEN** the model is unavailable and the text has an ingredients block and one instruction per line
-- **THEN** the fallback parser produces a valid `RecipeIR` using verb-keyed defaults for duration and equipment
-
-#### Scenario: Unparseable text fails cleanly
-- **WHEN** the text contains no recognisable ingredients or steps
-- **THEN** the stage returns a failure naming what was missing, and no partial recipe is stored
 
 ### Requirement: Every prompt and response is inspectable
 
@@ -82,4 +51,41 @@ The log SHALL NOT record the API key.
 #### Scenario: Secrets never reach the log
 - **WHEN** the debug log is serialised
 - **THEN** it contains no API key
+
+### Requirement: The application works with no model provider reachable
+
+Where the model provider is unreachable, unconfigured or disabled, the system SHALL remain
+fully usable: the structured intake form, bundled seed packs, deterministic ranking,
+template explanations and the scheduler SHALL between them reach a compiled schedule.
+
+The demo scenario SHALL compile end to end with the API origin blocked.
+
+This requirement does not rest on a natural-language fallback parser. The fallback for
+stage L1 is the structured form, which needs no parsing.
+
+#### Scenario: No provider means no call
+- **WHEN** the model provider is disabled
+- **THEN** no request is attempted and each stage reports that it took its deterministic primary path or was skipped
+
+#### Scenario: The demo compiles with the API blocked
+- **WHEN** the demo scenario is started with the API origin unreachable
+- **THEN** a complete schedule is produced in the browser from bundled seed packs
+
+#### Scenario: Form and voice produce the same constraints
+- **WHEN** equivalent answers are given through the structured form and through the voice interview
+- **THEN** the resulting `Constraints` objects are identical
+
+### Requirement: The model provider contributes no secret
+
+The system SHALL authenticate to the model provider through workload identity — the
+service account's Application Default Credentials — and SHALL NOT read, store or transmit
+a model API key.
+
+#### Scenario: No model key is configured anywhere
+- **WHEN** the repository and the deployment configuration are scanned for a model provider API key
+- **THEN** none is found, and no module reads one
+
+#### Scenario: The client bundle carries no provider secret
+- **WHEN** the built client bundle is scanned
+- **THEN** it contains no provider secret name and no value matching a known key shape
 

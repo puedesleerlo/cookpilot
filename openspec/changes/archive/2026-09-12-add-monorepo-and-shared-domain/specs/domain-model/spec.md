@@ -21,6 +21,27 @@ No other package or application SHALL redeclare a structural type that already e
 - **WHEN** the web client, the API and the worker each describe a `Task`
 - **THEN** all three resolve the type to the same `@kitchen/domain` declaration
 
+## REMOVED Requirements
+
+### Requirement: Scheduler output types live in the domain layer
+**Reason**: The single-bundle layer model is replaced by a workspace. The requirement's
+intent survives and is restated below against package boundaries, which are enforceable
+across three separate runtimes in a way that directory-prefix rules were not.
+
+**Migration**: The types did not move in substance — `src/domain/schedule.ts` became
+`packages/domain/src/schedule.ts`. Importers change `@/domain` to `@kitchen/domain`.
+
+### Requirement: The scheduler layer is structurally pure
+**Reason**: Superseded by a stricter requirement. The layer rule banned ambient time, I/O
+and randomness; the package rule adds Node built-ins, because the same package is now
+compiled into the browser bundle as well as the server and a `node:fs` import there breaks
+the offline demo path rather than merely offending a convention.
+
+**Migration**: No source changes were required — the engine had no Node imports. The lint
+rule set moves from `src/scheduler/**` to `packages/scheduler/**` and gains the built-in ban.
+
+## ADDED Requirements
+
 ### Requirement: Scheduler output types live in the domain package
 
 The system SHALL define the compiled-schedule types — `Schedule`, `ScheduledTask`,
@@ -34,16 +55,16 @@ broadcast one, without either of them depending on the engine's internals.
 - **WHEN** a component in `apps/web` imports `Schedule` from `@kitchen/domain`
 - **THEN** `pnpm lint` passes and no scheduler internal is pulled in
 
-#### Scenario: The API can persist a schedule it did not compute in-process
+#### Scenario: The API can persist a schedule without importing the engine
 - **WHEN** `apps/api` reads a stored schedule from the database
-- **THEN** it validates it against the `@kitchen/domain` schema without importing the engine
+- **THEN** it validates it against the `@kitchen/domain` schema without importing `@kitchen/scheduler`
 
 ### Requirement: The scheduler package is structurally pure
 
 Files in `packages/scheduler` SHALL NOT reference `Date.now`, `new Date()`,
-`Math.random`, `fetch`, `crypto`, `performance`, `localStorage`, `indexedDB` or any Node
-built-in module. Current time SHALL be passed in as a parameter and randomness SHALL come
-from a seeded generator.
+`Math.random`, `fetch`, `crypto`, `performance`, `localStorage`, `indexedDB`, `process`, or
+any Node built-in module. Current time SHALL be passed in as a parameter and randomness
+SHALL come from a seeded generator.
 
 The Node built-in ban is what keeps the package compilable for the browser, which the
 offline demo path depends on.
@@ -59,8 +80,6 @@ offline demo path depends on.
 #### Scenario: Node built-ins are a lint error
 - **WHEN** a file in `packages/scheduler` imports `node:fs` or `node:crypto`
 - **THEN** `pnpm lint` fails, because the package must also run in a browser
-
-## ADDED Requirements
 
 ### Requirement: The ingredient lexicon is a dictionary, not a parser
 
