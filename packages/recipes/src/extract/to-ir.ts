@@ -54,12 +54,29 @@ export type ToIrResult = {
 const MIN_PLAUSIBLE_RATIO = 0.34;
 const MAX_PLAUSIBLE_MULTIPLE = 12;
 
+export type DurationCheckOptions = {
+  /**
+   * The duration was read from the page rather than inferred from the verb.
+   *
+   * It changes what the floor is for. When nothing stated a time, the table is the best
+   * guess available and a number far below it is probably a misread. When the page said
+   * "simmer for two minutes until glossy", the page is right and the table is a default:
+   * pulling that to the table's twenty minutes invents eighteen minutes of waiting, and
+   * the person finds out in the kitchen with the pan already going. So a trusted source
+   * only has to clear zero.
+   */
+  trustSource?: boolean;
+};
+
 export const checkDuration = (
   verb: CookingVerb,
   claimed: number,
+  options: DurationCheckOptions = {},
 ): { used: number; reason?: string } => {
   const rule = VERB_RULES[verb];
-  const floor = Math.max(1, Math.round(rule.durationMin * MIN_PLAUSIBLE_RATIO));
+  const floor = options.trustSource
+    ? 1
+    : Math.max(1, Math.round(rule.durationMin * MIN_PLAUSIBLE_RATIO));
   const ceiling = rule.durationMin * MAX_PLAUSIBLE_MULTIPLE;
   if (claimed < floor) {
     return {

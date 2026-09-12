@@ -16,9 +16,14 @@ beforeEach(() => {
 
 const pantry = () => useSession.getState().intake.pantry;
 
+/**
+ * The typed fridge now sits one step behind the spoken one: the landing page asks what you
+ * want, and the answer screen offers typing as the alternative. Same destination.
+ */
 const openIntake = async (user: ReturnType<typeof userEvent.setup>): Promise<void> => {
   render(<App />);
-  await user.click(screen.getByRole('button', { name: 'Tell me what you have' }));
+  await user.click(screen.getByRole('button', { name: 'Tell me what you want' }));
+  await user.click(screen.getByRole('button', { name: 'Type a fridge instead' }));
   expect(screen.getByRole('heading', { name: 'Tell me what you have' })).toBeInTheDocument();
 };
 

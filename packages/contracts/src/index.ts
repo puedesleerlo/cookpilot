@@ -1,5 +1,10 @@
 import { z } from 'zod';
 import { AllergenSchema, CookSchema, IngredientSchema } from '@kitchen/domain';
+import {
+  CookRequestSchema as CookRequestBodySchema,
+  CookResponseSchema as CookPipelineResponseSchema,
+  TranscribeResponseSchema as CookTranscribeResponseSchema,
+} from './cook';
 
 /**
  * The wire contract.
@@ -203,7 +208,7 @@ export const routes = {
 export type RouteName = keyof typeof routes;
 
 export const allRoutes = (): (RouteContract & { name: string })[] =>
-  Object.entries({ ...routes, ...sessionRoutes }).map(([name, contract]) => ({
+  Object.entries({ ...routes, ...sessionRoutes, ...cookRoutes }).map(([name, contract]) => ({
     name,
     ...(contract as RouteContract),
   }));
@@ -408,3 +413,43 @@ export const sessionRoutes = {
 } as const;
 
 export type SessionRouteName = keyof typeof sessionRoutes;
+
+// ------------------------------------------------------------ the pipeline
+
+export {
+  CookRequestSchema,
+  CookResponseSchema,
+  PipelineNoteSchema,
+  TranscribeResponseSchema,
+} from './cook';
+export type { CookRequest, CookResponse, PipelineNote, TranscribeResponse } from './cook';
+
+/**
+ * The two routes that exist because they hold keys.
+ *
+ * Transcription takes raw audio rather than a JSON body, so it declares no `body` schema —
+ * the contract describes what comes back, and the route validates the bytes itself.
+ */
+export const cookRoutes = {
+  transcribe: describeRoute({
+    method: 'POST',
+    path: '/v1/voice/transcribe',
+    summary: 'Audio in, text out. The ElevenLabs key stays on the server.',
+    response: CookTranscribeResponseSchema,
+    errors: ['invalid_request', 'rate_limited', 'dependency_unavailable'],
+    auth: false,
+  }),
+
+  cook: describeRoute({
+    method: 'POST',
+    path: '/v1/cook',
+    summary:
+      'Two spoken answers into scaled recipes: intake, queries, search, fetch, extraction.',
+    body: CookRequestBodySchema,
+    response: CookPipelineResponseSchema,
+    errors: ['invalid_request', 'rate_limited', 'dependency_unavailable'],
+    auth: false,
+  }),
+} as const;
+
+export type CookRouteName = keyof typeof cookRoutes;

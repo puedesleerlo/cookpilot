@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "node --experimental-strip-types src/index.ts",
+    "dev": "node --env-file=../../.env --watch --import tsx src/index.ts",
+    "start": "tsx src/index.ts",
     "build": "tsc -b",
     "typecheck": "tsc -b --noEmit false",
     "migrate": "tsx src/db/migrate.ts",

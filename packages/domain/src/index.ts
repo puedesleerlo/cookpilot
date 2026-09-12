@@ -9,3 +9,5 @@ export * from './recipe';
 export * from './dish';
 export * from './lexicon';
 export * from './verb-ranges';
+export * from './spoken';
+export * from './extracted';

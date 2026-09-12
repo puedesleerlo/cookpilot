@@ -8,7 +8,9 @@ import {
   type Ingredient,
   type Urgency,
 } from '@kitchen/domain';
-import { compileSession, type CompileOutcome } from './compile';
+import type { CookResponse } from '@kitchen/contracts';
+import { compileSession, compileFound, intakeFromSpoken, type CompileOutcome } from './compile';
+import { runCookPipeline } from './cook';
 import { demoIntake } from './demo';
 
 /**
@@ -24,7 +26,16 @@ import { demoIntake } from './demo';
  * answer produce the same `Constraints`.
  */
 
-export type Screen = 'landing' | 'intake' | 'crew' | 'plans' | 'timeline' | 'cooking' | 'summary';
+export type Screen =
+  | 'landing'
+  | 'speak'
+  | 'intake'
+  | 'recipes'
+  | 'crew'
+  | 'plans'
+  | 'timeline'
+  | 'cooking'
+  | 'summary';
 
 /** Whether a value came from the user or was assumed on their behalf. */
 export type Provenance = 'stated' | 'assumed';
@@ -132,6 +143,12 @@ export const emptyIntake = (): IntakeAnswers => ({
 export type SessionState = {
   screen: Screen;
   intake: IntakeAnswers;
+  /** The two spoken answers, as text. Typed or transcribed; the compiler cannot tell. */
+  spoken: { wants: string; pantry: string };
+  /** What the pipeline found and read, before any of it is scheduled. */
+  found: CookResponse | null;
+  /** True while the API is searching and reading pages. It takes a minute; say so. */
+  finding: boolean;
   /** The last compile. Null until one has been run. */
   outcome: CompileOutcome | null;
   /** True while the compile curtain is up, which is theatre, not latency. */
@@ -150,6 +167,13 @@ export type SessionState = {
     key: K,
     value: IntakeAnswers[K] extends Answer<infer V> ? V : never,
   ) => void;
+  setSpokenAnswer: (key: 'wants' | 'pantry', text: string) => void;
+  /** Run the pipeline, then schedule what it came back with. */
+  findRecipes: () => Promise<void>;
+  /** Drop one of the found recipes and recompile the rest. */
+  dropRecipe: (id: string) => void;
+  /** Change one step's duration and recompile. */
+  reviseStep: (recipeId: string, stepId: string, durationMin: number) => void;
   startDemo: () => void;
   compile: () => void;
   /** Change one answer and recompile on the spot, with no curtain. */
@@ -158,6 +182,7 @@ export type SessionState = {
     value: IntakeAnswers[K] extends Answer<infer V> ? V : never,
   ) => void;
   settle: () => void;
+  scheduleFound: () => void;
   reset: () => void;
   canCompile: () => boolean;
 };
@@ -165,6 +190,9 @@ export type SessionState = {
 export const useSession = create<SessionState>((set, get) => ({
   screen: 'landing',
   intake: emptyIntake(),
+  spoken: { wants: '', pantry: '' },
+  found: null,
+  finding: false,
   outcome: null,
   compiling: false,
 
@@ -275,7 +303,102 @@ export const useSession = create<SessionState>((set, get) => ({
 
   settle: () => set({ compiling: false }),
 
-  reset: () => set({ screen: 'landing', intake: emptyIntake(), outcome: null, compiling: false }),
+  setSpokenAnswer: (key, text) =>
+    set((s) => ({ spoken: { ...s.spoken, [key]: text } })),
+
+  /**
+   * The chain: two answers out, recipes back, scheduled.
+   *
+   * The pipeline runs on the API because it holds three keys. Everything after it —
+   * planning, scheduling, the timeline — still happens here, so a session survives losing
+   * the network once the recipes have landed.
+   */
+  findRecipes: async () => {
+    const { wants, pantry } = get().spoken;
+    if (wants.trim().length === 0 && pantry.trim().length === 0) return;
+
+    set({ finding: true, outcome: null });
+    const response = await runCookPipeline({ wants, pantry });
+    if (!response.ok) {
+      set({ finding: false, outcome: { ok: false, reason: response.reason } });
+      return;
+    }
+
+    const found = response.result;
+    if (found.recipes.length === 0) {
+      set({
+        finding: false,
+        found,
+        outcome: {
+          ok: false,
+          reason:
+            'Nothing readable came back. Try naming a dish, or type your fridge in instead.',
+        },
+      });
+      return;
+    }
+
+    set({ found, finding: false, intake: intakeFromSpoken(found, get().intake), screen: 'recipes' });
+    get().scheduleFound();
+  },
+
+  dropRecipe: (id) => {
+    const found = get().found;
+    if (!found) return;
+    set({ found: { ...found, recipes: found.recipes.filter((r) => r.id !== id) } });
+    get().scheduleFound();
+  },
+
+  reviseStep: (recipeId, stepId, durationMin) => {
+    const found = get().found;
+    if (!found) return;
+    const minutes = Math.max(1, Math.round(durationMin));
+    set({
+      found: {
+        ...found,
+        recipes: found.recipes.map((recipe) =>
+          recipe.id !== recipeId
+            ? recipe
+            : {
+                ...recipe,
+                steps: recipe.steps.map((step) =>
+                  step.id !== stepId
+                    ? step
+                    : {
+                        ...step,
+                        durationMin: minutes,
+                        // Hands-on time cannot outlast the step it sits in.
+                        activeMin: Math.min(step.activeMin, minutes),
+                        finishMin: Math.min(step.finishMin, Math.max(0, minutes - Math.min(step.activeMin, minutes))),
+                      },
+                ),
+              },
+        ),
+      },
+    });
+    get().scheduleFound();
+  },
+
+  /** Compile whatever the pipeline came back with, as it currently stands. */
+  scheduleFound: () => {
+    const found = get().found;
+    if (!found || found.recipes.length === 0) {
+      set({ outcome: { ok: false, reason: 'There are no recipes left to schedule.' } });
+      return;
+    }
+    set({ outcome: compileFound(found, get().intake) });
+  },
+
+  reset: () =>
+    set({
+      screen: 'landing',
+      intake: emptyIntake(),
+      spoken: { wants: '', pantry: '' },
+      found: null,
+      finding: false,
+      outcome: null,
+      compiling: false,
+    }),
 
   /** Compiling needs food. Everything else has a defensible default. */
   canCompile: () => get().intake.pantry.length > 0,

@@ -33,6 +33,8 @@ describe('the example session, end to end', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       'A week of meals out of one fridge, in one session.',
     );
+    // The front door is the two questions; the example session is the shortcut.
+    expect(screen.getByRole('button', { name: 'Tell me what you want' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Try the example session' }));
 

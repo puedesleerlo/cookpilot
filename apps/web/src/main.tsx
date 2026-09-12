@@ -20,6 +20,7 @@ if (!root) throw new Error('#root is missing from index.html');
 const ENTRY: Record<string, () => void> = {
   '#demo': () => useSession.getState().startDemo(),
   '#fridge': () => useSession.getState().goTo('intake'),
+  '#speak': () => useSession.getState().goTo('speak'),
 };
 const JOIN = '#join';
 const hash = window.location.hash;

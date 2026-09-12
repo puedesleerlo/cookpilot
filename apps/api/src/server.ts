@@ -19,6 +19,7 @@ import type { Database } from './db/client';
 import { bearerFrom, issueDeviceWith, verifyDeviceWith } from './auth/devices';
 import { registerSessionRoutes } from './sessions/routes';
 import { memorySessionStore, postgresSessionStore, type SessionStore } from './sessions/store';
+import { registerPipelineRoutes, type PipelineDeps } from './pipeline/routes';
 import { stageMetrics, totalSpendUsd } from './llm/gateway';
 
 /**
@@ -41,6 +42,12 @@ export type BuildOptions = {
   store?: SessionStore;
   /** Signing key for device tokens. Absent, one is generated at boot and dies with it. */
   jwtSecret?: string;
+  /**
+   * The voice, search and generation providers. Absent in the unit tests that only
+   * exercise routes needing none of them — and absent means the two pipeline routes are
+   * not registered at all, rather than registered and failing.
+   */
+  pipeline?: PipelineDeps;
   /** Lowered in tests so the limiter can be exercised without a thousand requests. */
   rateLimits?: { globalPerMinute: number; deviceCreationPerHour: number };
   /** Join-code randomness. Injected so a test can force a collision. */
@@ -63,6 +70,7 @@ export const buildServer = async ({
   jwtSecret,
   rateLimits = { globalPerMinute: 300, deviceCreationPerHour: 20 },
   random,
+  pipeline,
 }: BuildOptions): Promise<FastifyInstance> => {
   const startedAt = now();
 
@@ -249,6 +257,10 @@ export const buildServer = async ({
 
     registerSessionRoutes(app, { store: sessionStore, now, requireDevice, ...(random ? { random } : {}) });
   }
+
+  // Voice and the cooking pipeline. No database and no device needed: they hold keys, and
+  // that is the only reason they are server-side at all.
+  if (pipeline) registerPipelineRoutes(app, pipeline);
 
   /**
    * Per-provider spend, so a cost surprise is something you notice rather than something

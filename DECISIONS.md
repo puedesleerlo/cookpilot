@@ -985,3 +985,94 @@ Consequence: with Postgres behind it the deployed API may run several instances 
      Azure's firewall has to admit Cloud Run's egress, which readiness will report.
 Revisit if: the organisation wants the app off that server. `DROP DATABASE
      kitchen_compiler` is the whole of the clean-up.
+
+
+## D-068 — The chain is model-driven at every step that needs judgement
+Date: 2026-09-12
+Question: The delta made L2 and L3 deterministic-first. The operator asked for search,
+          scraping, step extraction and scaling to be done with an LLM. Which wins?
+Choice: The operator. L2 and L3 are model-first; the deterministic paths stay as the floor.
+Why: the deterministic version of L2 is "join the wants to the urgent ingredients and add
+     the word recipe", which finds pages but not the right ones. The deterministic version
+     of L3 is JSON-LD, and JSON-LD is good for ingredients and yield and silent about the
+     one thing the scheduler needs — that the rice is twenty-five minutes of saucepan and
+     two minutes of hands. Reading that out of English is what a model is for.
+Consequence: a run costs five or six model calls. Every stage keeps its floor, and a stage
+     that fell back says so in the notes rather than passing degraded output off as a
+     model's work.
+
+## D-069 — Servings are derived from the week, not asked for
+Date: 2026-09-12
+Question: How many servings of each dish?
+Choice: Nobody is asked. The session targets seven days of meals for the people cooking,
+        and servings per dish fall out of that and the number of dishes.
+Why: it is a question nobody can answer before knowing how many dishes there will be, and
+     "a week, for us" is a thing people actually know. Scaling then happens inside L3
+     rather than by multiplying afterwards, because scaling is not multiplication: doubling
+     a stir-fry adds a second batch, doubling a tray bake changes nothing, and chopping
+     twice as much really does take twice as long.
+
+## D-070 — One recipe per query
+Date: 2026-09-12
+Question: The first live run came back with "Chicken Bok Choy Stir-Fry", "Chicken and Bok
+          Choy Stir Fry", "Bok Choy Chicken" and "Easy Low Carb Chicken and Bok Choy".
+Cause: search converges. Five different queries about chicken and bok choy return
+       substantially the same pages, ranked slightly differently, and reading the best four
+       of a pooled list gives four readings of one dinner.
+Fix: each query keeps its own bucket and contributes one recipe before any contributes a
+     second. The queries already encode the variety; the pooling was throwing it away.
+     Plus a similarity check on the words that actually name a dish, with the SEO filler
+     ("easy", "quick", "best", "low carb", "meal prep") removed — exact title matching
+     caught none of those four.
+Why worth recording: every individual stage was working correctly. The bug was in how
+     their outputs were combined, and only a live run showed it.
+
+## D-071 — A duration the model read beats the verb table
+Date: 2026-09-12
+Question: "Simmer for two minutes until glossy" was being rewritten to twenty minutes.
+Cause: `checkDuration` floors a claim at a third of the verb table's typical duration. That
+       floor is right when nothing stated a time and the table is the only guess available.
+       It is wrong when the page said outright how long, which is exactly what the model
+       reads.
+Fix: `trustSource` — the model path only has to clear zero; the JSON-LD path is unchanged.
+Consequence had it shipped: eighteen invented minutes of waiting in the middle of a
+       stir-fry, discovered in the kitchen with the pan already going.
+
+## D-072 — The API starts without a database
+Date: 2026-09-12
+Question: Cloud Run needs the API to boot. The API refused to start without Postgres and
+          Redis, which the cooking pipeline never touches.
+Choice: `requireSecrets` takes a set of degradable secrets, each with the feature that goes
+        away. Missing storage is a warning naming what is off; a missing provider key is
+        still a warning; a configured-but-broken database still fails readiness.
+Why: refusing to start over a database it will never open a connection to is a deploy
+     failing for a reason that is not true. `buildServer` already worked this way —
+     identity routes register only when a database is present — so this brings the entry
+     point in line with the server rather than inventing a new idea.
+Consequence: a storage-free deployment serves the pipeline, the clock and the scheduler,
+     and does not serve devices, sessions or the shared cooking flow. The boot log says so.
+
+## D-073 — Two `envDir` keys, and a production build that called a static bucket
+Date: 2026-09-12
+Question: `VITE_API_URL` was set in `.env.production` and did not reach the bundle, while
+          `VITE_API_URL=… vite build` worked. Why?
+Cause: `vite.config.ts` declared `envDir` twice — two sessions adding it independently.
+       The second silently wins in an object literal, so Vite read the wrong directory,
+       found no `VITE_API_URL`, and `resolveApiBase` fell back to the page's own origin.
+Consequence had it shipped: on Firebase Hosting the page's own origin is a static bucket
+       with no `/v1` behind it. The app loads perfectly and fails on the first recipe
+       search — the worst shape of bug, because nothing looks broken until it is used.
+Fix: one `envDir`, pointing at the repository root where `.env` and `.env.example` already
+     live; `.env.production` moved there and committed, since a public API URL is not a
+     secret and a build that silently loses it is worse than one that states it.
+Why worth recording: `no-dupe-keys` would have caught it, and lint had not been run between
+     the two edits. Two agents in one working tree is exactly how a duplicate key happens.
+
+## D-074 — `import.meta.env.X`, never `import.meta.env['X']`
+Date: 2026-09-12
+Question: Does bracket access to an env var work in a Vite build?
+Choice: No. Dot access only.
+Why: Vite statically replaces the dot form at build time. The bracket form reads an object
+     at runtime that carries whatever was in the shell when the bundle was built — which is
+     why a shell-provided value appeared to work and a file-provided one produced
+     `undefined`. It fails in exactly the configuration nobody tests: a CI build.

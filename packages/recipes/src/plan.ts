@@ -184,13 +184,26 @@ const toDish = (c: PlanCandidate, servings: number): Dish =>
  * Used for the provisional plans tried during assembly as well as the one returned, so what
  * is compiled during the search is exactly what comes out of it.
  */
+/**
+ * Where a dish's serving count comes from.
+ *
+ * `session` is the seed-pack path: every dish feeds the number the session asked for.
+ * `recipe` is the pipeline path, where the extractor has already scaled each recipe to
+ * this week's target and its own yield is the answer — scaling it a second time here would
+ * multiply what the model already adjusted.
+ */
+type ServingsSource = 'session' | 'recipe';
+
 const assemble = (
   chosen: PlanCandidate[],
   pantry: Ingredient[],
   constraints: Constraints,
   name?: string,
+  servingsFrom: ServingsSource = 'session',
 ): MealPlan => {
-  const dishes = chosen.map((c) => toDish(c, constraints.servings));
+  const dishes = chosen.map((c) =>
+    toDish(c, servingsFrom === 'recipe' ? c.recipe.yieldServings : constraints.servings),
+  );
 
   const used = new Set(chosen.flatMap((c) => c.matched));
   const unused = pantry.filter((i) => !used.has(i.canonicalName));
@@ -231,7 +244,7 @@ const assemble = (
         .map((i) => i.canonicalName),
       assumedPantryIds: [],
     },
-    totalServings: dishes.length * constraints.servings,
+    totalServings: dishes.reduce((n, d) => n + d.servings, 0),
   });
 };
 
@@ -263,6 +276,48 @@ const compiles = (chosen: PlanCandidate[], pantry: Ingredient[], constraints: Co
  * anyone who could do something about it. One ingredient and an ordinary kitchen was enough
  * to trigger it, and what the user got was a blank screen.
  */
+/**
+ * A plan from recipes somebody already chose.
+ *
+ * The pipeline path does not search a registry — it has been to the web, read four pages,
+ * and shown the user what it found. So there is nothing to select and nothing to budget
+ * against: every recipe here is in because a person left it in, and if the result does not
+ * fit the hour, the degradation ladder says what had to give. That is a better answer than
+ * quietly dropping a dish the user watched arrive.
+ */
+export const planFromRecipes = (
+  recipes: RecipeIR[],
+  pantry: Ingredient[],
+  constraints: Constraints,
+  name?: string,
+): MealPlan | null => {
+  const candidates = recipes.flatMap((recipe) => {
+    const scored = scoreCandidate(recipe, pantry, constraints);
+    // Scoring is for ranking, and here nothing is being ranked. A recipe the scorer would
+    // have rejected — half its ingredients missing — is still one the user asked for, and
+    // it gets a candidate with an honest coverage number rather than being dropped.
+    if (scored) return [scored];
+    const { skilledMin, unskilledMin } = handsOnSplit(recipe, constraints);
+    const have = new Set(pantry.map((i) => i.canonicalName));
+    const core = recipe.ingredients.filter((i) => !i.optional && i.role !== 'pantry');
+    const matched = core.filter((i) => have.has(i.canonicalName)).map((i) => i.canonicalName);
+    return [
+      {
+        recipe,
+        score: 0,
+        coverage: core.length === 0 ? 1 : matched.length / core.length,
+        matched,
+        missing: core.filter((i) => !have.has(i.canonicalName)).map((i) => i.canonicalName),
+        skilledMin,
+        unskilledMin,
+      },
+    ];
+  });
+
+  if (candidates.length === 0) return null;
+  return assemble(candidates, pantry, constraints, name, 'recipe');
+};
+
 export const buildPlan = (options: BuildPlanOptions): MealPlan | null => {
   const { index, pantry, constraints, slackFactor = 1.4 } = options;
 

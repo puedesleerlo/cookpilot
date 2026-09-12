@@ -24,6 +24,7 @@ import {
   totalSpendUsd,
   type GenerateRequest,
   type Generator,
+  type StageSpec,
 } from './gateway';
 import { clearStageRuns, stageRuns } from './debug';
 
@@ -35,8 +36,17 @@ const Out = z
   .refine((v) => v.count >= 0, { error: 'count must not be negative' });
 type Out = z.infer<typeof Out>;
 
-const spec = (over: Partial<Parameters<ReturnType<typeof createGateway>>[0]> = {}) => ({
-  stage: 'L1-intake' as const,
+/**
+ * The spec under test, concretely typed.
+ *
+ * `Partial<Parameters<...>[0]>` looked equivalent and was not: the gateway's parameter is
+ * generic, so an override spread through it widened `schema` and `fallback` to `unknown`
+ * and every `result.value` in this file stopped being checked at all.
+ */
+type TestSpec = StageSpec<string, z.infer<typeof Out>>;
+
+const spec = (over: Partial<TestSpec> = {}): TestSpec => ({
+  stage: 'L1-intake',
   schema: Out,
   system: 'You extract things.',
   buildUser: (input: string) => `Input: ${input}`,

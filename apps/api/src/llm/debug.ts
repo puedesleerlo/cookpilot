@@ -1,3 +1,4 @@
+import type { StageSource } from './gateway';
 import { redact } from '../config/redact';
 
 /**
@@ -10,7 +11,8 @@ export type StageRun = {
   stage: string;
   startedAt: number;
   durationMs: number;
-  source: 'model' | 'repaired' | 'fallback';
+  /** Every source the gateway can finish on, cache and fixture included. */
+  source: StageSource;
   repairs: number;
   ok: boolean;
   prompt: string;

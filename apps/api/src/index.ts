@@ -3,6 +3,10 @@ import { buildServer } from './server';
 import { ConfigError, parseEnv } from './config/env';
 import { envResolver, requireSecrets } from './config/loader';
 import { createDb, databaseCheck } from './db/client';
+import { createGateway } from './llm/gateway';
+import { vertexGeneratorFrom } from './llm/vertex';
+import { createBraveProvider } from './providers/brave';
+import { createElevenLabsProvider } from './providers/elevenlabs';
 
 /**
  * Entry point.
@@ -24,20 +28,66 @@ const main = async (): Promise<void> => {
     return die(err instanceof ConfigError ? err.message : String(err));
   }
 
-  const secrets = await requireSecrets('api', envResolver(process.env), die);
+  /*
+   * Storage is degradable; the providers are not.
+   *
+   * The cooking pipeline needs no database and no queue — it reads pages and calls a model
+   * — so a deployment that serves only that should start, serve it, and say plainly which
+   * features are missing. What must never be silent is the reverse: a database that is
+   * configured and broken still fails readiness, as it always did.
+   */
+  const warn = (message: string): void => {
+    process.stderr.write(`${message}\n`);
+  };
+  const secrets = await requireSecrets('api', envResolver(process.env), die, {
+    degradable: {
+      DATABASE_URL: 'sessions, devices and the shared cooking flow are off; the pipeline still runs',
+      REDIS_URL: 'background ingestion is off; nothing the pipeline does needs a queue',
+    },
+    onDegraded: warn,
+  });
 
   // Opening the pool does not connect; readiness is what discovers a broken database, and
   // it reports rather than crashing, so a Postgres blip does not restart a healthy process.
-  const database = createDb(secrets.get('DATABASE_URL'));
+  const databaseUrl = secrets.optional('DATABASE_URL');
+  const database = databaseUrl ? createDb(databaseUrl) : null;
+
+  /*
+   * The pipeline's providers.
+   *
+   * Each is optional and each says why when it is missing, because a deploy without a
+   * Brave key should still serve the scheduler rather than fail to start. What is not
+   * optional is where the keys live: this process, and never the browser.
+   */
+  const generate = vertexGeneratorFrom(process.env);
+  const pipeline = {
+    gateway: createGateway({
+      generate,
+      // Without a database the stage cache is simply not there. It saves money; it is not
+      // load-bearing.
+      ...(database ? { db: database.db } : {}),
+      env: process.env,
+    }),
+    brave: createBraveProvider(secrets),
+    elevenlabs: createElevenLabsProvider(secrets),
+  };
+  for (const [name, provider] of [
+    ['search', pipeline.brave],
+    ['voice', pipeline.elevenlabs],
+  ] as const) {
+    if (!provider.available) warn(`${name}: ${provider.reason}`);
+  }
+  if (!generate) warn('generation: GOOGLE_CLOUD_PROJECT is not set; every stage takes its floor');
 
   const app = await buildServer({
     env,
-    dependencies: [databaseCheck(database)],
+    dependencies: database ? [databaseCheck(database)] : [],
+    pipeline,
     // Without these the identity routes silently do not exist. They were exercised through
     // the test harness, which passes them, and not through this path -- so the gap only
     // showed up on the first real boot.
-    db: database.db,
-    jwtSecret: secrets.get('JWT_SECRET'),
+    ...(database ? { db: database.db } : {}),
+    ...(secrets.optional('JWT_SECRET') ? { jwtSecret: secrets.get('JWT_SECRET') } : {}),
   });
 
   for (const signal of ['SIGTERM', 'SIGINT'] as const) {
@@ -45,7 +95,7 @@ const main = async (): Promise<void> => {
       app.log.info({ signal }, 'shutting down');
       void app
         .close()
-        .then(() => database.close())
+        .then(() => database?.close())
         .then(() => process.exit(0));
     });
   }

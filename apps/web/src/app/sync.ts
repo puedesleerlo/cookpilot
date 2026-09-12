@@ -54,10 +54,16 @@ const writeResume = (resume: Resume | null): void => {
  * database. A server without one answers `not_found` for all of them, which is a fact about
  * the server, not a broken link, and is said as such.
  */
+/*
+ * Deliberately does not name the server's environment variables. `scan-bundle` treats a
+ * secret's *name* in the client bundle as a finding, not just its value, because a client
+ * that recites server configuration is telling an attacker where to look — and because the
+ * person reading this message is standing in a kitchen, not holding a deploy console.
+ */
 const NO_SESSIONS =
   'This server cannot keep a shared session; it has no database behind it. Cooking together ' +
-  'works against an API that has one — locally, that is `docker compose up` and the API ' +
-  'started with DATABASE_URL set.';
+  'works against an API that has one — locally, that is `docker compose up` and an API ' +
+  'started with a database configured.';
 
 const describe = (err: unknown): string => {
   if (isApiError(err, 'not_found')) return NO_SESSIONS;

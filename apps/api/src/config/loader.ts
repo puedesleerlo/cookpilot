@@ -160,13 +160,37 @@ export const describeMissing = (service: ServiceName, missing: SecretDeclaration
  * Start-up gate. Exits rather than listening, so a misconfigured deploy fails at deploy
  * time rather than in front of a user mid-session.
  */
+export type RequireSecretsOptions = {
+  /**
+   * Secrets that may be absent, with the feature that goes away when they are.
+   *
+   * A deployment that only serves the cooking pipeline needs three provider credentials
+   * and no storage at all, and refusing to start without a database it will never open a
+   * connection to is a deploy that fails for a reason that is not true. So the caller says
+   * which absences it can survive, and gets told what it lost — rather than every absence
+   * being fatal, or none of them being.
+   */
+  degradable?: Partial<Record<string, string>>;
+  /** Where the warnings go. */
+  onDegraded?: (message: string) => void;
+};
+
 export const requireSecrets = async (
   service: ServiceName,
   resolver: SecretResolver,
   onFatal: (message: string) => never,
+  options: RequireSecretsOptions = {},
 ): Promise<SecretStore> => {
   const { store, missing } = await loadSecrets(service, resolver);
-  if (missing.length > 0) onFatal(describeMissing(service, missing));
+  const degradable = options.degradable ?? {};
+
+  const fatal = missing.filter((s) => degradable[s.name] === undefined);
+  if (fatal.length > 0) onFatal(describeMissing(service, fatal));
+
+  for (const secret of missing) {
+    const consequence = degradable[secret.name];
+    if (consequence) options.onDegraded?.(`${secret.name} is not set: ${consequence}`);
+  }
   return store;
 };
 

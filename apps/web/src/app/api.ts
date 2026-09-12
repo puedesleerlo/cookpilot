@@ -68,7 +68,12 @@ export const resolveApiBase = (
 
 export const apiBaseUrl = (): string =>
   resolveApiBase(
-    import.meta.env['VITE_API_URL'] as string | undefined,
+    // Dot access, not `import.meta.env['VITE_API_URL']`. Vite only statically replaces the
+    // dot form; the bracket form reads an object at runtime that carries whatever happened
+    // to be in the shell at build time — so it worked with `VITE_API_URL=… vite build` and
+    // silently produced `undefined` from `.env.production`, which is how a production
+    // build ends up calling a static bucket for its API.
+    import.meta.env.VITE_API_URL as string | undefined,
     typeof window === 'undefined' ? null : window.location,
     Boolean(import.meta.env.DEV),
   );

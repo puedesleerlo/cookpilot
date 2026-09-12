@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "typecheck": "tsc -b --pretty",
+    "typecheck": "tsc -b --force --pretty",
     "check": "pnpm scan:secrets && pnpm lint && pnpm typecheck && pnpm test",
     "packs:build": "node scripts/build-seed-packs.mjs && node scripts/build-registry-index.mjs",
     "design:build": "node scripts/build-design-canvas.mjs",

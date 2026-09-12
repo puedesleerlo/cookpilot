@@ -12,9 +12,43 @@
 | Database | Runs. Schema, migrations, seed (5 packs, 22 recipes). |
 | Gemini via Vertex | Works. Verified live against `gemini-3.5-flash-lite`. |
 | Recipe extraction | Works. 100% JSON-LD hit rate measured on 27 real pages. |
+| The whole chain | **Works.** Two spoken answers → real recipes off the web → scheduled. See below. |
+| Voice intake | **Works.** ElevenLabs Scribe, server-side. The key never reaches the browser. |
+| Recipe search | **Works.** Gemini writes the queries, Brave answers, robots is honoured. |
+| Step extraction | **Works.** Gemini reads each page into steps with timings and scales them. |
 | Your own fridge | **Works.** Search the lexicon, say what has to go today, correct the kitchen, compile. |
 | Cooking mode | **Works, on every phone.** Scan the host's code, pick your cook, follow your own steps with timers that count down together. Needs the API, with or without a database. |
-| Voice intake | **Not built.** The structured form is the way in, by design — the free-text parser was deleted. |
+
+
+### The chain, end to end
+
+```
+  two spoken answers
+        │  ElevenLabs Scribe (server-side; the key never reaches the browser)
+        ▼
+  transcripts
+        │  L1  Gemini → structured intake, constrained to the domain schema
+        ▼
+  what they want · what they have · how many are cooking
+        │  L2  Gemini → search queries worth running
+        ▼
+  queries ──► Brave ──► robots-respecting fetch ──► readable text
+        │  L3  Gemini → steps with durations, equipment, dependencies,
+        │              scaled to seven days of meals for the people cooking
+        ▼
+  RecipeIR × N ──► corrections screen ──► scheduler ──► timeline
+```
+
+Each query contributes one recipe, in parallel, and a dish already found is rejected by
+name — five queries about chicken and bok choy otherwise return the same dinner five times.
+A live run takes about a hundred seconds and costs six model calls.
+
+Verify it against the real providers:
+
+```bash
+LIVE_PIPELINE=1 npx vitest run apps/api/src/pipeline/pipeline.live
+cat /tmp/pipeline-live.txt        # every step it read, and everything it dropped
+```
 
 ### The demo, in one link
 

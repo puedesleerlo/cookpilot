@@ -26,8 +26,8 @@ export const Landing = () => {
       </p>
 
       <div className="mt-7 flex flex-wrap items-center gap-3">
-        <Button variant="primary" size="lg" onClick={() => goTo('intake')}>
-          Tell me what you have
+        <Button variant="primary" size="lg" onClick={() => goTo('speak')}>
+          Tell me what you want
         </Button>
         <Button variant="secondary" size="lg" onClick={startDemo}>
           Try the example session
@@ -41,8 +41,8 @@ export const Landing = () => {
         {[
           {
             glyph: 'produce' as const,
-            head: 'Say what is in the fridge',
-            body: 'Type it, pick it from the list, and say what has to go today. It keeps what it did not recognise rather than guessing.',
+            head: 'Answer two questions',
+            body: 'Out loud or typed: what you want to cook, and what you have. It goes and finds the recipes.',
           },
           {
             glyph: 'burner' as const,

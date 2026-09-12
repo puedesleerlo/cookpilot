@@ -223,11 +223,21 @@ describe('the entry point wires what the server needs', () => {
    * when handed `db` and `jwtSecret`, the test harness always passes them, and `index.ts`
    * did not. Everything passed, and `POST /v1/devices` was a 404 on the first real boot.
    */
-  it('passes db and jwtSecret to buildServer', () => {
+  it('passes db and jwtSecret to buildServer when it has them', () => {
     const src = readFileSync(path.join(process.cwd(), 'apps/api/src/index.ts'), 'utf8');
-    const call = /buildServer\(\{[\s\S]*?\}\)/.exec(src)?.[0] ?? '';
-    expect(call).toContain('db:');
-    expect(call).toContain('jwtSecret:');
+    expect(src).toContain('buildServer({');
+    // Both are conditional now — storage is degradable, so an API serving only the cooking
+    // pipeline starts without them. What must stay true is that when they exist they are
+    // handed over, which is the thing that was once simply forgotten.
+    expect(src).toMatch(/db:\s*database\.db/);
+    expect(src).toMatch(/jwtSecret:\s*secrets\.get\('JWT_SECRET'\)/);
+  });
+
+  it('names what is lost when storage is absent, rather than failing to start', () => {
+    const src = readFileSync(path.join(process.cwd(), 'apps/api/src/index.ts'), 'utf8');
+    expect(src).toContain('degradable');
+    // The operator has to be told which features are off, by name.
+    expect(src).toMatch(/DATABASE_URL:\s*'[^']*sessions[^']*'/);
   });
 
   it('says so loudly when sessions are kept in memory rather than a database', async () => {

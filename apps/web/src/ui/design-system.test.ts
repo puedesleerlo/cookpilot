@@ -288,6 +288,12 @@ describe('typography', () => {
      * scheduler emits. It is not available for chrome, headings or body copy, which is
      * what this list is here to keep true.
      */
-    expect(uses.sort()).toEqual(['CompileCurtain.tsx', 'Gantt.tsx', 'RunSheet.tsx', 'Timeline.tsx']);
+    expect(uses.sort()).toEqual([
+      'CompileCurtain.tsx',
+      'Gantt.tsx',
+      'Recipes.tsx',
+      'RunSheet.tsx',
+      'Timeline.tsx',
+    ]);
   });
 });

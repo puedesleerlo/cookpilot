@@ -18,6 +18,36 @@ export type VertexOptions = {
   location?: string;
 };
 
+/**
+ * Retry the two failures that are about load rather than about the request.
+ *
+ * A pipeline run makes one model call per page, back to back, and a shared Vertex quota
+ * answers some of them with 429. Retrying is right there — the request was fine, the
+ * service was busy — and the cost of not retrying is a recipe silently missing from
+ * someone's week. Everything else (a bad schema, a model that does not exist, no
+ * credentials) is thrown on the first attempt, because those do not improve with time.
+ */
+const RETRIES = 3;
+const BACKOFF_MS = [1_000, 3_000, 7_000];
+
+const isRetryable = (error: unknown): boolean => {
+  const text = error instanceof Error ? error.message : String(error);
+  return /\b(429|503|500)\b|RESOURCE_EXHAUSTED|UNAVAILABLE|deadline|ECONNRESET|socket hang up/i.test(text);
+};
+
+const sleep = (ms: number, signal: AbortSignal): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        reject(new Error('aborted'));
+      },
+      { once: true },
+    );
+  });
+
 export const createVertexGenerator = (options: VertexOptions): Generator => {
   const clients = new Map<string, GoogleGenAI>();
 
@@ -36,25 +66,37 @@ export const createVertexGenerator = (options: VertexOptions): Generator => {
   return async (req: GenerateRequest): Promise<GenerateResult> => {
     const client = clientFor(req.location || options.location || 'global');
 
-    const response = await client.models.generateContent({
-      model: req.model,
-      contents: [{ role: 'user', parts: [{ text: req.user }] }],
-      config: {
-        systemInstruction: req.system,
-        temperature: req.temperature,
-        maxOutputTokens: req.maxOutputTokens,
-        responseMimeType: 'application/json',
-        responseJsonSchema: req.responseSchema,
-        abortSignal: req.signal,
-      },
-    });
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= RETRIES; attempt++) {
+      if (attempt > 0) {
+        await sleep(BACKOFF_MS[attempt - 1] ?? 4_000, req.signal);
+      }
+      try {
+        const response = await client.models.generateContent({
+          model: req.model,
+          contents: [{ role: 'user', parts: [{ text: req.user }] }],
+          config: {
+            systemInstruction: req.system,
+            temperature: req.temperature,
+            maxOutputTokens: req.maxOutputTokens,
+            responseMimeType: 'application/json',
+            responseJsonSchema: req.responseSchema,
+            abortSignal: req.signal,
+          },
+        });
 
-    const usage = response.usageMetadata;
-    return {
-      text: response.text ?? '',
-      tokensIn: usage?.promptTokenCount ?? 0,
-      tokensOut: usage?.candidatesTokenCount ?? 0,
-    };
+        const usage = response.usageMetadata;
+        return {
+          text: response.text ?? '',
+          tokensIn: usage?.promptTokenCount ?? 0,
+          tokensOut: usage?.candidatesTokenCount ?? 0,
+        };
+      } catch (error) {
+        lastError = error;
+        if (req.signal.aborted || !isRetryable(error)) throw error;
+      }
+    }
+    throw lastError;
   };
 };
 

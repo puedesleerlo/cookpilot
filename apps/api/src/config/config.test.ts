@@ -28,7 +28,7 @@ afterEach(() => clearRegisteredSecrets());
 describe('the secret inventory', () => {
   it('agrees with .env.example', () => {
     const example = readFileSync(path.join(root, '.env.example'), 'utf8');
-    const declared = new Set(SECRETS.map((s) => s.name));
+    const declared = new Set<string>(SECRETS.map((s) => s.name));
     const inExample = new Set(
       example
         .split('\n')

@@ -1,0 +1,17 @@
+# Everything the API image does not need. .env especially: the keys come from Secret
+# Manager, and a build context that carries a .env is a credential in a build log.
+.env
+.env.*
+!.env.example
+node_modules/
+**/node_modules/
+**/dist/
+**/.turbo/
+.git/
+apps/web/
+design/
+openspec/
+scripts/
+*.tsbuildinfo
+**/*.tsbuildinfo
+/tmp/

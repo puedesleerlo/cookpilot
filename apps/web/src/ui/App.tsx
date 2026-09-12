@@ -3,6 +3,8 @@ import { useSync } from '@/app/sync';
 import { Blobs, Button, CompileCurtain, Glyph, Grain } from './primitives';
 import { Intake } from './screens/Intake';
 import { Landing } from './screens/Landing';
+import { Recipes } from './screens/Recipes';
+import { Speak } from './screens/Speak';
 import { Shared } from './screens/Shared';
 import { Timeline } from './screens/Timeline';
 
@@ -12,6 +14,7 @@ export const App = () => {
   const outcome = useSession((s) => s.outcome);
   const compiling = useSession((s) => s.compiling);
   const settle = useSession((s) => s.settle);
+  const found = useSession((s) => s.found);
   const shared = useSync((s) => s.phase !== 'idle');
 
   /*
@@ -36,7 +39,13 @@ export const App = () => {
 
       {screen === 'landing' ? <Landing /> : null}
 
+      {screen === 'speak' ? <Speak /> : null}
+
       {screen === 'intake' ? <Intake /> : null}
+
+      {screen === 'recipes' ? (
+        found ? <Recipes found={found} /> : <Speak />
+      ) : null}
 
       {screen === 'timeline' ? (
         outcome?.ok ? (
@@ -56,7 +65,13 @@ export const App = () => {
         )
       ) : null}
 
-      {screen !== 'landing' && screen !== 'intake' && screen !== 'timeline' ? <NotBuiltYet /> : null}
+      {screen !== 'landing' &&
+      screen !== 'speak' &&
+      screen !== 'intake' &&
+      screen !== 'recipes' &&
+      screen !== 'timeline' ? (
+        <NotBuiltYet />
+      ) : null}
 
       {/*
         The curtain is dismissed by its own sequence finishing, not by the compile: the

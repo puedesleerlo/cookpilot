@@ -5,11 +5,17 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
   plugins: [react()],
   /**
-   * The one `.env` lives at the repository root, next to `.env.example`, and it is where
-   * `VITE_API_URL` is documented. Left at the default, Vite reads `apps/web/.env`, which
-   * does not exist, and the client quietly calls its own origin for the API. Only `VITE_*`
-   * names reach the bundle; the provider secrets in the same file never do, and the bundle
-   * scanner fails the build if one did.
+   * Env files live at the repository root, next to `.env.example`.
+   *
+   * That is where `.env` is, and where `.env.production` pins the deployed API URL. Only
+   * `VITE_*` names reach the bundle; the provider secrets in the same file never do, and
+   * the bundle scanner fails the build if one did.
+   *
+   * This key was briefly declared twice — once here and once pointing at `apps/web` — and
+   * the second silently won, so a production build read the wrong directory, found no
+   * `VITE_API_URL`, and fell back to the page's own origin. On Firebase Hosting that is a
+   * static bucket with no API behind it: the app came up looking perfect and failed on the
+   * first recipe search.
    */
   envDir: '../..',
   resolve: {
