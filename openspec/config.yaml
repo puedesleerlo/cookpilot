@@ -1,0 +1,35 @@
+schema: spec-driven
+
+context: |
+  Kitchen Compiler compiles a fridge inventory into an executable meal-prep session:
+  dishes + batch beverages + sauces, scheduled against a time budget, cooks and cookware.
+
+  Full project context lives in openspec/project.md — read it before writing any artifact.
+
+  Stack: React 19 + TypeScript 6 (strict) + Vite 8 + Tailwind 3.4, Zod 4 at every
+  boundary, Zustand, IndexedDB, Vitest. No backend, no auth, no database.
+
+  Layer boundaries (lint-enforced in eslint.config.js):
+    src/domain     types + Zod schemas, imports nothing
+    src/recipes    pack loading, RecipeIR
+    src/llm        may call the model, returns validated data, NEVER schedules
+    src/scheduler  pure, deterministic, zero I/O, zero randomness
+    src/app        composition root / use-cases
+    src/ui         renders only, calls @/app
+
+  Non-negotiables: the scheduler is a pure function (identical input -> byte-identical
+  output); the LLM never makes scheduling decisions; the whole app works with
+  VITE_ANTHROPIC_API_KEY unset; food safety (cross-contamination) is a hard constraint.
+
+rules:
+  proposal:
+    - State the user-visible behaviour change, not the implementation.
+    - Always name the deterministic fallback when a capability involves the LLM.
+  specs:
+    - Every requirement needs at least one scenario with observable, testable behaviour.
+    - Prefer concrete numbers over adjectives ("within 120 minutes", not "promptly").
+  design:
+    - Required for any non-obvious algorithm. Show the data flow and the tie-breaking rules.
+  tasks:
+    - Order tasks so the suite is green after every group.
+    - The last group is always: validate, test, archive, commit.
