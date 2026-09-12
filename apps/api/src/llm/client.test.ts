@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { callStage, setTransport, type Transport } from './client';

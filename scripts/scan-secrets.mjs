@@ -19,17 +19,24 @@ const SKIP_DIRS = new Set([
 ]);
 
 /**
- * Files that legitimately contain key *shapes* as test fixtures or documentation.
- * Each entry is a deliberate exemption, not a blanket one.
+ * Whole-file exemptions, for the handful of files whose entire job is to describe key
+ * shapes. Keep this list short: a file exemption stops protecting the file the moment
+ * someone adds a real key to it. Everything else uses the line pragma below.
  */
 const EXEMPT = [
   'scripts/scan-secrets.mjs',
   'scripts/scan-bundle.mjs',
   'apps/api/src/config/redact.ts',
-  'packages/domain/src/bundle-scan.test.ts',
-  'apps/api/src/config/config.test.ts',
   '.env.example',
 ];
+
+/**
+ * Line-level exemption: `scan-secrets-ignore: <reason>` on the line or the one above it.
+ *
+ * This is the granularity that works. A pragma has to be written deliberately, sits next
+ * to the thing it excuses, and shows up in review with its reason attached.
+ */
+const PRAGMA = /scan-secrets-ignore:\s*\S+/;
 
 /**
  * `strict: true` shapes are unmistakable credentials -- a real prefix and a real length --
@@ -93,6 +100,7 @@ for (const file of walk(ROOT)) {
   const isDoc = /\.(md|txt)$/.test(file);
   const lines = readFileSync(file, 'utf8').split('\n');
   lines.forEach((line, i) => {
+    if (PRAGMA.test(line) || (i > 0 && PRAGMA.test(lines[i - 1] ?? ''))) return;
     for (const { name, re, strict } of SHAPES) {
       if (isDoc && !strict) continue;
       const m = re.exec(line);
@@ -115,7 +123,8 @@ if (findings.length > 0) {
   }
   console.error(
     '\nRotate anything real that appears above, then move it to Secret Manager.\n' +
-      'If a match is a deliberate test fixture, add the file to EXEMPT in this script.\n',
+      'If a match is a deliberate test fixture, mark that line:\n' +
+      '  // scan-secrets-ignore: synthetic fixture for the redaction test\n',
   );
   process.exit(1);
 }

@@ -327,3 +327,67 @@ Why: (a) turns a deploy-time mistake into a user-facing one and buries the cause
      shifts, and the message says exactly what to fix.
 Revisit if: a secret is genuinely needed by only one rare route; the answer then is to mark
      it optional and have that route report itself unavailable, which the loader supports.
+
+## D-025 — `/healthz` and `/readyz` are separate routes with different dependencies
+Date: 2026-09-12
+Question: One health endpoint or two?
+Options: (a) one `/healthz` that checks everything, (b) liveness and readiness separately
+Choice: (b). `/healthz` depends on nothing; `/readyz` checks registered dependencies and
+        returns 503 naming the failing one.
+Why: With (a), a database blip makes Cloud Run conclude the *process* is broken and restart
+     it — which cannot help, costs a cold start, and turns a recoverable dependency outage
+     into an outage of everything. Liveness answers "is this process wedged"; readiness
+     answers "should this instance take traffic". They are different questions and only one
+     of them should be able to kill a container.
+Revisit if: never; this is the standard split for a reason.
+
+## D-026 — `/readyz` reports the scheduler version
+Date: 2026-09-12
+Question: How does a client find out it is running a stale copy of the engine?
+Options: (a) it does not, (b) readiness reports `schedulerVersion`
+Choice: (b), from `@kitchen/scheduler`.
+Why: The client computes optimistically and the server is authoritative, so a client on a
+     stale cached bundle will disagree with the server about a timeline. Without a version
+     to compare, that surfaces as "the plan changed when I reconnected" and is close to
+     undebuggable. With it, the client can log `scheduler-divergence` with both versions,
+     which is the telemetry that catches a bad cache in the wild.
+Revisit if: the engine is ever versioned independently of the package.
+
+## D-027 — The OpenAPI document is generated from the contract, not written
+Date: 2026-09-12
+Question: How is the API described?
+Options: (a) a hand-written OpenAPI file, (b) generated from the Zod contracts
+Choice: (b) — `buildOpenApi` walks the route registry and emits JSON Schema from the same
+        schemas the server validates against.
+Why: Hand-written API docs are wrong within a sprint and the wrong version is the one
+     people read. Generating means a renamed field updates the description in the same
+     commit, with no second edit to forget. The route registry also makes "which routes
+     need a token" a declared fact rather than something a reader infers.
+Revisit if: the contract needs documentation prose that Zod cannot carry; the answer then
+     is a description field on the schema, not a parallel document.
+
+## D-028 — Line-level scanner pragmas instead of file exemptions
+Date: 2026-09-12
+Question: The credential scanner caught its own test fixtures. How are deliberate fixtures
+          excused?
+Options: (a) exempt the whole file, (b) construct fixtures at runtime so no literal exists,
+         (c) a line-level `scan-secrets-ignore: <reason>` pragma
+Choice: (c), with (a) kept for the three files whose entire job is describing key shapes.
+Why: A file exemption stops protecting that file the moment someone adds a real key to it,
+     and the list grows quietly. (b) works but makes the fixtures unreadable, and the next
+     person writes a literal anyway. A pragma has to be written deliberately, sits on the
+     line it excuses with its reason attached, and is visible in review.
+Revisit if: pragmas start appearing without reasons; then require a minimum reason length.
+
+## D-029 — Redaction had to hook pino's log method, not just its formatter
+Date: 2026-09-12
+Question: Does `formatters.log` cover every way a secret can reach a log line?
+Options: (a) yes, (b) no — the message string bypasses it
+Choice: (b). Added a `hooks.logMethod` that redacts string arguments before pino sees them.
+Why: A test written to assert redaction failed, and the reason was worse than the test
+     being wrong: `formatters.log` only receives the *merge object*, so
+     `logger.error(\`failed using ${key}\`)` went straight through untouched. That is
+     precisely the shape an accidental leak takes — a hurried debug line interpolating the
+     credential while someone works out why a provider call is failing. The protection
+     looked complete and had a hole in the most likely path.
+Revisit if: never. Both passes are needed.

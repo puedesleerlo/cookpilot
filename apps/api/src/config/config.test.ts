@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
@@ -154,8 +155,10 @@ describe('redaction', () => {
   });
 
   it('redacts by shape even when the value was never registered', () => {
-    expect(redact('key is sk-ant-api03-AAAABBBBCCCCDDDD here')).toContain(REDACTION);
-    expect(redact('key is sk-ant-api03-AAAABBBBCCCCDDDD here')).not.toContain('AAAABBBBCCCCDDDD');
+    // scan-secrets-ignore: synthetic key, the fixture this test exists to redact
+    const synthetic = 'sk-ant-api03-BBBBCCCCDDDDEEEE';
+    expect(redact(`key is ${synthetic} here`)).toContain(REDACTION);
+    expect(redact(`key is ${synthetic} here`)).not.toContain('BBBBCCCCDDDDEEEE');
   });
 
   it('redacts inside free text, not only in fields', () => {
@@ -164,6 +167,7 @@ describe('redaction', () => {
   });
 
   it('keeps a database host readable while hiding the credentials', () => {
+    // scan-secrets-ignore: synthetic connection string
     const out = redact('failed to reach postgresql://kc:s3cretpass@db.internal:5432/kc');
     expect(out).not.toContain('s3cretpass');
     expect(out).toContain('db.internal');
@@ -267,6 +271,7 @@ describe('the secret scanner', () => {
   });
 
   it('catches a planted credential without printing it', () => {
+    // scan-secrets-ignore: planted on purpose, to prove the scanner catches it
     const { code, output } = run(treeWith('a.ts', `const k = "sk-ant-api03-PLANTEDPLANTEDPLANTED";`));
     expect(code).toBe(1);
     expect(output).toContain('FAILED');
@@ -275,6 +280,7 @@ describe('the secret scanner', () => {
   });
 
   it('catches a credentialled database URL', () => {
+    // scan-secrets-ignore: planted on purpose, to prove the scanner catches it
     expect(run(treeWith('a.ts', `const u = "postgresql://kc:realpassword@db/kc";`)).code).toBe(1);
   });
 

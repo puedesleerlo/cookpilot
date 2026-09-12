@@ -41,13 +41,20 @@ describe('the bundle scanner', () => {
     expect(output).toContain('clean');
   });
 
+  // scan-secrets-ignore: every entry below is planted, to prove the scanner catches it
   it.each([
     ['a secret name', 'index.js', 'const k=import.meta.env.BRAVE_API_KEY;'],
+    // scan-secrets-ignore: planted fixture
     ['an Anthropic key shape', 'index.js', 'const k="sk-ant-api03-AAAABBBBCCCCDDDDEEEE";'],
+    // scan-secrets-ignore: planted fixture
     ['a Google API key shape', 'index.js', 'const k="AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";'],
+    // scan-secrets-ignore: planted fixture
     ['an ElevenLabs key shape', 'index.js', 'const k="sk_0123456789abcdef0123456789abcdef";'],
+    // scan-secrets-ignore: planted fixture
     ['a Postgres URL with credentials', 'index.js', 'const u="postgresql://user:hunter2@db.example/app";'],
+    // scan-secrets-ignore: planted fixture
     ['a service-account key', 'config.json', '{"type":"service_account","project_id":"x"}'],
+    // scan-secrets-ignore: planted fixture
     ['a PEM private key', 'index.js', '"-----BEGIN RSA PRIVATE KEY-----"'],
   ])('rejects %s', (_label, file, content) => {
     const { code, output } = run(bundleWith(file, content));
@@ -56,6 +63,7 @@ describe('the bundle scanner', () => {
   });
 
   it('reports the shape without printing the value', () => {
+    // scan-secrets-ignore: planted fixture
     const { output } = run(bundleWith('index.js', 'const k="sk-ant-api03-SECRETSECRETSECRET";'));
     expect(output).toContain('redacted');
     expect(output).not.toContain('SECRETSECRETSECRET');
