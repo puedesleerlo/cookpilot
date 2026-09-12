@@ -355,6 +355,15 @@ const PhaseStrip = ({ step, longest }: { step: RecipeStep; longest: number }) =>
   );
 };
 
+/** Makitra's icon set has no bin, so this one is drawn to its grid: straight segments, square caps. */
+const TrashIcon = () => (
+  <svg viewBox="0 0 24 24" className="mk-icon" aria-hidden="true" focusable="false">
+    <path d="M3.5 6.5h17M9 6.5v-3h6v3" />
+    <polygon points="5.5,6.5 18.5,6.5 17.5,21 6.5,21" />
+    <path d="M10 10.5v6.5M14 10.5v6.5" />
+  </svg>
+);
+
 const RecipeCard = ({ recipe, flip }: { recipe: RecipeIR; flip: boolean }) => {
   const [open, setOpen] = useState(false);
   const dropRecipe = useSession((s) => s.dropRecipe);
@@ -374,17 +383,23 @@ const RecipeCard = ({ recipe, flip }: { recipe: RecipeIR; flip: boolean }) => {
       <CardArt recipe={recipe} tone={tone} flip={flip} />
 
       <div className="flex min-w-0 flex-col gap-4 p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="flex items-start justify-between gap-4">
           <Display
             as="h2"
-            className={`min-w-0 flex-1 basis-[16rem] text-xl leading-none sm:text-2xl ${STAMP}`}
+            className={`min-w-0 flex-1 text-xl leading-none sm:text-2xl ${STAMP}`}
             style={{ '--stamp-from': flip ? '6deg' : '-6deg' } as CSSProperties}
           >
             {recipe.title}
           </Display>
-          <Button variant="quiet" onClick={() => dropRecipe(recipe.id)}>
-            Not this one
-          </Button>
+          <button
+            type="button"
+            onClick={() => dropRecipe(recipe.id)}
+            aria-label={`Remove ${recipe.title}`}
+            title="Remove this recipe"
+            className="mk-btn mk-btn--icon flex-none [--btn-fg:var(--mk-danger)] hover:[--btn-bg:var(--mk-danger-bg)]"
+          >
+            <TrashIcon />
+          </button>
         </div>
 
         <ul className="flex flex-wrap items-center gap-2 text-sm">

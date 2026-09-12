@@ -1,5 +1,5 @@
 /*
- * The token layer. Every colour, size, radius and duration in Kitchen Compiler is defined
+ * The token layer. Every colour, size, radius and duration in Cookpilot is defined
  * here once. Components reference tokens; a hex literal anywhere under src/ui outside this
  * file is a test failure.
  *

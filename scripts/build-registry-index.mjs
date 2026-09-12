@@ -42,7 +42,7 @@ const entries = files.map((file) => {
 const index = {
   registryVersion: 1,
   description:
-    'Kitchen Compiler recipe packs. A pack is a JSON file of structured recipes; add one by opening a pull request with the file and an entry here.',
+    'Cookpilot recipe packs. A pack is a JSON file of structured recipes; add one by opening a pull request with the file and an entry here.',
   packs: entries,
 };
 

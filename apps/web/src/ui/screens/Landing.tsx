@@ -33,7 +33,7 @@ export const Landing = () => {
         <div className="relative mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-5 pb-[28px] pt-5 sm:px-[40px] sm:pb-[40px]">
           <p className="flex items-center gap-3 text-md font-bold [font-variation-settings:var(--mk-sharp)]">
             <img src={bowl} alt="" className="h-[36px] w-auto" />
-            Kitchen Compiler
+            Cookpilot
           </p>
 
           <h1 className="voice-display mt-5 leading-[0.84] sm:mt-6">

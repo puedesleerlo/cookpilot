@@ -61,7 +61,7 @@ export const buildOpenApi = (routes: (RouteContract & { name: string })[]): Reco
   return {
     openapi: '3.1.0',
     info: {
-      title: 'Kitchen Compiler API',
+      title: 'Cookpilot API',
       version: '0.1.0',
       description:
         'Sessions, an ordered event log, and server-authoritative scheduling. Generated from ' +
