@@ -1,0 +1,82 @@
+{
+  "registryVersion": 1,
+  "description": "Kitchen Compiler recipe packs. A pack is a JSON file of structured recipes; add one by opening a pull request with the file and an entry here.",
+  "packs": [
+    {
+      "packId": "seed-asian-weeknight",
+      "name": "Weeknight Asian staples",
+      "description": "Mains and a side built on a soy, ginger and garlic pantry.",
+      "version": "1.0.0",
+      "locale": "en-US",
+      "provenance": "seed",
+      "contentHash": "fnv1a-17444feb",
+      "recipeCount": 5,
+      "kinds": {
+        "main": 4,
+        "side": 1
+      },
+      "bytes": 24259,
+      "url": "packs/seed-asian-weeknight.json"
+    },
+    {
+      "packId": "seed-bases",
+      "name": "Batch bases",
+      "description": "Grains, eggs and greens with long passive windows and high reuse across the week.",
+      "version": "1.0.0",
+      "locale": "en-US",
+      "provenance": "seed",
+      "contentHash": "fnv1a-80e457ec",
+      "recipeCount": 4,
+      "kinds": {
+        "base": 4
+      },
+      "bytes": 9942,
+      "url": "packs/seed-bases.json"
+    },
+    {
+      "packId": "seed-beverages",
+      "name": "Batch beverages",
+      "description": "Drinks by the jug, including one that starts tonight and is ready tomorrow.",
+      "version": "1.0.0",
+      "locale": "en-US",
+      "provenance": "seed",
+      "contentHash": "fnv1a-bf35dd0b",
+      "recipeCount": 4,
+      "kinds": {
+        "beverage": 4
+      },
+      "bytes": 13381,
+      "url": "packs/seed-beverages.json"
+    },
+    {
+      "packId": "seed-fast-mains",
+      "name": "Fast mains",
+      "description": "Short mains the compiler can substitute in when the session will not fit.",
+      "version": "1.0.0",
+      "locale": "en-US",
+      "provenance": "seed",
+      "contentHash": "fnv1a-162ec5b2",
+      "recipeCount": 4,
+      "kinds": {
+        "main": 4
+      },
+      "bytes": 12117,
+      "url": "packs/seed-fast-mains.json"
+    },
+    {
+      "packId": "seed-sauces",
+      "name": "Sauces and condiments",
+      "description": "Ambient, short, and almost free of burner contention. The best work to hand a beginner.",
+      "version": "1.0.0",
+      "locale": "en-US",
+      "provenance": "seed",
+      "contentHash": "fnv1a-3a9a7649",
+      "recipeCount": 5,
+      "kinds": {
+        "sauce": 5
+      },
+      "bytes": 14510,
+      "url": "packs/seed-sauces.json"
+    }
+  ]
+}

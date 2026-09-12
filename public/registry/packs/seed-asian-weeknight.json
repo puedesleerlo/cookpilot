@@ -1,0 +1,1180 @@
+{
+ "packId": "seed-asian-weeknight",
+ "version": "1.0.0",
+ "contentHash": "fnv1a-17444feb",
+ "name": "Weeknight Asian staples",
+ "description": "Mains and a side built on a soy, ginger and garlic pantry.",
+ "locale": "en-US",
+ "provenance": "seed",
+ "recipes": [
+  {
+   "id": "rcp:ginger-garlic-chicken",
+   "title": "Ginger-garlic chicken with peppers",
+   "kind": "main",
+   "yieldServings": 4,
+   "ingredients": [
+    {
+     "canonicalName": "chicken breast",
+     "quantity": 600,
+     "unit": "g",
+     "role": "core",
+     "category": "protein-raw",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "bell peppers",
+     "quantity": 2,
+     "unit": "piece",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "garlic",
+     "quantity": 4,
+     "unit": "clove",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "ginger",
+     "quantity": 20,
+     "unit": "g",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "soy sauce",
+     "quantity": 3,
+     "unit": "tbsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "cooking wine",
+     "quantity": 2,
+     "unit": "tbsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sesame oil",
+     "quantity": 1,
+     "unit": "tbsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "cornstarch",
+     "quantity": 2,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "neutral oil",
+     "quantity": 2,
+     "unit": "tbsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-ginger-garlic-chicken:0",
+     "verb": "slice",
+     "text": "Slice the chicken into thin strips",
+     "durationMin": 7,
+     "activeMin": 7,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "chicken breast"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-ginger-garlic-chicken:1",
+     "verb": "marinate",
+     "text": "Toss the chicken with soy sauce, wine and cornstarch and leave it",
+     "durationMin": 15,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "mixing-bowl",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "chicken breast",
+      "soy sauce",
+      "cooking wine",
+      "cornstarch"
+     ],
+     "taskClass": "marinate",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-ginger-garlic-chicken:0"
+     ]
+    },
+    {
+     "id": "step:rcp-ginger-garlic-chicken:2",
+     "verb": "mince",
+     "text": "Mince the garlic and ginger",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "garlic",
+      "ginger"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-ginger-garlic-chicken:1"
+     ]
+    },
+    {
+     "id": "step:rcp-ginger-garlic-chicken:3",
+     "verb": "slice",
+     "text": "Slice the peppers",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "bell peppers"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-ginger-garlic-chicken:2"
+     ]
+    },
+    {
+     "id": "step:rcp-ginger-garlic-chicken:4",
+     "verb": "stir-fry",
+     "text": "Stir-fry the chicken hard until it colours",
+     "durationMin": 7,
+     "activeMin": 7,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "frying-pan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "chicken breast",
+      "neutral oil"
+     ],
+     "taskClass": "stovetop",
+     "minSkill": "intermediate",
+     "effort": 3,
+     "optional": false,
+     "heat": {
+      "level": "high"
+     },
+     "dependsOn": [
+      "step:rcp-ginger-garlic-chicken:1",
+      "step:rcp-ginger-garlic-chicken:2"
+     ]
+    },
+    {
+     "id": "step:rcp-ginger-garlic-chicken:5",
+     "verb": "stir-fry",
+     "text": "Add the peppers and aromatics and toss through",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "frying-pan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "bell peppers",
+      "garlic",
+      "ginger",
+      "sesame oil"
+     ],
+     "taskClass": "stovetop",
+     "minSkill": "intermediate",
+     "effort": 3,
+     "optional": false,
+     "heat": {
+      "level": "high"
+     },
+     "dependsOn": [
+      "step:rcp-ginger-garlic-chicken:3",
+      "step:rcp-ginger-garlic-chicken:4"
+     ]
+    }
+   ],
+   "tags": [
+    "asian",
+    "stir-fry",
+    "chicken"
+   ],
+   "allergens": [
+    "soy",
+    "sesame"
+   ],
+   "dietary": [],
+   "keepsDays": 4,
+   "overnight": false
+  },
+  {
+   "id": "rcp:beef-mushroom-stirfry",
+   "title": "Beef and mushroom stir-fry",
+   "kind": "main",
+   "yieldServings": 4,
+   "ingredients": [
+    {
+     "canonicalName": "ground beef",
+     "quantity": 500,
+     "unit": "g",
+     "role": "core",
+     "category": "protein-raw",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "mushrooms",
+     "quantity": 300,
+     "unit": "g",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "garlic",
+     "quantity": 3,
+     "unit": "clove",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "soy sauce",
+     "quantity": 2,
+     "unit": "tbsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "neutral oil",
+     "quantity": 1,
+     "unit": "tbsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "black pepper",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-beef-mushroom-stirfry:0",
+     "verb": "slice",
+     "text": "Slice the mushrooms thickly",
+     "durationMin": 5,
+     "activeMin": 5,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "mushrooms"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-beef-mushroom-stirfry:1",
+     "verb": "mince",
+     "text": "Mince the garlic",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "garlic"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-beef-mushroom-stirfry:0"
+     ]
+    },
+    {
+     "id": "step:rcp-beef-mushroom-stirfry:2",
+     "verb": "sear",
+     "text": "Brown the beef in a dry hot pan, breaking it up",
+     "durationMin": 8,
+     "activeMin": 8,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "frying-pan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "ground beef"
+     ],
+     "taskClass": "stovetop",
+     "minSkill": "intermediate",
+     "effort": 3,
+     "optional": false,
+     "heat": {
+      "level": "high"
+     },
+     "dependsOn": [
+      "step:rcp-beef-mushroom-stirfry:1"
+     ]
+    },
+    {
+     "id": "step:rcp-beef-mushroom-stirfry:3",
+     "verb": "stir-fry",
+     "text": "Add mushrooms and garlic and cook until they give up their water",
+     "durationMin": 6,
+     "activeMin": 6,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "frying-pan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "mushrooms",
+      "garlic",
+      "soy sauce",
+      "black pepper"
+     ],
+     "taskClass": "stovetop",
+     "minSkill": "intermediate",
+     "effort": 3,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-beef-mushroom-stirfry:1",
+      "step:rcp-beef-mushroom-stirfry:2"
+     ]
+    }
+   ],
+   "tags": [
+    "asian",
+    "stir-fry",
+    "beef"
+   ],
+   "allergens": [
+    "soy"
+   ],
+   "dietary": [],
+   "keepsDays": 4,
+   "overnight": false
+  },
+  {
+   "id": "rcp:soy-ginger-salmon",
+   "title": "Soy-ginger salmon",
+   "kind": "main",
+   "yieldServings": 4,
+   "ingredients": [
+    {
+     "canonicalName": "salmon",
+     "quantity": 4,
+     "unit": "piece",
+     "role": "core",
+     "category": "protein-raw",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "ginger",
+     "quantity": 15,
+     "unit": "g",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "soy sauce",
+     "quantity": 2,
+     "unit": "tbsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "cooking wine",
+     "quantity": 1,
+     "unit": "tbsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "honey",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "neutral oil",
+     "quantity": 1,
+     "unit": "tbsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-soy-ginger-salmon:0",
+     "verb": "grate",
+     "text": "Grate the ginger",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "grater",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "mixing-bowl",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "ginger"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-soy-ginger-salmon:1",
+     "verb": "mix",
+     "text": "Stir the ginger, soy, wine and honey into a glaze",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "mixing-bowl",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "ginger",
+      "soy sauce",
+      "cooking wine",
+      "honey"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-soy-ginger-salmon:0"
+     ]
+    },
+    {
+     "id": "step:rcp-soy-ginger-salmon:2",
+     "verb": "sear",
+     "text": "Sear the salmon skin-side down, then turn",
+     "durationMin": 9,
+     "activeMin": 9,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "frying-pan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "salmon",
+      "neutral oil"
+     ],
+     "taskClass": "stovetop",
+     "minSkill": "intermediate",
+     "effort": 3,
+     "optional": false,
+     "heat": {
+      "level": "medium"
+     },
+     "dependsOn": [
+      "step:rcp-soy-ginger-salmon:1"
+     ]
+    },
+    {
+     "id": "step:rcp-soy-ginger-salmon:3",
+     "verb": "reduce",
+     "text": "Spoon over the glaze and let it thicken around the fish",
+     "durationMin": 3,
+     "activeMin": 2,
+     "finishMin": 1,
+     "equipment": [
+      {
+       "kind": "frying-pan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "salmon"
+     ],
+     "taskClass": "simmer-watch",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-soy-ginger-salmon:1",
+      "step:rcp-soy-ginger-salmon:2"
+     ]
+    },
+    {
+     "id": "step:rcp-soy-ginger-salmon:4",
+     "verb": "rest",
+     "text": "Let the salmon rest before it is moved",
+     "durationMin": 4,
+     "activeMin": 0,
+     "finishMin": 0,
+     "equipment": [],
+     "ingredientRefs": [
+      "salmon"
+     ],
+     "taskClass": "chill",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "minDelayAfterMin": 0,
+     "maxDelayAfterMin": 15,
+     "note": "Rest at least a few minutes, and get it cold within the hour.",
+     "dependsOn": [
+      "step:rcp-soy-ginger-salmon:3"
+     ]
+    }
+   ],
+   "tags": [
+    "asian",
+    "fish"
+   ],
+   "allergens": [
+    "fish",
+    "soy"
+   ],
+   "dietary": [],
+   "keepsDays": 2,
+   "overnight": false
+  },
+  {
+   "id": "rcp:garlic-bok-choy",
+   "title": "Garlic bok choy",
+   "kind": "side",
+   "yieldServings": 4,
+   "ingredients": [
+    {
+     "canonicalName": "bok choy",
+     "quantity": 500,
+     "unit": "g",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "garlic",
+     "quantity": 3,
+     "unit": "clove",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sesame oil",
+     "quantity": 1,
+     "unit": "tbsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "salt",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-garlic-bok-choy:0",
+     "verb": "wash",
+     "text": "Wash the bok choy and shake it dry",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "colander",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "sink",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "bok choy"
+     ],
+     "taskClass": "wash-produce",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-garlic-bok-choy:1",
+     "verb": "chop",
+     "text": "Halve the bok choy lengthways",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "bok choy"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-garlic-bok-choy:0"
+     ]
+    },
+    {
+     "id": "step:rcp-garlic-bok-choy:2",
+     "verb": "mince",
+     "text": "Mince the garlic",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "garlic"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-garlic-bok-choy:1"
+     ]
+    },
+    {
+     "id": "step:rcp-garlic-bok-choy:3",
+     "verb": "steam",
+     "text": "Steam the greens until the stems just give",
+     "durationMin": 6,
+     "activeMin": 1,
+     "finishMin": 1,
+     "equipment": [
+      {
+       "kind": "pot",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "bok choy"
+     ],
+     "taskClass": "simmer-watch",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-garlic-bok-choy:1"
+     ]
+    },
+    {
+     "id": "step:rcp-garlic-bok-choy:4",
+     "verb": "mix",
+     "text": "Dress with garlic, sesame oil and salt",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "mixing-bowl",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "garlic",
+      "sesame oil",
+      "salt"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-garlic-bok-choy:2",
+      "step:rcp-garlic-bok-choy:3"
+     ]
+    }
+   ],
+   "tags": [
+    "asian",
+    "greens",
+    "fast"
+   ],
+   "allergens": [
+    "sesame"
+   ],
+   "dietary": [],
+   "keepsDays": 4,
+   "overnight": false
+  },
+  {
+   "id": "rcp:tomato-egg",
+   "title": "Tomato and egg",
+   "kind": "main",
+   "yieldServings": 4,
+   "ingredients": [
+    {
+     "canonicalName": "tomatoes",
+     "quantity": 5,
+     "unit": "piece",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "eggs",
+     "quantity": 6,
+     "unit": "piece",
+     "role": "core",
+     "category": "protein-raw",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "spring onions",
+     "quantity": 2,
+     "unit": "stalk",
+     "role": "core",
+     "category": "aromatic",
+     "optional": true,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sesame oil",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sugar",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "salt",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "neutral oil",
+     "quantity": 2,
+     "unit": "tbsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-tomato-egg:0",
+     "verb": "chop",
+     "text": "Cut the tomatoes into wedges",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "tomatoes"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-tomato-egg:1",
+     "verb": "whisk",
+     "text": "Beat the eggs with a pinch of salt",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "mixing-bowl",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "eggs",
+      "salt"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-tomato-egg:0"
+     ]
+    },
+    {
+     "id": "step:rcp-tomato-egg:2",
+     "verb": "stir-fry",
+     "text": "Scramble the eggs in hot oil and lift them out while soft",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "frying-pan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "eggs",
+      "neutral oil"
+     ],
+     "taskClass": "stovetop",
+     "minSkill": "intermediate",
+     "effort": 3,
+     "optional": false,
+     "heat": {
+      "level": "high"
+     },
+     "dependsOn": [
+      "step:rcp-tomato-egg:1"
+     ]
+    },
+    {
+     "id": "step:rcp-tomato-egg:3",
+     "verb": "saute",
+     "text": "Cook the tomatoes down with the sugar until saucy",
+     "durationMin": 6,
+     "activeMin": 6,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "frying-pan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "tomatoes",
+      "sugar"
+     ],
+     "taskClass": "stovetop",
+     "minSkill": "intermediate",
+     "effort": 3,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-tomato-egg:0",
+      "step:rcp-tomato-egg:2"
+     ]
+    },
+    {
+     "id": "step:rcp-tomato-egg:4",
+     "verb": "mix",
+     "text": "Fold the eggs back through and finish with sesame oil",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "frying-pan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "eggs",
+      "sesame oil"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-tomato-egg:3"
+     ]
+    },
+    {
+     "id": "step:rcp-tomato-egg:5",
+     "verb": "garnish",
+     "text": "Scatter over the spring onion",
+     "durationMin": 1,
+     "activeMin": 1,
+     "finishMin": 0,
+     "equipment": [],
+     "ingredientRefs": [
+      "spring onions"
+     ],
+     "taskClass": "garnish",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": true,
+     "dependsOn": [
+      "step:rcp-tomato-egg:4"
+     ]
+    }
+   ],
+   "tags": [
+    "asian",
+    "fast",
+    "vegetarian"
+   ],
+   "allergens": [
+    "egg"
+   ],
+   "dietary": [
+    "vegetarian"
+   ],
+   "keepsDays": 4,
+   "overnight": false
+  }
+ ]
+}

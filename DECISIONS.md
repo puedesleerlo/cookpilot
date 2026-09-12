@@ -139,3 +139,52 @@ Why: A hand-authored canvas starts accurate and drifts the moment a token change
      values, and the glyph sheet renders the same path data the app renders. Re-running the
      script is the whole update process.
 Revisit if: the canvas needs layout nuance the generator cannot express.
+
+## D-012 — Sesame oil is a core ingredient, not an assumable staple
+Date: 2026-09-12
+Question: Which ingredients may the compiler assume are in the cupboard?
+Options: (a) all oils and condiments, (b) only genuinely universal items
+Choice: (b). `PANTRY_STAPLES` is salt, black pepper, sugar, water, neutral oil, olive oil,
+        cornstarch, chilli flakes, honey, vinegar, flour. Sesame oil and soy sauce are not.
+Why: The test for this started as an assertion that sesame oil was assumable and failed —
+     which turned out to be the code being right. Sesame oil is what makes a dish that
+     dish. Assuming it plans a sesame dinner for someone who has no sesame oil, and the
+     scoring hides the problem by not counting it as missing. Salt is different: nobody
+     is surprised to be told to add salt.
+Revisit if: coverage scores skew so low that good candidates get filtered out.
+
+## D-013 — Import takes pasted text, never a URL fetch
+Date: 2026-09-12
+Question: Should "import from a URL" actually fetch the URL?
+Options: (a) fetch in the browser, (b) fetch via a CORS proxy, (c) user pastes the text
+Choice: (c). The user pastes; we keep `source.url` and `source.siteName` for attribution.
+Why: (a) fails on almost every recipe site's CORS policy, so it would work in a demo and
+     break in reality. (b) means running a backend, which the brief rules out, and turns
+     the app into something that fetches arbitrary URLs on a user's behalf. (c) always
+     works, needs no infrastructure, and loses nothing the compiler needs — the structure
+     comes from the text either way.
+Revisit if: the app ever gains a backend for another reason.
+
+## D-014 — The API key is bundled, and the app says so
+Date: 2026-09-12
+Question: `VITE_ANTHROPIC_API_KEY` is inlined into the client bundle at build time. How
+          should that be handled?
+Options: (a) ignore it, (b) add a backend proxy, (c) ship it and state the limitation
+Choice: (c). The debug panel states plainly that the key is bundled and that this build is
+        for local use. `dangerouslyAllowBrowser` is set with a comment pointing here.
+Why: A backend contradicts the brief's architecture. Silently shipping a bundled key and
+     letting it look production-ready is the genuinely bad option — the honest one is to
+     ship it working and name the constraint where someone deploying would see it.
+Revisit if: the app is ever deployed anywhere real; then it needs a proxy, not a warning.
+
+## D-015 — Five seed packs split by role, including one of deliberately short mains
+Date: 2026-09-12
+Question: How should the bundled recipe content be organised?
+Options: (a) one big pack, (b) packs by cuisine, (c) packs by role in a session
+Choice: (c) — mains, bases, sauces, beverages, and a fifth pack of fast mains.
+Why: The planner composes a session (a main, a base, a sauce, a drink), so indexing by role
+     is what it actually asks for. The fifth pack exists specifically so rung 3 of the
+     degradation ladder — "substitute a long dish for a short one" — has somewhere to go.
+     A substitution rung with nothing shorter to substitute is a no-op that looks like a
+     feature.
+Revisit if: users import enough of their own content that role coverage comes from there.

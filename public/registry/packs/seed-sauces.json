@@ -1,0 +1,721 @@
+{
+ "packId": "seed-sauces",
+ "version": "1.0.0",
+ "contentHash": "fnv1a-3a9a7649",
+ "name": "Sauces and condiments",
+ "description": "Ambient, short, and almost free of burner contention. The best work to hand a beginner.",
+ "locale": "en-US",
+ "provenance": "seed",
+ "recipes": [
+  {
+   "id": "rcp:soy-ginger-sauce",
+   "title": "Soy-ginger sauce",
+   "kind": "sauce",
+   "yieldServings": 8,
+   "ingredients": [
+    {
+     "canonicalName": "soy sauce",
+     "quantity": 60,
+     "unit": "ml",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "ginger",
+     "quantity": 20,
+     "unit": "g",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "garlic",
+     "quantity": 2,
+     "unit": "clove",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sesame oil",
+     "quantity": 2,
+     "unit": "tsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sugar",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-soy-ginger-sauce:0",
+     "verb": "grate",
+     "text": "Grate the ginger and garlic straight into a jar",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "grater",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "jar",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "ginger",
+      "garlic"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-soy-ginger-sauce:1",
+     "verb": "mix",
+     "text": "Add soy, sesame oil and sugar and shake",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "jar",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "soy sauce",
+      "sesame oil",
+      "sugar"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-soy-ginger-sauce:0"
+     ]
+    }
+   ],
+   "tags": [
+    "sauce",
+    "no-heat",
+    "beginner"
+   ],
+   "allergens": [
+    "soy",
+    "sesame"
+   ],
+   "dietary": [],
+   "keepsDays": 10,
+   "overnight": false
+  },
+  {
+   "id": "rcp:garlic-sesame-sauce",
+   "title": "Garlic-sesame sauce",
+   "kind": "sauce",
+   "yieldServings": 8,
+   "ingredients": [
+    {
+     "canonicalName": "garlic",
+     "quantity": 4,
+     "unit": "clove",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sesame oil",
+     "quantity": 3,
+     "unit": "tbsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "soy sauce",
+     "quantity": 2,
+     "unit": "tbsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "salt",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-garlic-sesame-sauce:0",
+     "verb": "mince",
+     "text": "Mince the garlic fine",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "garlic"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-garlic-sesame-sauce:1",
+     "verb": "mix",
+     "text": "Stir it through the oil, soy and salt",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "jar",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "sesame oil",
+      "soy sauce",
+      "salt"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-garlic-sesame-sauce:0"
+     ]
+    }
+   ],
+   "tags": [
+    "sauce",
+    "no-heat",
+    "beginner"
+   ],
+   "allergens": [
+    "soy",
+    "sesame"
+   ],
+   "dietary": [],
+   "keepsDays": 7,
+   "overnight": false
+  },
+  {
+   "id": "rcp:chilli-garlic-oil",
+   "title": "Chilli-garlic oil",
+   "kind": "sauce",
+   "yieldServings": 10,
+   "ingredients": [
+    {
+     "canonicalName": "garlic",
+     "quantity": 5,
+     "unit": "clove",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "chilli flakes",
+     "quantity": 3,
+     "unit": "tbsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "neutral oil",
+     "quantity": 120,
+     "unit": "ml",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sesame oil",
+     "quantity": 1,
+     "unit": "tbsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "salt",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-chilli-garlic-oil:0",
+     "verb": "mince",
+     "text": "Mince the garlic",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "garlic"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-chilli-garlic-oil:1",
+     "verb": "toast",
+     "text": "Warm the oil until it shimmers, then take it off",
+     "durationMin": 5,
+     "activeMin": 2,
+     "finishMin": 1,
+     "equipment": [
+      {
+       "kind": "saucepan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "neutral oil"
+     ],
+     "taskClass": "stovetop",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-chilli-garlic-oil:0"
+     ]
+    },
+    {
+     "id": "step:rcp-chilli-garlic-oil:2",
+     "verb": "mix",
+     "text": "Pour the hot oil over the chilli and garlic",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "jar",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "chilli flakes",
+      "garlic",
+      "sesame oil",
+      "salt"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "maxDelayAfterMin": 3,
+     "dependsOn": [
+      "step:rcp-chilli-garlic-oil:0",
+      "step:rcp-chilli-garlic-oil:1"
+     ]
+    },
+    {
+     "id": "step:rcp-chilli-garlic-oil:3",
+     "verb": "cool",
+     "text": "Let it come down to room temperature before it is closed",
+     "durationMin": 12,
+     "activeMin": 0,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "jar",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [],
+     "taskClass": "chill",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-chilli-garlic-oil:2"
+     ]
+    }
+   ],
+   "tags": [
+    "sauce",
+    "condiment"
+   ],
+   "allergens": [
+    "sesame"
+   ],
+   "dietary": [],
+   "keepsDays": 21,
+   "overnight": false
+  },
+  {
+   "id": "rcp:scallion-ginger-oil",
+   "title": "Scallion-ginger oil",
+   "kind": "sauce",
+   "yieldServings": 8,
+   "ingredients": [
+    {
+     "canonicalName": "spring onions",
+     "quantity": 4,
+     "unit": "stalk",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "ginger",
+     "quantity": 30,
+     "unit": "g",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "neutral oil",
+     "quantity": 80,
+     "unit": "ml",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sesame oil",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "core",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "salt",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-scallion-ginger-oil:0",
+     "verb": "slice",
+     "text": "Slice the spring onions and ginger very fine",
+     "durationMin": 5,
+     "activeMin": 5,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "spring onions",
+      "ginger"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-scallion-ginger-oil:1",
+     "verb": "toast",
+     "text": "Heat the oil until it just moves",
+     "durationMin": 4,
+     "activeMin": 2,
+     "finishMin": 1,
+     "equipment": [
+      {
+       "kind": "saucepan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "neutral oil"
+     ],
+     "taskClass": "stovetop",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-scallion-ginger-oil:0"
+     ]
+    },
+    {
+     "id": "step:rcp-scallion-ginger-oil:2",
+     "verb": "mix",
+     "text": "Pour it over and season",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "jar",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "sesame oil",
+      "salt"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "maxDelayAfterMin": 3,
+     "dependsOn": [
+      "step:rcp-scallion-ginger-oil:0",
+      "step:rcp-scallion-ginger-oil:1"
+     ]
+    }
+   ],
+   "tags": [
+    "sauce",
+    "condiment"
+   ],
+   "allergens": [
+    "sesame"
+   ],
+   "dietary": [],
+   "keepsDays": 7,
+   "overnight": false
+  },
+  {
+   "id": "rcp:lemon-mint-dressing",
+   "title": "Lemon-mint dressing",
+   "kind": "sauce",
+   "yieldServings": 8,
+   "ingredients": [
+    {
+     "canonicalName": "lemons",
+     "quantity": 2,
+     "unit": "piece",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "mint",
+     "quantity": 1,
+     "unit": "bunch",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "neutral oil",
+     "quantity": 60,
+     "unit": "ml",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "honey",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "salt",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-lemon-mint-dressing:0",
+     "verb": "juice",
+     "text": "Juice the lemons",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "measuring-cup",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "lemons"
+     ],
+     "taskClass": "strain",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-lemon-mint-dressing:1",
+     "verb": "chop",
+     "text": "Chop the mint",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "mint"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-lemon-mint-dressing:0"
+     ]
+    },
+    {
+     "id": "step:rcp-lemon-mint-dressing:2",
+     "verb": "whisk",
+     "text": "Whisk everything together",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "mixing-bowl",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "neutral oil",
+      "honey",
+      "salt"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-lemon-mint-dressing:0",
+      "step:rcp-lemon-mint-dressing:1"
+     ]
+    }
+   ],
+   "tags": [
+    "sauce",
+    "no-heat",
+    "beginner",
+    "fresh"
+   ],
+   "allergens": [],
+   "dietary": [],
+   "keepsDays": 4,
+   "overnight": false
+  }
+ ]
+}

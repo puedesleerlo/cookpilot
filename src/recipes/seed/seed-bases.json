@@ -1,0 +1,487 @@
+{
+ "packId": "seed-bases",
+ "version": "1.0.0",
+ "contentHash": "fnv1a-80e457ec",
+ "name": "Batch bases",
+ "description": "Grains, eggs and greens with long passive windows and high reuse across the week.",
+ "locale": "en-US",
+ "provenance": "seed",
+ "recipes": [
+  {
+   "id": "rcp:jasmine-rice",
+   "title": "Steamed jasmine rice",
+   "kind": "base",
+   "yieldServings": 6,
+   "ingredients": [
+    {
+     "canonicalName": "jasmine rice",
+     "quantity": 400,
+     "unit": "g",
+     "role": "core",
+     "category": "grain",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "water",
+     "quantity": 600,
+     "unit": "ml",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-jasmine-rice:0",
+     "verb": "wash",
+     "text": "Rinse the rice until the water runs clear",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "colander",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "sink",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "jasmine rice"
+     ],
+     "taskClass": "wash-produce",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-jasmine-rice:1",
+     "verb": "simmer",
+     "text": "Bring to a boil, then leave it covered on the lowest heat",
+     "durationMin": 25,
+     "activeMin": 2,
+     "finishMin": 1,
+     "equipment": [
+      {
+       "kind": "saucepan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "jasmine rice",
+      "water"
+     ],
+     "taskClass": "simmer-watch",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "note": "The 22 passive minutes here are the single biggest parallelism window in most sessions.",
+     "dependsOn": [
+      "step:rcp-jasmine-rice:0"
+     ]
+    },
+    {
+     "id": "step:rcp-jasmine-rice:2",
+     "verb": "rest",
+     "text": "Let it stand off the heat, still covered",
+     "durationMin": 5,
+     "activeMin": 0,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "saucepan",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "jasmine rice"
+     ],
+     "taskClass": "chill",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-jasmine-rice:1"
+     ]
+    }
+   ],
+   "tags": [
+    "base",
+    "grain",
+    "batch"
+   ],
+   "allergens": [],
+   "dietary": [],
+   "keepsDays": 4,
+   "overnight": false
+  },
+  {
+   "id": "rcp:soft-boiled-eggs",
+   "title": "Batch soft-boiled eggs",
+   "kind": "base",
+   "yieldServings": 6,
+   "ingredients": [
+    {
+     "canonicalName": "eggs",
+     "quantity": 6,
+     "unit": "piece",
+     "role": "core",
+     "category": "protein-raw",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "water",
+     "quantity": 1,
+     "unit": "l",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-soft-boiled-eggs:0",
+     "verb": "boil",
+     "text": "Lower the eggs into boiling water and set a timer",
+     "durationMin": 9,
+     "activeMin": 2,
+     "finishMin": 1,
+     "equipment": [
+      {
+       "kind": "saucepan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "eggs",
+      "water"
+     ],
+     "taskClass": "boil-water",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-soft-boiled-eggs:1",
+     "verb": "cool",
+     "text": "Drop them into cold water to stop the cooking",
+     "durationMin": 6,
+     "activeMin": 0,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "mixing-bowl",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "eggs"
+     ],
+     "taskClass": "chill",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "maxDelayAfterMin": 2,
+     "note": "Straight into cold water, or the yolks keep going.",
+     "dependsOn": [
+      "step:rcp-soft-boiled-eggs:0"
+     ]
+    }
+   ],
+   "tags": [
+    "base",
+    "batch",
+    "breakfast"
+   ],
+   "allergens": [
+    "egg"
+   ],
+   "dietary": [],
+   "keepsDays": 5,
+   "overnight": false
+  },
+  {
+   "id": "rcp:blanched-greens",
+   "title": "Blanched greens for the week",
+   "kind": "base",
+   "yieldServings": 6,
+   "ingredients": [
+    {
+     "canonicalName": "bok choy",
+     "quantity": 600,
+     "unit": "g",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "water",
+     "quantity": 2,
+     "unit": "l",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "salt",
+     "quantity": 1,
+     "unit": "tbsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-blanched-greens:0",
+     "verb": "wash",
+     "text": "Wash the greens",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "colander",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "sink",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "bok choy"
+     ],
+     "taskClass": "wash-produce",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-blanched-greens:1",
+     "verb": "boil",
+     "text": "Blanch them in salted water until just bright",
+     "durationMin": 6,
+     "activeMin": 2,
+     "finishMin": 1,
+     "equipment": [
+      {
+       "kind": "saucepan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "bok choy",
+      "water",
+      "salt"
+     ],
+     "taskClass": "boil-water",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-blanched-greens:0"
+     ]
+    },
+    {
+     "id": "step:rcp-blanched-greens:2",
+     "verb": "cool",
+     "text": "Spread them out to stop cooking",
+     "durationMin": 5,
+     "activeMin": 0,
+     "finishMin": 0,
+     "equipment": [],
+     "ingredientRefs": [
+      "bok choy"
+     ],
+     "taskClass": "chill",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "maxDelayAfterMin": 2,
+     "dependsOn": [
+      "step:rcp-blanched-greens:1"
+     ]
+    }
+   ],
+   "tags": [
+    "base",
+    "batch",
+    "greens"
+   ],
+   "allergens": [],
+   "dietary": [],
+   "keepsDays": 3,
+   "overnight": false
+  },
+  {
+   "id": "rcp:charred-peppers",
+   "title": "Charred peppers",
+   "kind": "base",
+   "yieldServings": 6,
+   "ingredients": [
+    {
+     "canonicalName": "bell peppers",
+     "quantity": 4,
+     "unit": "piece",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "neutral oil",
+     "quantity": 1,
+     "unit": "tbsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "salt",
+     "quantity": 1,
+     "unit": "tsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-charred-peppers:0",
+     "verb": "slice",
+     "text": "Cut the peppers into broad flat pieces",
+     "durationMin": 5,
+     "activeMin": 5,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "cutting-board",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "knife",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "bell peppers"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "intermediate",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-charred-peppers:1",
+     "verb": "sear",
+     "text": "Char them hard in a dry pan, skin down, without moving them",
+     "durationMin": 10,
+     "activeMin": 10,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "frying-pan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "bell peppers",
+      "neutral oil"
+     ],
+     "taskClass": "stovetop",
+     "minSkill": "intermediate",
+     "effort": 3,
+     "optional": false,
+     "heat": {
+      "level": "high"
+     },
+     "dependsOn": [
+      "step:rcp-charred-peppers:0"
+     ]
+    },
+    {
+     "id": "step:rcp-charred-peppers:2",
+     "verb": "rest",
+     "text": "Cover them and let the skins loosen",
+     "durationMin": 8,
+     "activeMin": 0,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "mixing-bowl",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "bell peppers"
+     ],
+     "taskClass": "chill",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-charred-peppers:1"
+     ]
+    }
+   ],
+   "tags": [
+    "base",
+    "batch",
+    "no-oven"
+   ],
+   "allergens": [],
+   "dietary": [],
+   "keepsDays": 5,
+   "overnight": false
+  }
+ ]
+}

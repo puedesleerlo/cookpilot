@@ -1,0 +1,657 @@
+{
+ "packId": "seed-beverages",
+ "version": "1.0.0",
+ "contentHash": "fnv1a-bf35dd0b",
+ "name": "Batch beverages",
+ "description": "Drinks by the jug, including one that starts tonight and is ready tomorrow.",
+ "locale": "en-US",
+ "provenance": "seed",
+ "recipes": [
+  {
+   "id": "rcp:cold-brew-coffee",
+   "title": "Overnight cold brew",
+   "kind": "beverage",
+   "yieldServings": 6,
+   "ingredients": [
+    {
+     "canonicalName": "coffee beans",
+     "quantity": 120,
+     "unit": "g",
+     "role": "core",
+     "category": "beverage-base",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "water",
+     "quantity": 1,
+     "unit": "l",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-cold-brew-coffee:0",
+     "verb": "chop",
+     "text": "Grind the beans coarse",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "blender",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "coffee beans"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-cold-brew-coffee:1",
+     "verb": "mix",
+     "text": "Stir the grounds into cold water in a jar",
+     "durationMin": 2,
+     "activeMin": 2,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "jar",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "coffee beans",
+      "water"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-cold-brew-coffee:0"
+     ]
+    },
+    {
+     "id": "step:rcp-cold-brew-coffee:2",
+     "verb": "steep",
+     "text": "Leave it in the fridge overnight",
+     "durationMin": 720,
+     "activeMin": 0,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "jar",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "fridge-shelf",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [],
+     "taskClass": "steep",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "note": "Starts tonight, finishes tomorrow. The session does not wait for it.",
+     "dependsOn": [
+      "step:rcp-cold-brew-coffee:1"
+     ]
+    },
+    {
+     "id": "step:rcp-cold-brew-coffee:3",
+     "verb": "strain",
+     "text": "Strain out the grounds in the morning",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "colander",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "pitcher",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "coffee beans"
+     ],
+     "taskClass": "strain",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-cold-brew-coffee:2"
+     ]
+    }
+   ],
+   "tags": [
+    "beverage",
+    "batch",
+    "overnight",
+    "caffeine"
+   ],
+   "allergens": [],
+   "dietary": [],
+   "keepsDays": 10,
+   "overnight": true
+  },
+  {
+   "id": "rcp:mint-lemonade",
+   "title": "Mint lemonade",
+   "kind": "beverage",
+   "yieldServings": 6,
+   "ingredients": [
+    {
+     "canonicalName": "lemons",
+     "quantity": 5,
+     "unit": "piece",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "mint",
+     "quantity": 1,
+     "unit": "bunch",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sugar",
+     "quantity": 80,
+     "unit": "g",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "water",
+     "quantity": 1,
+     "unit": "l",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-mint-lemonade:0",
+     "verb": "juice",
+     "text": "Juice the lemons",
+     "durationMin": 6,
+     "activeMin": 6,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "measuring-cup",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "lemons"
+     ],
+     "taskClass": "strain",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-mint-lemonade:1",
+     "verb": "mix",
+     "text": "Muddle the mint with the sugar",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "mixing-bowl",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "mint",
+      "sugar"
+     ],
+     "taskClass": "mix",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-mint-lemonade:0"
+     ]
+    },
+    {
+     "id": "step:rcp-mint-lemonade:2",
+     "verb": "infuse",
+     "text": "Add water and let the mint give up its oils",
+     "durationMin": 18,
+     "activeMin": 2,
+     "finishMin": 1,
+     "equipment": [
+      {
+       "kind": "pitcher",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "water"
+     ],
+     "taskClass": "steep",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-mint-lemonade:0",
+      "step:rcp-mint-lemonade:1"
+     ]
+    },
+    {
+     "id": "step:rcp-mint-lemonade:3",
+     "verb": "strain",
+     "text": "Strain out the leaves",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "colander",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "pitcher",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "mint"
+     ],
+     "taskClass": "strain",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-mint-lemonade:2"
+     ]
+    }
+   ],
+   "tags": [
+    "beverage",
+    "batch",
+    "fresh",
+    "no-heat"
+   ],
+   "allergens": [],
+   "dietary": [],
+   "keepsDays": 4,
+   "overnight": false
+  },
+  {
+   "id": "rcp:ginger-lemon-tonic",
+   "title": "Ginger-turmeric tonic",
+   "kind": "beverage",
+   "yieldServings": 6,
+   "ingredients": [
+    {
+     "canonicalName": "ginger",
+     "quantity": 60,
+     "unit": "g",
+     "role": "core",
+     "category": "aromatic",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "turmeric",
+     "quantity": 10,
+     "unit": "g",
+     "role": "core",
+     "category": "aromatic",
+     "optional": true,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "lemons",
+     "quantity": 2,
+     "unit": "piece",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "honey",
+     "quantity": 2,
+     "unit": "tbsp",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "water",
+     "quantity": 1,
+     "unit": "l",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-ginger-lemon-tonic:0",
+     "verb": "grate",
+     "text": "Grate the ginger and turmeric",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "grater",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "mixing-bowl",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "ginger",
+      "turmeric"
+     ],
+     "taskClass": "knife-work",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-ginger-lemon-tonic:1",
+     "verb": "simmer",
+     "text": "Simmer them in water, then leave it alone",
+     "durationMin": 16,
+     "activeMin": 1,
+     "finishMin": 1,
+     "equipment": [
+      {
+       "kind": "saucepan",
+       "count": 1,
+       "heldThroughHold": true
+      },
+      {
+       "kind": "burner",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [
+      "ginger",
+      "water"
+     ],
+     "taskClass": "simmer-watch",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-ginger-lemon-tonic:0"
+     ]
+    },
+    {
+     "id": "step:rcp-ginger-lemon-tonic:2",
+     "verb": "juice",
+     "text": "Juice the lemons while it simmers",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "measuring-cup",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "lemons"
+     ],
+     "taskClass": "strain",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-ginger-lemon-tonic:1"
+     ]
+    },
+    {
+     "id": "step:rcp-ginger-lemon-tonic:3",
+     "verb": "strain",
+     "text": "Strain into a jug and stir in lemon and honey",
+     "durationMin": 4,
+     "activeMin": 4,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "colander",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "pitcher",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "lemons",
+      "honey"
+     ],
+     "taskClass": "strain",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-ginger-lemon-tonic:1",
+      "step:rcp-ginger-lemon-tonic:2"
+     ]
+    },
+    {
+     "id": "step:rcp-ginger-lemon-tonic:4",
+     "verb": "cool",
+     "text": "Let it come down before it goes cold",
+     "durationMin": 12,
+     "activeMin": 0,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "pitcher",
+       "count": 1,
+       "heldThroughHold": true
+      }
+     ],
+     "ingredientRefs": [],
+     "taskClass": "chill",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-ginger-lemon-tonic:3"
+     ]
+    }
+   ],
+   "tags": [
+    "beverage",
+    "batch",
+    "warming"
+   ],
+   "allergens": [],
+   "dietary": [],
+   "keepsDays": 5,
+   "overnight": false
+  },
+  {
+   "id": "rcp:lemon-mint-agua-fresca",
+   "title": "Lemon-mint agua fresca",
+   "kind": "beverage",
+   "yieldServings": 6,
+   "ingredients": [
+    {
+     "canonicalName": "lemons",
+     "quantity": 4,
+     "unit": "piece",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "mint",
+     "quantity": 1,
+     "unit": "bunch",
+     "role": "core",
+     "category": "produce",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "sugar",
+     "quantity": 50,
+     "unit": "g",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    },
+    {
+     "canonicalName": "water",
+     "quantity": 1,
+     "unit": "l",
+     "role": "pantry",
+     "category": "pantry",
+     "optional": false,
+     "substitutes": []
+    }
+   ],
+   "steps": [
+    {
+     "id": "step:rcp-lemon-mint-agua-fresca:0",
+     "verb": "juice",
+     "text": "Juice the lemons",
+     "durationMin": 5,
+     "activeMin": 5,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "measuring-cup",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "lemons"
+     ],
+     "taskClass": "strain",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": []
+    },
+    {
+     "id": "step:rcp-lemon-mint-agua-fresca:1",
+     "verb": "blend",
+     "text": "Blend the mint with water and sugar",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "blender",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [
+      "mint",
+      "water",
+      "sugar"
+     ],
+     "taskClass": "blend",
+     "minSkill": "beginner",
+     "effort": 2,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-lemon-mint-agua-fresca:0"
+     ]
+    },
+    {
+     "id": "step:rcp-lemon-mint-agua-fresca:2",
+     "verb": "strain",
+     "text": "Strain into a jug",
+     "durationMin": 3,
+     "activeMin": 3,
+     "finishMin": 0,
+     "equipment": [
+      {
+       "kind": "colander",
+       "count": 1,
+       "heldThroughHold": false
+      },
+      {
+       "kind": "pitcher",
+       "count": 1,
+       "heldThroughHold": false
+      }
+     ],
+     "ingredientRefs": [],
+     "taskClass": "strain",
+     "minSkill": "beginner",
+     "effort": 1,
+     "optional": false,
+     "dependsOn": [
+      "step:rcp-lemon-mint-agua-fresca:1"
+     ]
+    }
+   ],
+   "tags": [
+    "beverage",
+    "batch",
+    "fresh",
+    "no-heat",
+    "fast"
+   ],
+   "allergens": [],
+   "dietary": [],
+   "keepsDays": 3,
+   "overnight": false
+  }
+ ]
+}

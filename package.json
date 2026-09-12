@@ -10,9 +10,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false || tsc -p tsconfig.app.json --noEmit"
+    "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false || tsc -p tsconfig.app.json --noEmit",
+    "packs:build": "node scripts/build-seed-packs.mjs && node scripts/build-registry-index.mjs",
+    "design:build": "node scripts/build-design-canvas.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
     "idb": "^8.0.3",
     "lz-string": "^1.5.0",
     "qrcode": "^1.5.4",

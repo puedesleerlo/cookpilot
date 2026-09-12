@@ -6,3 +6,4 @@ export * from './task';
 export * from './dish';
 export * from './constraints';
 export * from './schedule';
+export * from './recipe';
