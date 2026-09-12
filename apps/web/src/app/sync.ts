@@ -4,7 +4,7 @@ import { SCHEDULER_VERSION } from '@kitchen/scheduler';
 import type { SessionEvent, SessionView } from '@kitchen/contracts';
 import { ApiRequestError, api, ensureDevice, isApiError, offsetFrom } from './api';
 import { compileSession, type CompileOutcome } from './compile';
-import { completedFrom } from './story';
+import { completedFrom, startedFrom } from './story';
 import type { IntakeAnswers } from './store';
 
 /**
@@ -95,6 +95,9 @@ export type SyncState = {
   /** Task ids finished, from the log plus any tap not yet acknowledged. */
   completed: string[];
   pendingCompletions: string[];
+  /** Task id -> server millisecond a cook started it by hand, from the log plus unacknowledged taps. */
+  started: Record<string, number>;
+  pendingStarts: string[];
   startedAtMs: number | null;
   clockOffsetMs: number;
   /** A request the user asked for is out. */
@@ -112,6 +115,8 @@ export type SyncState = {
   claim: (cookId: string, displayName: string) => Promise<void>;
   start: () => Promise<void>;
   complete: (taskId: string) => Promise<void>;
+  /** "I am starting this now": moves the step's timer to this moment, for every device. */
+  startNow: (taskId: string) => Promise<void>;
   poll: () => Promise<void>;
   resume: () => Promise<void>;
   leave: () => void;
@@ -130,6 +135,8 @@ const initial = {
   lastSeq: 0,
   completed: [],
   pendingCompletions: [],
+  started: {},
+  pendingStarts: [],
   startedAtMs: null,
   clockOffsetMs: 0,
   pending: false,
@@ -268,6 +275,7 @@ export const useSync = create<SyncState>((set, get) => {
             lastSeq: Math.max(s.lastSeq, event.seq),
             pendingCompletions: pendingLeft,
             completed: [...new Set([...completedFrom(events), ...pendingLeft])],
+            started: foldStarts(events, s.started, s.pendingStarts),
             clockOffsetMs: offsetFrom(serverTimeMs, sent, Date.now()),
           };
         });
@@ -278,6 +286,47 @@ export const useSync = create<SyncState>((set, get) => {
             pendingCompletions: pendingLeft,
             completed: [...new Set([...completedFrom(s.events), ...pendingLeft])],
             error: `Could not save that as done: ${describe(err)}`,
+            ...(isFatal(err) ? { phase: 'error' as const } : {}),
+          };
+        });
+      }
+    },
+
+    /**
+     * Starting by hand is optimistic in the same way: the timer moves the instant the cook
+     * taps, on this device's reading of the server clock, and the log's stamp replaces it
+     * when the append comes back. The two differ by a round trip, which no one can see.
+     */
+    startNow: async (taskId) => {
+      const { session } = get();
+      if (!session) return;
+      const tappedAt = get().now();
+      set((s) => ({
+        started: { ...s.started, [taskId]: tappedAt },
+        pendingStarts: [...s.pendingStarts.filter((id) => id !== taskId), taskId],
+        error: null,
+      }));
+      try {
+        const sent = Date.now();
+        const { event, serverTimeMs } = await api.append(session.id, { type: 'task-started', taskId });
+        set((s) => {
+          const events = merge(s.events, [event]);
+          const pendingLeft = s.pendingStarts.filter((id) => id !== taskId);
+          return {
+            events,
+            lastSeq: Math.max(s.lastSeq, event.seq),
+            pendingStarts: pendingLeft,
+            started: foldStarts(events, s.started, pendingLeft),
+            clockOffsetMs: offsetFrom(serverTimeMs, sent, Date.now()),
+          };
+        });
+      } catch (err) {
+        set((s) => {
+          const pendingLeft = s.pendingStarts.filter((id) => id !== taskId);
+          return {
+            pendingStarts: pendingLeft,
+            started: foldStarts(s.events, s.started, pendingLeft),
+            error: `Could not save that start: ${describe(err)}`,
             ...(isFatal(err) ? { phase: 'error' as const } : {}),
           };
         });
@@ -302,6 +351,7 @@ export const useSync = create<SyncState>((set, get) => {
             events,
             lastSeq: Math.max(s.lastSeq, res.lastSeq),
             completed: [...new Set([...completedFrom(events), ...s.pendingCompletions])],
+            started: foldStarts(events, s.started, s.pendingStarts),
             startedAtMs: res.startedAtMs,
             clockOffsetMs: offsetFrom(res.serverTimeMs, sent, received),
             session: {
@@ -350,6 +400,17 @@ export const useSync = create<SyncState>((set, get) => {
     dismissError: () => set({ error: null }),
   };
 });
+
+/** Starts from the log, with this device's unacknowledged taps kept on top until they land. */
+const foldStarts = (
+  events: SessionEvent[],
+  have: Record<string, number>,
+  pending: string[],
+): Record<string, number> => {
+  const folded = startedFrom(events);
+  for (const id of pending) if (have[id] !== undefined) folded[id] = have[id];
+  return folded;
+};
 
 /** The log, with newcomers folded in by sequence number and duplicates dropped. */
 const merge = (have: SessionEvent[], incoming: SessionEvent[]): SessionEvent[] => {

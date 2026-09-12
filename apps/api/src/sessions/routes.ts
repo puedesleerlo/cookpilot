@@ -281,17 +281,21 @@ export const registerSessionRoutes = (app: FastifyInstance, ctx: SessionRouteCon
 
     await requireAccess(session, deviceId);
     if (session.status !== 'cooking') {
-      throw new ApiError('conflict', 'Nothing can be finished before the session has started.');
+      throw new ApiError('conflict', 'Nothing can be started or finished before the session has.');
     }
+    const stamp = at();
     const event = await store.appendEvent(
       {
         id: newEventId(),
         sessionId: session.id,
-        type: 'task-completed',
+        type: body.type,
         taskId: body.taskId,
+        // A start carries the moment, in the server's clock, so every device's countdown for
+        // that step runs from the same second the cook tapped.
+        ...(body.type === 'task-started' ? { payload: { startedAtMs: stamp.getTime() } } : {}),
         byDeviceId: deviceId,
       },
-      at(),
+      stamp,
     );
     return reply.status(201).send({ event: toEvent(event), serverTimeMs: now() });
   });

@@ -441,6 +441,27 @@ describe.each(backends)('sessions in %s', (_name, backend) => {
       expect(benSees.events.slice(3).map((e) => e.taskId)).toEqual(anaCatchesUp.events.map((e) => e.taskId));
     });
 
+    run('records a step started by hand, stamped with the server’s clock', async () => {
+      const server = await start();
+      const { host: h, ana } = await actors(server);
+      const view = await host(server, h);
+      await join(server, view.id, ana, crew[0]!.id, 'Ana');
+      await append(server, view.id, h, { type: 'session-started' });
+
+      clock = T0 + 600_000;
+      const res = await append(server, view.id, ana, { type: 'task-started', taskId: 'task:rice:start' });
+      expect(res.statusCode).toBe(201);
+      expect(res.json().event).toMatchObject({
+        type: 'task-started',
+        taskId: 'task:rice:start',
+        payload: { startedAtMs: T0 + 600_000 },
+        byDeviceId: ana.deviceId,
+      });
+      // seq 1 was the join; replaying after it shows the start and the step.
+      const log = await replay(server, view.id, h, 1);
+      expect(log.events.map((e) => e.type)).toEqual(['session-started', 'task-started']);
+    });
+
     run('says nothing new when there is nothing new, and still reports the clock', async () => {
       const server = await start();
       const { host: h } = await actors(server);

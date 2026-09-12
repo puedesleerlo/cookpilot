@@ -5,7 +5,7 @@ import { contentHash } from '@kitchen/domain';
 import type { SessionMember, SessionView } from '@kitchen/contracts';
 import { compileSession } from '@/app/compile';
 import { demoIntake } from '@/app/demo';
-import { clockText, stepsFor } from '@/app/story';
+import { clockText, dishProgress, sessionProgress, stepsFor } from '@/app/story';
 import { useSession } from '@/app/store';
 import { useSync } from '@/app/sync';
 import { App } from '@/ui/App';
@@ -124,7 +124,77 @@ describe('a slide', () => {
     expect(within(slide).getByRole('timer')).toHaveTextContent(clockText(first.task.durationMin * 60));
     expect(within(slide).getByText('Next')).toBeInTheDocument();
     expect(within(slide).getByText(steps[1]!.task.name)).toBeInTheDocument();
-    expect(within(slide).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
+    expect(within(slide).getByRole('progressbar', { name: 'Progress through this step' })).toHaveAttribute('aria-valuenow', '0');
+  });
+
+  it('shows how far the whole meal and this dish have come', () => {
+    const mine = new Set(steps.slice(0, 2).map((s) => s.task.id));
+    render(
+      <Story schedule={schedule} cook={cookOne} cookIndex={0} displayName="Ana" elapsedSec={0} completed={mine} hues={hues} />,
+    );
+    const all = sessionProgress(schedule, mine);
+    expect(screen.getByRole('progressbar', { name: `Whole session: ${all.done} of ${all.total} steps done` })).toHaveAttribute(
+      'aria-valuenow',
+      String(Math.round((all.done / all.total) * 100)),
+    );
+    // The dish bar follows the step in view: after two done, the view is on the third.
+    const viewed = steps[2]!;
+    const dish = dishProgress(schedule, viewed.task.dishId, mine);
+    expect(screen.getByRole('progressbar', { name: `${viewed.dishName}: ${dish.done} of ${dish.total} steps done` })).toBeInTheDocument();
+  });
+
+  it('pages back and ahead through the steps, and comes back to now', async () => {
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    render(
+      <Story schedule={schedule} cook={cookOne} cookIndex={0} displayName="Ana" elapsedSec={0} completed={new Set()} hues={hues} onDone={vi.fn()} onStart={onStart} />,
+    );
+    expect(screen.getByText(`Step 1 of ${steps.length}`)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Previous step' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Next step' }));
+    expect(screen.getByText(`Step 2 of ${steps.length}`)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(steps[1]!.task.name);
+    // A step that has not begun offers to begin, not to finish.
+    await user.click(screen.getByRole('button', { name: 'Start it now' }));
+    expect(onStart).toHaveBeenCalledWith(steps[1]!.task.id);
+
+    await user.click(screen.getByRole('button', { name: 'Now' }));
+    expect(screen.getByText(`Step 1 of ${steps.length}`)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Now' })).not.toBeInTheDocument();
+  });
+
+  it('offers to start the next step now while the cook is waiting for it', async () => {
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    // First step done at its own start minute: the plan says wait for the second.
+    const early = first.scheduled.startMin * 60;
+    if (steps[1]!.scheduled.startMin * 60 <= early) return;
+    render(
+      <Story schedule={schedule} cook={cookOne} cookIndex={0} displayName="Ana" elapsedSec={early} completed={new Set([first.task.id])} hues={hues} onDone={vi.fn()} onStart={onStart} />,
+    );
+    expect(screen.getByText('Nothing in your hands right now')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Start it now' }));
+    expect(onStart).toHaveBeenCalledWith(steps[1]!.task.id);
+  });
+
+  it('runs a by-hand start from the tap, not from the plan', () => {
+    render(
+      <Story
+        schedule={schedule}
+        cook={cookOne}
+        cookIndex={0}
+        displayName="Ana"
+        elapsedSec={30}
+        completed={new Set([first.task.id])}
+        starts={new Map([[steps[1]!.task.id, 30]])}
+        hues={hues}
+      />,
+    );
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(steps[1]!.task.name);
+    expect(screen.getByRole('timer')).toHaveTextContent(clockText(steps[1]!.task.durationMin * 60));
+    expect(screen.getByText(/started by hand/)).toBeInTheDocument();
   });
 
   it('counts down, then says it is over rather than going negative', () => {

@@ -183,6 +183,10 @@ class FakeServer {
         return this.json(201, { event, serverTimeMs: this.now() });
       }
       if (s.status !== 'cooking') return this.error(409, 'conflict', 'Not started.');
+      if (body['type'] === 'task-started') {
+        const event = this.append(s, 'task-started', String(body['taskId']), deviceId, { startedAtMs: this.now() });
+        return this.json(201, { event, serverTimeMs: this.now() });
+      }
       const event = this.append(s, 'task-completed', String(body['taskId']), deviceId);
       return this.json(201, { event, serverTimeMs: this.now() });
     }
@@ -202,6 +206,12 @@ class FakeServer {
   finishFromElsewhere(id: string, taskId: string): void {
     const s = this.sessions.get(id)!;
     this.append(s, 'task-completed', taskId, 'dev_other');
+  }
+
+  /** Another cook starting something by hand. */
+  startTaskFromElsewhere(id: string, taskId: string): void {
+    const s = this.sessions.get(id)!;
+    this.append(s, 'task-started', taskId, 'dev_other', { startedAtMs: this.now() });
   }
 }
 
@@ -402,6 +412,42 @@ describe('cooking', () => {
     // Polling again asks for nothing it already has.
     await state().poll();
     expect(server.calls.at(-1)).toContain(`after=${seen + 2}`);
+  });
+
+  it('moves a step’s timer to now when the cook starts it by hand, then keeps the server’s stamp', async () => {
+    const hosted = await hostIt();
+    await state().start();
+    const id = taskId();
+    const before = state().now();
+
+    const promise = state().startNow(id);
+    expect(state().started[id]).toBeGreaterThanOrEqual(before);
+    expect(state().pendingStarts).toEqual([id]);
+    await promise;
+
+    const stamped = server.sessions.get(hosted.id)!.events.at(-1)!;
+    expect(stamped.type).toBe('task-started');
+    expect(state().started[id]).toBe(stamped.payload['startedAtMs']);
+    expect(state().pendingStarts).toEqual([]);
+    expect(state().events.at(-1)?.type).toBe('task-started');
+  });
+
+  it('takes a start back if the server refuses it', async () => {
+    await hostIt();
+    await state().start();
+    const id = taskId();
+    server.down = true;
+    await state().startNow(id);
+    expect(state().started[id]).toBeUndefined();
+    expect(state().error).toMatch(/Could not save that start/);
+  });
+
+  it('folds in a step another cook started by hand', async () => {
+    const hosted = await hostIt();
+    await state().start();
+    server.startTaskFromElsewhere(hosted.id, 'task:theirs');
+    await state().poll();
+    expect(state().started['task:theirs']).toBe(server.sessions.get(hosted.id)!.events.at(-1)!.payload['startedAtMs']);
   });
 
   it('marks itself offline on a failed poll and back online on the next good one', async () => {

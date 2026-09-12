@@ -272,6 +272,8 @@ export type SessionMember = z.infer<typeof SessionMemberSchema>;
 export const SessionEventTypeSchema = z.enum([
   'member-joined',
   'session-started',
+  /** A cook began a task by hand — early, or to restart its timer. Payload: `startedAtMs`. */
+  'task-started',
   'task-completed',
 ]);
 export type SessionEventType = z.infer<typeof SessionEventTypeSchema>;
@@ -342,6 +344,7 @@ export type SessionEventsResponse = z.infer<typeof SessionEventsResponseSchema>;
 
 export const AppendSessionEventRequestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('session-started') }),
+  z.object({ type: z.literal('task-started'), taskId: z.string().min(1) }),
   z.object({ type: z.literal('task-completed'), taskId: z.string().min(1) }),
 ]);
 export type AppendSessionEventRequest = z.infer<typeof AppendSessionEventRequestSchema>;

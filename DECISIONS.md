@@ -1076,3 +1076,22 @@ Why: Vite statically replaces the dot form at build time. The bracket form reads
      at runtime that carries whatever was in the shell when the bundle was built — which is
      why a shell-provided value appeared to work and a file-provided one produced
      `undefined`. It fails in exactly the configuration nobody tests: a CI build.
+
+## D-068 — Starting a step by hand is an event, and it moves the timer, not the work
+Date: 2026-09-12
+Question: A cook waiting on a simmer wants to skip the wait. Local to that phone, or in
+          the shared log? And does skipping shorten anything?
+Choice: a `task-started` event, stamped by the server. The step's countdown runs from the
+        stamp for the minutes the compiler gave it, on every device. Nothing is shortened.
+Why: the kitchen display shows every cook's slide, and a start that lived only on one phone
+     would put the display and the phone in different places. The log is where the devices
+     agree, so the tap goes there, like Done. And a tap cannot make rice cook faster: the
+     honest reading of "skip the wait" is "the pan is ready sooner than the plan thought,
+     start the timer now", which is exactly what moving the window does. The most recent
+     tap wins over the plan's order, because the plan's order is a forecast and the tap is
+     a report.
+Consequence: no schema change and no new route; the log already carries any type. The
+     server stamps the start as it stamps the session's start, so two phones run the same
+     countdown to within a round trip.
+Revisit if: mid-session recompilation lands. Then a start by hand is also an input to the
+     scheduler, and the same event feeds it.

@@ -6,13 +6,19 @@ import { demoIntake } from './demo';
 import {
   clockText,
   completedFrom,
+  dishProgress,
   elapsedSeconds,
   everyoneHere,
   holdsAt,
   roleOf,
+  sessionProgress,
   slideFor,
   slots,
+  startedFrom,
+  startsSince,
+  statusOf,
   stepsFor,
+  windowOf,
   type Step,
 } from './story';
 
@@ -159,6 +165,88 @@ describe('which slide is showing', () => {
 
   it('is done from the start for a cook with nothing to do', () => {
     expect(slideFor([], 0, none)).toEqual({ kind: 'done', finishedMin: 0 });
+  });
+});
+
+describe('starting a step by hand', () => {
+  const steps = [step('a', 0, 5), step('b', 10, 15), step('c', 20, 25)];
+
+  it('moves the step’s timer to the tap, for the minutes the compiler gave it', () => {
+    expect(windowOf(steps[1]!)).toEqual({ startSec: 600, endSec: 900, byHand: false });
+    expect(windowOf(steps[1]!, new Map([['b', 120]]))).toEqual({ startSec: 120, endSec: 420, byHand: true });
+  });
+
+  it('skips the wait: the tapped step is now, with its whole time ahead of it', () => {
+    const slide = slideFor(steps, 120, new Set(['a']), new Map([['b', 120]]));
+    if (slide.kind !== 'now') throw new Error(slide.kind);
+    expect(slide.step.task.id).toBe('b');
+    expect(slide.secondsLeft).toBe(300);
+    expect(slide.progress).toBe(0);
+    expect(slide.next?.task.id).toBe('c');
+  });
+
+  it('runs over from the tap, not from the plan', () => {
+    const slide = slideFor(steps, 421, new Set(['a']), new Map([['b', 120]]));
+    if (slide.kind !== 'now') throw new Error(slide.kind);
+    expect(slide.overBy).toBe(1);
+    expect(slide.secondsLeft).toBe(0);
+  });
+
+  it('shows the most recent tap, whatever the plan’s order says', () => {
+    const slide = slideFor(steps, 100, none, new Map([['c', 60], ['b', 90]]));
+    if (slide.kind !== 'now') throw new Error(slide.kind);
+    expect(slide.step.task.id).toBe('b');
+    // The step the plan wanted first is still owed, so it is what comes next.
+    expect(slide.next?.task.id).toBe('a');
+  });
+
+  it('ignores a tap that has not happened yet on this clock', () => {
+    const slide = slideFor(steps, 100, new Set(['a']), new Map([['b', 500]]));
+    expect(slide.kind).toBe('wait');
+  });
+
+  it('tells each step’s status for paging through the list', () => {
+    const starts = new Map([['c', 30]]);
+    const done = new Set(['a']);
+    expect(statusOf(steps[0]!, 100, done, starts)).toBe('done');
+    expect(statusOf(steps[1]!, 100, done, starts)).toBe('upcoming');
+    expect(statusOf(steps[1]!, 700, done, starts)).toBe('now');
+    expect(statusOf(steps[1]!, 901, done, starts)).toBe('overdue');
+    expect(statusOf(steps[2]!, 100, done, starts)).toBe('now');
+  });
+
+  it('folds starts from the log, last tap winning, stamped by the server', () => {
+    const started = startedFrom([
+      { type: 'task-started', taskId: 't1', atMs: 5_000, payload: { startedAtMs: 4_000 } },
+      { type: 'task-completed', taskId: 't1', atMs: 6_000, payload: {} },
+      { type: 'task-started', taskId: 't2', atMs: 7_000, payload: {} },
+      { type: 'task-started', taskId: 't1', atMs: 9_000, payload: { startedAtMs: 9_000 } },
+    ]);
+    expect(started).toEqual({ t1: 9_000, t2: 7_000 });
+    expect(startsSince(started, 1_000)).toEqual(new Map([['t1', 8], ['t2', 6]]));
+    expect(startsSince({ early: 500 }, 1_000).get('early')).toBe(0);
+  });
+});
+
+describe('progress', () => {
+  it('counts the whole meal as attended steps done over attended steps there are', () => {
+    const all = sessionProgress(schedule, none);
+    const attended = schedule.scheduled.filter(
+      (s) => s.cookId && !schedule.overnight.includes(s.taskId) && schedule.tasks[s.taskId]?.phase !== 'hold',
+    );
+    expect(all).toEqual({ done: 0, total: attended.length });
+    expect(sessionProgress(schedule, new Set(attended.slice(0, 3).map((s) => s.taskId)))).toEqual({
+      done: 3,
+      total: attended.length,
+    });
+  });
+
+  it('counts one dish on its own, and the dishes add up to the meal', () => {
+    const dishIds = [...new Set(Object.values(schedule.tasks).map((t) => t.dishId))];
+    const perDish = dishIds.map((id) => dishProgress(schedule, id, none));
+    expect(perDish.reduce((n, p) => n + p.total, 0)).toBe(sessionProgress(schedule, none).total);
+    const first = stepsFor(schedule, constraints.cooks[0]!.id)[0]!;
+    expect(dishProgress(schedule, first.task.dishId, new Set([first.task.id])).done).toBe(1);
   });
 });
 

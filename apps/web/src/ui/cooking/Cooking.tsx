@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { selectCompiled, selectMe, useSync } from '@/app/sync';
-import { clockText, elapsedSeconds, holdsAt, type Watch } from '@/app/story';
+import { clockText, elapsedSeconds, holdsAt, startsSince, type Watch } from '@/app/story';
 import { Button, Glyph } from '../primitives';
 import { allocateDishHues } from '../theme';
 import { Story } from './Story';
@@ -21,15 +21,18 @@ export const Cooking = () => {
   const me = useSync(selectMe);
   const startedAtMs = useSync((s) => s.startedAtMs);
   const completed = useSync((s) => s.completed);
+  const started = useSync((s) => s.started);
   const offline = useSync((s) => s.offline);
   const error = useSync((s) => s.error);
   const complete = useSync((s) => s.complete);
+  const startNow = useSync((s) => s.startNow);
   const dismissError = useSync((s) => s.dismissError);
   const leave = useSync((s) => s.leave);
   const nowMs = useNow();
 
   const [view, setView] = useState<'me' | 'all'>(me ? 'me' : 'all');
   const completedSet = useMemo(() => new Set(completed), [completed]);
+  const starts = useMemo(() => startsSince(started, startedAtMs ?? 0), [started, startedAtMs]);
 
   if (!session) return null;
 
@@ -106,8 +109,10 @@ export const Cooking = () => {
           displayName={nameOf(mine.id, mine.name)}
           elapsedSec={elapsedSec}
           completed={completedSet}
+          starts={starts}
           hues={hues}
           onDone={(taskId) => void complete(taskId)}
+          onStart={(taskId) => void startNow(taskId)}
           size="full"
         />
       ) : (
@@ -121,8 +126,10 @@ export const Cooking = () => {
               displayName={nameOf(cook.id, cook.name)}
               elapsedSec={elapsedSec}
               completed={completedSet}
+              starts={starts}
               hues={hues}
               onDone={(taskId) => void complete(taskId)}
+              onStart={(taskId) => void startNow(taskId)}
               size="compact"
             />
           ))}
