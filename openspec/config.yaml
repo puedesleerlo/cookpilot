@@ -6,30 +6,32 @@ context: |
 
   Full project context lives in openspec/project.md — read it before writing any artifact.
 
-  Stack: React 19 + TypeScript 6 (strict) + Vite 8 + Tailwind 3.4, Zod 4 at every
-  boundary, Zustand, IndexedDB, Vitest. No backend, no auth, no database.
+  Architecture: pnpm workspace. apps/{web,api,worker}; packages/{domain,scheduler,contracts,recipes}.
+  Cloud Run api + worker, Postgres + pgvector, Redis, Secret Manager. Gemini on Vertex via
+  ADC (no model API key). Brave Search. ElevenLabs for voice.
 
-  Layer boundaries (lint-enforced in eslint.config.js):
-    src/domain     types + Zod schemas, imports nothing
-    src/recipes    pack loading, RecipeIR
-    src/llm        may call the model, returns validated data, NEVER schedules
-    src/scheduler  pure, deterministic, zero I/O, zero randomness
-    src/app        composition root / use-cases
-    src/ui         renders only, calls @/app
+  packages/scheduler compiles into BOTH the API and the browser bundle: the server is
+  authoritative, the client computes optimistically, and the two must agree byte for byte.
 
-  Non-negotiables: the scheduler is a pure function (identical input -> byte-identical
-  output); the LLM never makes scheduling decisions; the whole app works with
-  VITE_ANTHROPIC_API_KEY unset; food safety (cross-contamination) is a hard constraint.
+  Dependencies flow one way: domain is a leaf; scheduler/contracts/recipes depend on domain;
+  apps depend on packages; nothing depends on an app. Lint-enforced.
+
+  Non-negotiables: the scheduler is a pure function; the LLM never makes a scheduling
+  decision; there is no model API key and no provider secret in the client bundle; there is
+  NO natural-language fallback parser (the fallback for intake is the structured form);
+  ranking, normalization and explanation are deterministic-first; food safety
+  (cross-contamination) is a hard constraint; the demo runs with the API origin blocked.
 
 rules:
   proposal:
     - State the user-visible behaviour change, not the implementation.
-    - Always name the deterministic fallback when a capability involves the LLM.
+    - Name the deterministic primary path, and say what the model adds on top of it.
   specs:
     - Every requirement needs at least one scenario with observable, testable behaviour.
     - Prefer concrete numbers over adjectives, e.g. "within 120 minutes" not "promptly".
   design:
     - Required for any non-obvious algorithm. Show the data flow and the tie-breaking rules.
+    - Name what the design costs, not only what it buys.
   tasks:
     - Order tasks so the suite is green after every group.
     - "The last group is always: validate, test, archive, commit."

@@ -1,4 +1,10 @@
 {
   "files": [],
-  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+  "references": [
+    { "path": "./packages/domain" },
+    { "path": "./packages/scheduler" },
+    { "path": "./packages/contracts" },
+    { "path": "./packages/recipes" },
+    { "path": "./apps/web" }
+  ]
 }

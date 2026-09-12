@@ -1,0 +1,17 @@
+{
+  "name": "@kitchen/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --noEmit false"
+  },
+  "dependencies": {
+    "@kitchen/domain": "workspace:*",
+    "@kitchen/scheduler": "workspace:*",
+    "@kitchen/contracts": "workspace:*",
+    "@kitchen/recipes": "workspace:*",
+    "zod": "^4.6.2"
+  }
+}

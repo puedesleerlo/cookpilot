@@ -3,7 +3,7 @@
  *
  * Authored as a generator rather than by hand so that step ids, dependency wiring and the
  * active/passive split stay consistent across ~22 recipes. The output is plain JSON in
- * src/recipes/seed/ -- that is what ships and what the registry loads.
+ * packages/recipes/src/seed/ -- that is what ships and what the registry loads.
  *
  * Run: node scripts/build-seed-packs.mjs
  */
@@ -12,7 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outDir = path.join(root, 'src/recipes/seed');
+const outDir = path.join(root, 'packages/recipes/src/seed');
 mkdirSync(outDir, { recursive: true });
 
 // -------------------------------------------------------------------- helpers
@@ -24,7 +24,7 @@ const slug = (s) =>
     .replace(/^-+|-+$/g, '') || 'x';
 const makeId = (...parts) => parts.map(slug).join(':');
 
-/** Mirrors VERB_RULES in src/llm/fallbacks/verb-table.ts; a test asserts they agree. */
+/** Mirrors VERB_RULES in packages/domain/src/verb-ranges.ts; a test asserts they agree. */
 const VERB = {
   wash: ['wash-produce', 'beginner', 1],
   peel: ['knife-work', 'beginner', 2],
@@ -177,7 +177,7 @@ function recipe(spec) {
   };
 }
 
-// FNV-1a over canonical JSON, matching contentHash() in src/domain/ids.ts.
+// FNV-1a over canonical JSON, matching contentHash() in packages/domain/src/ids.ts.
 const canonicalJson = (v) => {
   if (v === null || typeof v !== 'object') return JSON.stringify(v) ?? 'null';
   if (Array.isArray(v)) return `[${v.map(canonicalJson).join(',')}]`;

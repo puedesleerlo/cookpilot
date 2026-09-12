@@ -188,3 +188,90 @@ Why: The planner composes a session (a main, a base, a sauce, a drink), so index
      A substitution rung with nothing shorter to substitute is a no-op that looks like a
      feature.
 Revisit if: users import enough of their own content that role coverage comes from there.
+
+---
+
+# Redirection — consolidated delta (2026-09-12)
+
+A consolidated delta superseded §5, §9 and §11 of the original brief and replaced the
+13-change sequence with 34. The reversals that matter: Gemini on Vertex replaces Anthropic,
+a real backend replaces "no backend", and the L1 natural-language fallback parser is
+deleted outright. Entries below record how the work already done was treated.
+
+## D-016 — Abandoned `add-voice-pantry-intake` before archiving it
+Date: 2026-09-12
+Question: Change #4 was implemented but not archived when the delta landed. Finish it,
+          archive it, or drop it?
+Options: (a) archive it and supersede it later, (b) drop it and salvage the parts
+Choice: (b). The OpenSpec change is deleted, not archived; `openspec/specs/` never learns
+        about it. Superseded code is removed in the same commit as the salvage.
+Why: Archiving would write a requirement into `openspec/specs/pantry-intake` saying the
+     system SHALL fall back to a keyword parser — the exact thing the delta deletes. A
+     spec that records a decision already reversed is worse than no spec: every later
+     change would have to argue with it.
+Revisit if: never. The delta is explicit.
+
+## D-017 — What survived the delta, and in what role
+Date: 2026-09-12
+Question: Which of the first three changes' output is still correct under the new plan?
+
+| Artefact | Fate |
+|---|---|
+| `src/domain/**` | Survives whole, becomes `packages/domain`. It was provider-agnostic. |
+| Design system, glyphs, tokens, primitives | Survives whole — the delta keeps §8 authoritative. |
+| Seed packs, `RecipeIR`, registry | Survives, becomes `packages/recipes`. Feeds the offline demo path. |
+| `lexicon.ts` | Survives, **re-scoped**. The delta keeps it for normalizing names arriving from L1, form autocomplete and `RecipeIR` — a dictionary lookup, which is a different job from extracting terms from speech. |
+| `verb-table.ts` | Survives, **repurposed** as the L4 range validator (new change #20). It was already a table of plausible durations per verb; that is exactly what the validator needs. |
+| `client.ts` (schema → call → validate → repair) | Shape survives, provider swapped. Constrained decoding via `responseSchema` replaces most of the repair loop. |
+| `parseIntakeDeterministically` | **Deleted.** |
+| `useSpeech.ts` (Web Speech API) | **Deleted.** Replaced by ElevenLabs. |
+| Conversational `Intake.tsx` | **Deleted.** Replaced by the structured form. |
+| `app/intake.ts` slot interview | **Deleted client-side.** The API owns question order now. |
+| `app/demo.ts`, chips, store shell | Survives, feeds the structured form. |
+
+Why the parser had to go, in its own words: it passed its tests because its tests were
+written against the same handful of phrasings it was built for. It could not do negation
+("no oven", "I'm out of rice"), cross-turn reference, or code-switching, and the failure
+mode was silent — a plausible-looking pantry with the wrong food in it. A structured form
+needs no parsing and is not a degraded mode.
+
+## D-018 — pnpm workspaces, not npm
+Date: 2026-09-12
+Question: The delta specifies a monorepo. Which workspace tool?
+Options: (a) npm workspaces (already installed), (b) pnpm (delta names it explicitly)
+Choice: (b) — pnpm 10.7 is on the machine and the delta says "pnpm workspaces".
+Why: Named in the delta, and its strict node_modules layout is what stops `apps/web` from
+     accidentally importing a server-only dependency by transitive luck — which matters a
+     great deal here, because a provider key reaching the client bundle is a CI failure.
+Revisit if: pnpm causes Docker build friction on Cloud Run.
+
+## D-019 — The bundle scanner checks value shapes, not just secret names
+Date: 2026-09-12
+Question: The delta requires CI to grep the client bundle for each key name. Is a name
+          grep enough?
+Options: (a) grep the documented secret names, (b) also match the value shapes
+Choice: (b). `scripts/scan-bundle.mjs` checks nine secret names *and* seven value shapes —
+        `sk-ant-*`, `AIza…`, `sk_…`, credentialled Postgres and Redis URLs, a
+        `"type":"service_account"` blob, and PEM private keys.
+Why: A name grep only catches the leak that arrives through the variable you expected. It
+     misses a key pasted as a literal during debugging, one that arrives through a
+     dependency's bundled config, or a service-account JSON copied into `public/`. The
+     shapes cost nothing and cover the cases where someone was not thinking about the
+     name at all. The script reports the shape and length and never prints the value, so a
+     CI log does not become the second leak.
+Revisit if: a legitimate string trips a shape rule; the fix is a narrower regex, not a
+     removed one.
+
+## D-020 — `no-restricted-imports` needed path patterns, not just package names
+Date: 2026-09-12
+Question: Does banning `@kitchen/api` and `**/apps/**` actually stop `apps/web` reaching
+          server code?
+Options: (a) trust the package-name patterns, (b) also ban `**/<app>/src/**`
+Choice: (b).
+Why: The boundary test caught this: `no-restricted-imports` matches the *literal
+     specifier*, not the resolved path, so `import { server } from '../../api/src/server'`
+     sails past a `**/apps/**` pattern — the string contains no `apps/`. The rule looked
+     enforced and was not. This is exactly the failure the boundary tests exist to find,
+     and it would have been invisible in review.
+Revisit if: the workspace grows enough that `eslint-plugin-import-x`'s path-resolving
+     `no-restricted-paths` becomes worth the dependency.

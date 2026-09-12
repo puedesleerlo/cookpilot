@@ -8,7 +8,7 @@ import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const tokensCss = readFileSync(path.join(root, 'src/ui/tokens.css'), 'utf8');
+const tokensCss = readFileSync(path.join(root, 'apps/web/src/ui/tokens.css'), 'utf8');
 
 /** Pull `--name: value;` pairs out of tokens.css, resolving one level of var(). */
 export function readTokens() {
@@ -24,7 +24,7 @@ export function readTokens() {
   return Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, resolve(v)]));
 }
 
-export const glyphs = JSON.parse(readFileSync(path.join(root, 'src/assets/glyphs/glyphs.json'), 'utf8'));
+export const glyphs = JSON.parse(readFileSync(path.join(root, 'apps/web/src/assets/glyphs/glyphs.json'), 'utf8'));
 
 // --------------------------------------------------------------- contrast
 const srgb = (h) => {

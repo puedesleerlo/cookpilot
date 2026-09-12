@@ -11,8 +11,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const seedDir = path.join(root, 'src/recipes/seed');
-const publicPackDir = path.join(root, 'public/registry/packs');
+const seedDir = path.join(root, 'packages/recipes/src/seed');
+const publicPackDir = path.join(root, 'apps/web/public/registry/packs');
 mkdirSync(publicPackDir, { recursive: true });
 
 const files = readdirSync(seedDir).filter((f) => f.endsWith('.json')).sort();
@@ -46,6 +46,6 @@ const index = {
   packs: entries,
 };
 
-writeFileSync(path.join(root, 'public/registry/index.json'), JSON.stringify(index, null, 2) + '\n');
+writeFileSync(path.join(root, 'apps/web/public/registry/index.json'), JSON.stringify(index, null, 2) + '\n');
 console.log(`registry: ${entries.length} packs, ${entries.reduce((n, e) => n + e.recipeCount, 0)} recipes`);
 for (const e of entries) console.log(`  ${e.packId.padEnd(22)} ${e.recipeCount} recipes  ${(e.bytes / 1024).toFixed(1)}kB  ${e.url}`);
