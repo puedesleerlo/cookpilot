@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap">
+  <style>
+    
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #fdf8f0;
+    color: #2e2a26;
+    font-family: 'Recursive', system-ui, sans-serif;
+    font-variation-settings: 'MONO' 0, 'CASL' 0.3, 'slnt' 0, 'CRSV' 0;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  a { color: #b8371f; } a:hover { color: #2e2a26; }
+  .sheet { padding: 40px 44px; display: flex; flex-direction: column; gap: 32px; }
+  .display {
+    font-variation-settings: 'MONO' 0, 'CASL' 1, 'slnt' 0, 'CRSV' 0.5;
+    font-weight: 800; letter-spacing: -0.015em; line-height: 1.05;
+  }
+  .mono {
+    font-variation-settings: 'MONO' 1, 'CASL' 0, 'slnt' 0, 'CRSV' 0;
+    font-weight: 500; letter-spacing: 0.01em;
+  }
+  .plate-title { font-size: 31px; margin: 0; }
+  .plate-note { margin: 0; max-width: 62ch; color: #6b625a; font-size: 14px; }
+  .rule { height: 1px; background: #e0d3c0; border: 0; margin: 0; }
+  .grid { display: grid; gap: 14px; }
+  .section-h { font-size: 13px; font-weight: 700; margin: 0 0 2px; }
+  .tape {
+    display: inline-block; padding: 5px 14px; background: #efe0c6cc;
+    color: #2e2a26; font-size: 12px; font-weight: 700;
+    transform: rotate(-1.4deg);
+    clip-path: polygon(2% 8%, 98% 0%, 100% 88%, 1% 100%);
+    box-shadow: 0 1px 2px rgb(46 42 38 / 12%);
+  }
+
+  </style>
+</helmet>
+
+<div class="sheet">
+  <div>
+    <span class="tape">Plate 02</span>
+    <h1 class="plate-title display" style="margin-top:14px">Three voices, one typeface</h1>
+    <p class="plate-note">Recursive, driven on two axes. The product's whole tension is a warm kitchen
+      against a compiler, and one variable superfamily spans exactly that range &mdash; which is also why the
+      monospace here is not decoration. It is reserved for the places the interface is genuinely speaking
+      as a compiler.</p>
+  </div>
+  <hr class="rule">
+  <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+    <div style="padding:22px;background:#f5eadb;border-radius:18px 25px 20px 23px">
+      <div class="mono" style="font-size:11px;color:#6b625a">CASL 1 &middot; wght 800</div>
+      <div class="display" style="font-size:42px;margin-top:8px">Bok choy<br>and garlic</div>
+      <p style="font-size:13px;color:#6b625a;margin:12px 0 0">Display. Titles, dish names,
+        the compile moment. The casual axis is what makes the letterforms irregular.</p>
+    </div>
+    <div style="padding:22px;background:#f5eadb;border-radius:18px 25px 20px 23px">
+      <div class="mono" style="font-size:11px;color:#6b625a">CASL 0.3 &middot; wght 400&ndash;800</div>
+      <div style="font-size:26px;margin-top:8px;font-weight:600;line-height:1.2">Start the rice,<br>then chop</div>
+      <p style="font-size:13px;color:#6b625a;margin:12px 0 0">Interface. Every label and
+        button, and the timers at weight 800 with tabular figures.</p>
+    </div>
+    <div style="padding:22px;background:#f5eadb;border-radius:18px 25px 20px 23px">
+      <div class="mono" style="font-size:11px;color:#6b625a">MONO 1 &middot; wght 500</div>
+      <div class="mono" style="font-size:19px;margin-top:8px;line-height:1.35">checking<br>dependencies</div>
+      <p style="font-size:13px;color:#6b625a;margin:12px 0 0">Compiler. Status lines and the
+        time ruler. Nowhere else.</p>
+    </div>
+  </div>
+  <hr class="rule">
+  <div>
+    <h2 class="section-h">Scale &mdash; major third from 16px</h2>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-top:10px">
+      
+        <div style="display:grid;grid-template-columns:120px 1fr 200px;gap:16px;align-items:baseline;padding:8px 0;border-bottom:1px solid #e0d3c0">
+          <span class="mono" style="font-size:11px;color:#6b625a">t-5xl &middot; 76px</span>
+          <span class="display" style="font-size:76px;">Compile</span>
+          <span style="font-size:12px;color:#6b625a">The makespan figure</span>
+        </div>
+        <div style="display:grid;grid-template-columns:120px 1fr 200px;gap:16px;align-items:baseline;padding:8px 0;border-bottom:1px solid #e0d3c0">
+          <span class="mono" style="font-size:11px;color:#6b625a">t-3xl &middot; 49px</span>
+          <span class="display" style="font-size:49px;">Compile</span>
+          <span style="font-size:12px;color:#6b625a">Screen titles</span>
+        </div>
+        <div style="display:grid;grid-template-columns:120px 1fr 200px;gap:16px;align-items:baseline;padding:8px 0;border-bottom:1px solid #e0d3c0">
+          <span class="mono" style="font-size:11px;color:#6b625a">t-xl &middot; 31px</span>
+          <span class="display" style="font-size:31px;">Compile</span>
+          <span style="font-size:12px;color:#6b625a">Dish names</span>
+        </div>
+        <div style="display:grid;grid-template-columns:120px 1fr 200px;gap:16px;align-items:baseline;padding:8px 0;border-bottom:1px solid #e0d3c0">
+          <span class="mono" style="font-size:11px;color:#6b625a">t-lg &middot; 25px</span>
+          <span class="" style="font-size:25px;font-weight:600">Compile</span>
+          <span style="font-size:12px;color:#6b625a">Section heads</span>
+        </div>
+        <div style="display:grid;grid-template-columns:120px 1fr 200px;gap:16px;align-items:baseline;padding:8px 0;border-bottom:1px solid #e0d3c0">
+          <span class="mono" style="font-size:11px;color:#6b625a">t-md &middot; 20px</span>
+          <span class="" style="font-size:20px;font-weight:600">Compile</span>
+          <span style="font-size:12px;color:#6b625a">Task names in cooking mode</span>
+        </div>
+        <div style="display:grid;grid-template-columns:120px 1fr 200px;gap:16px;align-items:baseline;padding:8px 0;border-bottom:1px solid #e0d3c0">
+          <span class="mono" style="font-size:11px;color:#6b625a">t-sm &middot; 16px</span>
+          <span class="" style="font-size:16px;font-weight:600">Compile</span>
+          <span style="font-size:12px;color:#6b625a">Body</span>
+        </div>
+        <div style="display:grid;grid-template-columns:120px 1fr 200px;gap:16px;align-items:baseline;padding:8px 0;border-bottom:1px solid #e0d3c0">
+          <span class="mono" style="font-size:11px;color:#6b625a">t-xs &middot; 13px</span>
+          <span class="mono" style="font-size:13px;">Compile</span>
+          <span style="font-size:12px;color:#6b625a">Lane labels, the time ruler</span>
+        </div>
+    </div>
+  </div>
+  <hr class="rule">
+  <div>
+    <h2 class="section-h">The timer, at kitchen distance</h2>
+    <p class="plate-note" style="margin-bottom:14px">Weight 800, tabular figures so the digits do not
+      shift width as they count down. This is read from across a room with wet hands.</p>
+    <div style="display:flex;align-items:baseline;gap:20px;padding:26px 30px;background:#f5eadb;border-radius:28px 38px 31px 35px">
+      <span style="font-size:76px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.02em;line-height:1">08:24</span>
+      <span style="font-size:20px;color:#6b625a">left on the rice</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

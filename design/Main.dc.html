@@ -1,0 +1,305 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap">
+  <style>
+    
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #fdf8f0;
+    color: #2e2a26;
+    font-family: 'Recursive', system-ui, sans-serif;
+    font-variation-settings: 'MONO' 0, 'CASL' 0.3, 'slnt' 0, 'CRSV' 0;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  a { color: #b8371f; } a:hover { color: #2e2a26; }
+  .sheet { padding: 40px 44px; display: flex; flex-direction: column; gap: 32px; }
+  .display {
+    font-variation-settings: 'MONO' 0, 'CASL' 1, 'slnt' 0, 'CRSV' 0.5;
+    font-weight: 800; letter-spacing: -0.015em; line-height: 1.05;
+  }
+  .mono {
+    font-variation-settings: 'MONO' 1, 'CASL' 0, 'slnt' 0, 'CRSV' 0;
+    font-weight: 500; letter-spacing: 0.01em;
+  }
+  .plate-title { font-size: 31px; margin: 0; }
+  .plate-note { margin: 0; max-width: 62ch; color: #6b625a; font-size: 14px; }
+  .rule { height: 1px; background: #e0d3c0; border: 0; margin: 0; }
+  .grid { display: grid; gap: 14px; }
+  .section-h { font-size: 13px; font-weight: 700; margin: 0 0 2px; }
+  .tape {
+    display: inline-block; padding: 5px 14px; background: #efe0c6cc;
+    color: #2e2a26; font-size: 12px; font-weight: 700;
+    transform: rotate(-1.4deg);
+    clip-path: polygon(2% 8%, 98% 0%, 100% 88%, 1% 100%);
+    box-shadow: 0 1px 2px rgb(46 42 38 / 12%);
+  }
+
+  </style>
+</helmet>
+
+<div class="sheet">
+  <div>
+    <span class="tape">Plate 01</span>
+    <h1 class="plate-title display" style="margin-top:14px">Palette</h1>
+    <p class="plate-note">Cream ground, tomato accent. Every hue ships in three states: the base for
+      fills and strokes, an <em>ink</em> variant darkened until body text is legal on cream, and a
+      <em>wash</em> tint for timeline blocks that carry charcoal labels.</p>
+  </div>
+  <hr class="rule">
+  <div>
+    <h2 class="section-h">Ground and ink</h2>
+    <div class="grid" style="grid-template-columns:repeat(4,1fr)">
+      <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#fdf8f0;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Cream</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#fdf8f0</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">1.00:1 &middot; fills only</div>
+    <div style="font-size:12px;color:#6b625a">The ground.</div>
+  </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#f5eadb;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Cream deep</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#f5eadb</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">1.12:1 &middot; fills only</div>
+    <div style="font-size:12px;color:#6b625a">Lanes, recessed surfaces.</div>
+  </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#2e2a26;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Charcoal</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#2e2a26</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">13.46:1 &middot; body text</div>
+    <div style="font-size:12px;color:#6b625a">Body text. Never pure black.</div>
+  </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#6b625a;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Ink soft</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#6b625a</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">5.64:1 &middot; body text</div>
+    <div style="font-size:12px;color:#6b625a">Secondary text.</div>
+  </div>
+    </div>
+  </div>
+  <div>
+    <h2 class="section-h">Accents &mdash; base</h2>
+    <div class="grid" style="grid-template-columns:repeat(6,1fr)">
+      <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#e2553d;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Tomato</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#e2553d</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">3.55:1 &middot; large text only</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#7c9473;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Sage</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#7c9473</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">3.13:1 &middot; large text only</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#e8944a;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Orange</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#e8944a</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">2.27:1 &middot; fills only</div>
+    
+  </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#8c6a9b;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Plum</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#8c6a9b</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">4.27:1 &middot; large text only</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#4e8a8b;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Teal</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#4e8a8b</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">3.72:1 &middot; large text only</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#c9a227;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Mustard</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#c9a227</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">2.29:1 &middot; fills only</div>
+    
+  </div>
+    </div>
+  </div>
+  <div>
+    <h2 class="section-h">Accents &mdash; ink, for text</h2>
+    <div class="grid" style="grid-template-columns:repeat(6,1fr)">
+      <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#b8371f;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Tomato ink</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#b8371f</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">5.51:1 &middot; body text</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#4f6247;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Sage ink</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#4f6247</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">6.26:1 &middot; body text</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#a65f22;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Orange ink</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#a65f22</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">4.64:1 &middot; body text</div>
+    
+  </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#6e4f7d;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Plum ink</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#6e4f7d</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">6.45:1 &middot; body text</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#3a6b6c;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Teal ink</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#3a6b6c</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">5.68:1 &middot; body text</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#8a6e14;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Mustard ink</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#8a6e14</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">4.60:1 &middot; body text</div>
+    
+  </div>
+    </div>
+  </div>
+  <div>
+    <h2 class="section-h">Accents &mdash; wash, for blocks</h2>
+    <div class="grid" style="grid-template-columns:repeat(6,1fr)">
+      <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#f8dbd0;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Tomato wash</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#f8dbd0</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">1.24:1 &middot; fills only</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#e6e6da;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Sage wash</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#e6e6da</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">1.19:1 &middot; fills only</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#f9e6d2;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Orange wash</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#f9e6d2</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">1.15:1 &middot; fills only</div>
+    
+  </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#e9dee1;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Plum wash</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#e9dee1</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">1.24:1 &middot; fills only</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#dee4de;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Teal wash</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#dee4de</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">1.22:1 &middot; fills only</div>
+    
+  </div><div style="display:flex;flex-direction:column;gap:6px">
+    <div style="height:78px;background:#f4e9cc;border-radius:11px 15px 12px 14px;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+      <strong style="font-size:13px">Mustard wash</strong>
+      <span class="mono" style="font-size:11px;color:#6b625a">#f4e9cc</span>
+    </div>
+    <div class="mono" style="font-size:11px;color:#6b625a">1.14:1 &middot; fills only</div>
+    
+  </div>
+    </div>
+  </div>
+  <hr class="rule">
+  <div>
+    <h2 class="section-h">Contrast, measured</h2>
+    <p class="plate-note" style="margin-bottom:12px">These pairings are enforced by a test, not checked by eye.
+      The row that matters is the last one: tomato is the brand colour and it cannot carry body text.</p>
+    <div class="grid" style="grid-template-columns:1fr">
+      <div style="display:grid;grid-template-columns:1fr 84px 74px;gap:12px;align-items:center;padding:9px 12px;background:#fdf8f0;border-radius:7px 10px 8px 9px;border:1px solid #e0d3c0">
+    <span style="color:#2e2a26;font-size:14px;font-weight:400">Start the rice, then chop while it cooks</span>
+    <span class="mono" style="font-size:12px;color:#2e2a26">13.46:1</span>
+    <span class="mono" style="font-size:11px;color:#4f6247;font-weight:700">passes</span>
+  </div>
+      <div style="display:grid;grid-template-columns:1fr 84px 74px;gap:12px;align-items:center;padding:9px 12px;background:#fdf8f0;border-radius:7px 10px 8px 9px;border:1px solid #e0d3c0">
+    <span style="color:#6b625a;font-size:14px;font-weight:400">Cook 2 &middot; beginner &middot; 14 minutes idle</span>
+    <span class="mono" style="font-size:12px;color:#6b625a">5.64:1</span>
+    <span class="mono" style="font-size:11px;color:#4f6247;font-weight:700">passes</span>
+  </div>
+      <div style="display:grid;grid-template-columns:1fr 84px 74px;gap:12px;align-items:center;padding:9px 12px;background:#fdf8f0;border-radius:7px 10px 8px 9px;border:1px solid #e0d3c0">
+    <span style="color:#b8371f;font-size:14px;font-weight:400">Salmon must be chilled within 2 hours</span>
+    <span class="mono" style="font-size:12px;color:#b8371f">5.51:1</span>
+    <span class="mono" style="font-size:11px;color:#4f6247;font-weight:700">passes</span>
+  </div>
+      <div style="display:grid;grid-template-columns:1fr 84px 74px;gap:12px;align-items:center;padding:9px 12px;background:#c43f29;border-radius:7px 10px 8px 9px;border:1px solid #e0d3c0">
+    <span style="color:#fdf8f0;font-size:14px;font-weight:400">Compile the session</span>
+    <span class="mono" style="font-size:12px;color:#fdf8f0">4.86:1</span>
+    <span class="mono" style="font-size:11px;color:#4f6247;font-weight:700">passes</span>
+  </div>
+      <div style="display:grid;grid-template-columns:1fr 84px 74px;gap:12px;align-items:center;padding:9px 12px;background:#e6e6da;border-radius:7px 10px 8px 9px;border:1px solid #e0d3c0">
+    <span style="color:#2e2a26;font-size:14px;font-weight:400">Rice cooks &mdash; 24 min, hands free</span>
+    <span class="mono" style="font-size:12px;color:#2e2a26">11.32:1</span>
+    <span class="mono" style="font-size:11px;color:#4f6247;font-weight:700">passes</span>
+  </div>
+      <div style="display:grid;grid-template-columns:1fr 84px 74px;gap:12px;align-items:center;padding:9px 12px;background:#fdf8f0;border-radius:7px 10px 8px 9px;border:1px solid #e0d3c0">
+    <span style="color:#e2553d;font-size:21px;font-weight:800">54 minutes</span>
+    <span class="mono" style="font-size:12px;color:#e2553d">3.55:1</span>
+    <span class="mono" style="font-size:11px;color:#4f6247;font-weight:700">passes</span>
+  </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

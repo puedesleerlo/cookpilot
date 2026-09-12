@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap">
+  <style>
+    
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #fdf8f0;
+    color: #2e2a26;
+    font-family: 'Recursive', system-ui, sans-serif;
+    font-variation-settings: 'MONO' 0, 'CASL' 0.3, 'slnt' 0, 'CRSV' 0;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  a { color: #b8371f; } a:hover { color: #2e2a26; }
+  .sheet { padding: 40px 44px; display: flex; flex-direction: column; gap: 32px; }
+  .display {
+    font-variation-settings: 'MONO' 0, 'CASL' 1, 'slnt' 0, 'CRSV' 0.5;
+    font-weight: 800; letter-spacing: -0.015em; line-height: 1.05;
+  }
+  .mono {
+    font-variation-settings: 'MONO' 1, 'CASL' 0, 'slnt' 0, 'CRSV' 0;
+    font-weight: 500; letter-spacing: 0.01em;
+  }
+  .plate-title { font-size: 31px; margin: 0; }
+  .plate-note { margin: 0; max-width: 62ch; color: #6b625a; font-size: 14px; }
+  .rule { height: 1px; background: #e0d3c0; border: 0; margin: 0; }
+  .grid { display: grid; gap: 14px; }
+  .section-h { font-size: 13px; font-weight: 700; margin: 0 0 2px; }
+  .tape {
+    display: inline-block; padding: 5px 14px; background: #efe0c6cc;
+    color: #2e2a26; font-size: 12px; font-weight: 700;
+    transform: rotate(-1.4deg);
+    clip-path: polygon(2% 8%, 98% 0%, 100% 88%, 1% 100%);
+    box-shadow: 0 1px 2px rgb(46 42 38 / 12%);
+  }
+
+  </style>
+</helmet>
+
+<div class="sheet">
+  <div>
+    <span class="tape">Plate 03</span>
+    <h1 class="plate-title display" style="margin-top:14px">Primitives</h1>
+    <p class="plate-note">Every surface uses a non-uniform corner radius, so nothing in the interface is a
+      perfect rounded rectangle. Focus rings are off-palette on purpose &mdash; a focus state that reads as
+      decoration is not a focus state.</p>
+  </div>
+  <hr class="rule">
+  <div>
+    <h2 class="section-h">Buttons</h2>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px">
+      <button style="background:#c43f29;color:#fdf8f0;border:0;box-shadow:0 2px 0 var(--c-line), 0 8px 20px rgb(46 42 38 / 9%);border-radius:11px 15px 12px 14px;padding:11px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px">Compile the session</button>
+      <button style="background:#fdf8f0;color:#2e2a26;border:1.5px solid #cdbba1;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%);border-radius:11px 15px 12px 14px;padding:11px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px">Add an ingredient</button>
+      <button style="background:transparent;color:#b8371f;border:0;text-decoration:underline;text-underline-offset:3px;border-radius:11px 15px 12px 14px;padding:11px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px">Skip this step</button>
+      <span style="display:inline-flex;border-radius:6px;outline:3px solid #1f5f8f;outline-offset:2px"><button style="background:#fdf8f0;color:#2e2a26;border:1.5px solid #cdbba1;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%);border-radius:11px 15px 12px 14px;padding:11px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px">Focused</button></span>
+    </div>
+  </div>
+  <div>
+    <h2 class="section-h">Ingredient chips</h2>
+    <p class="plate-note">The chip is the product's main editing surface: the compiler shows what it heard,
+      and you correct it by tapping. An assumption it made on your behalf is drawn as a dashed outline,
+      never silently.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+      <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;background:#fdf8f0;border:1.5px solid #cdbba1;border-radius:14px 20px 15px 19px;font-size:14px;font-weight:600;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)">
+    <span style="color:#e2553d;display:inline-flex"><svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.4 16.2C11.6 15.4 8.2 12 7 7.4c5-0.4 8.8 2.8 9.6 8.8z" fill="rgb(0 0 0 / 9%)"/><path d="M17 18.4c4.6-1.6 8.8-5 9.8-9.6-5.4-0.4-9 3-9.8 9.6z" fill="rgb(0 0 0 / 9%)"/><path d="M16 29.2c-0.9-5.1-0.5-10.2 0.4-14.4"/><path d="M16.4 16.2C11.6 15.4 8.2 12 7 7.4c5-0.4 8.8 2.8 9.6 8.8z"/><path d="M17 18.4c4.6-1.6 8.8-5 9.8-9.6-5.4-0.4-9 3-9.8 9.6z"/></svg></span>Bok choy
+    <span style="font-size:11px;font-weight:700;color:#b8371f;background:#f8dbd0;padding:2px 7px;border-radius:7px 10px 8px 9px">today</span>
+    
+  </span>
+      <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;background:#fdf8f0;border:1.5px solid #cdbba1;border-radius:14px 20px 15px 19px;font-size:14px;font-weight:600;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)">
+    <span style="color:#4f6247;display:inline-flex"><svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.4 18.8C6.4 12.8 11.2 7.8 17.8 7.4c6.2-0.4 9.2 3.6 8.4 8-0.8 4.6-5.6 9.6-11.4 9.4-4.2-0.2-6.8-2.4-7.4-6z" fill="rgb(0 0 0 / 9%)"/><path d="M7.4 18.8C6.4 12.8 11.2 7.8 17.8 7.4c6.2-0.4 9.2 3.6 8.4 8-0.8 4.6-5.6 9.6-11.4 9.4-4.2-0.2-6.8-2.4-7.4-6z"/><path d="M12.4 13.2c2.2 1.6 3.9 3.9 4.9 6.6"/><path d="M17.4 11.4c1.9 1.7 3.4 3.9 4.2 6.2"/></svg></span>Chicken breast
+    
+    
+  </span>
+      <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;background:#fdf8f0;border:1.5px solid #cdbba1;border-radius:14px 20px 15px 19px;font-size:14px;font-weight:600;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)">
+    <span style="color:#4f6247;display:inline-flex"><svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.2 14.8c0.4 3.6 4 11 11 11.2 7 0.2 10.4-7.4 10.8-11.2z" fill="rgb(0 0 0 / 9%)"/><path d="M5.2 14.8c0.4 3.6 4 11 11 11.2 7 0.2 10.4-7.4 10.8-11.2"/><path d="M4.2 14.4c5.8-1.2 18.2-1.4 23.6 0.2"/><path d="M11.2 9.8c1.6-1.4 3.2-0.8 3.4 0.8"/><path d="M16.6 7.2c1.9-1 3.3 0.1 3.1 1.7"/><path d="M20.4 11c1.4-1.5 3.1-1.1 3.5 0.5"/></svg></span>Jasmine rice
+    
+    
+  </span>
+      <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;background:#fdf8f0;border:1.5px solid #cdbba1;border-radius:14px 20px 15px 19px;font-size:14px;font-weight:600;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)">
+    <span style="color:#4f6247;display:inline-flex"><svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.2 26.4c-5.2-0.2-8.2-3.8-7.8-8 0.4-4.4 3.6-8 7.6-9.8 4.2 1.6 7.6 5.2 8 9.6 0.4 4.2-2.6 8-7.8 8.2z" fill="rgb(0 0 0 / 9%)"/><path d="M16.2 26.4c-5.2-0.2-8.2-3.8-7.8-8 0.4-4.4 3.6-8 7.6-9.8 4.2 1.6 7.6 5.2 8 9.6 0.4 4.2-2.6 8-7.8 8.2z"/><path d="M16.2 9c-1.3 5.1-1.7 11.6-0.2 17.2"/><path d="M11.4 13.8c0.2 4.6 1.2 9.1 2.8 12.2"/><path d="M20.8 13.6c-0.4 4.6-1.2 9-2.6 12.2"/><path d="M16 8.6c0.5-2.3 1.8-3.9 3.6-4.5"/></svg></span>Garlic
+    
+    
+  </span>
+      <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;background:#fdf8f0;border:1.5px solid #cdbba1;border-radius:14px 20px 15px 19px;font-size:14px;font-weight:600;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)">
+    <span style="color:#4f6247;display:inline-flex"><svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 19.4c0-3.9 2.7-6.9 6.3-6.9s6.2 2.8 6.2 6.7-2.6 6.9-6.2 6.9-6.3-2.8-6.3-6.7z" fill="rgb(0 0 0 / 9%)"/><path d="M18.4 10c0-2.7 1.9-4.8 4.3-4.8s4.2 2 4.2 4.7-1.8 4.8-4.2 4.8-4.3-2-4.3-4.7z" fill="rgb(0 0 0 / 9%)"/><path d="M6.6 19.4c0-3.9 2.7-6.9 6.3-6.9s6.2 2.8 6.2 6.7-2.6 6.9-6.2 6.9-6.3-2.8-6.3-6.7z"/><path d="M9.6 14.4c2 3 2.4 7.2 0.6 10.2"/><path d="M18.4 10c0-2.7 1.9-4.8 4.3-4.8s4.2 2 4.2 4.7-1.8 4.8-4.2 4.8-4.3-2-4.3-4.7z"/><path d="M20.6 6.4c1.3 2.1 1.4 4.9 0.3 7.1"/></svg></span>Coffee beans
+    
+    
+  </span>
+      <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;background:#fdf8f0;border:1.5px dashed #cdbba1;border-radius:14px 20px 15px 19px;font-size:14px;font-weight:600;box-shadow:0 1px 0 var(--c-line), 0 2px 6px rgb(46 42 38 / 6%)">
+    <span style="color:#9a8f83;display:inline-flex"><svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.6 11.8L8 26.4c0 1 0.8 1.6 1.8 1.6l12.2-0.2c1 0 1.6-0.6 1.6-1.6l-0.8-14.6z" fill="rgb(0 0 0 / 9%)"/><path d="M8.6 11.8L8 26.4c0 1 0.8 1.6 1.8 1.6l12.2-0.2c1 0 1.6-0.6 1.6-1.6l-0.8-14.6z"/><path d="M7.4 11.6c4.2-1.4 12.6-1.6 16.6-0.2l-0.2-3.2C19.6 6.8 11.8 7 7.6 8.4z"/><path d="M11.6 17.2l8.4-0.2 0.2 4.8-8.4 0.2z"/></svg></span>Sesame oil
+    
+    <span style="font-size:11px;color:#6b625a;font-style:italic">assumed</span>
+  </span>
+    </div>
+  </div>
+  <div>
+    <h2 class="section-h">Cards and stats</h2>
+    <div class="grid" style="grid-template-columns:1.4fr 1fr;margin-top:10px">
+      <div style="padding:22px 24px;background:#f5eadb;border-radius:28px 38px 31px 35px;box-shadow:0 2px 0 var(--c-line), 0 8px 20px rgb(46 42 38 / 9%)">
+        <div class="display" style="font-size:25px">Chicken and bok choy, two ways</div>
+        <p style="margin:8px 0 16px;color:#6b625a;font-size:14px">Leans on everything that has to go
+          today. Leaves the salmon for tomorrow.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <span class="mono" style="font-size:12px;padding:5px 11px;background:#fdf8f0;border-radius:7px 10px 8px 9px;border:1px solid #e0d3c0">3 dishes</span><span class="mono" style="font-size:12px;padding:5px 11px;background:#fdf8f0;border-radius:7px 10px 8px 9px;border:1px solid #e0d3c0">1 sauce</span><span class="mono" style="font-size:12px;padding:5px 11px;background:#fdf8f0;border-radius:7px 10px 8px 9px;border:1px solid #e0d3c0">2 drinks</span><span class="mono" style="font-size:12px;padding:5px 11px;background:#fdf8f0;border-radius:7px 10px 8px 9px;border:1px solid #e0d3c0">10 portions</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="padding:18px 20px;background:#e6e6da;border-radius:18px 25px 20px 23px">
+          <div style="font-size:39px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1">38 min</div>
+          <div style="font-size:13px;color:#6b625a;margin-top:2px">bought back by working in parallel</div>
+        </div>
+        <div style="padding:18px 20px;background:#f5eadb;border-radius:18px 25px 20px 23px">
+          <div style="font-size:39px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1">2</div>
+          <div style="font-size:13px;color:#6b625a;margin-top:2px">washes, down from five</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <h2 class="section-h">The compile sequence</h2>
+    <p class="plate-note">One orchestrated moment, not five animations. Under reduced motion it lands on
+      the final state with no movement.</p>
+    <div style="margin-top:12px;padding:24px 26px;background:#2e2a26;border-radius:28px 38px 31px 35px;color:#fdf8f0">
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div class="mono" style="font-size:14px;display:flex;gap:12px;align-items:center;opacity:1">
+            <span style="width:8px;height:8px;border-radius:50%;background:#7c9473;flex:none"></span>reading the pantry</div><div class="mono" style="font-size:14px;display:flex;gap:12px;align-items:center;opacity:1">
+            <span style="width:8px;height:8px;border-radius:50%;background:#7c9473;flex:none"></span>checking dependencies</div><div class="mono" style="font-size:14px;display:flex;gap:12px;align-items:center;opacity:1">
+            <span style="width:8px;height:8px;border-radius:50%;background:#e2553d;flex:none"></span>allocating cookware</div><div class="mono" style="font-size:14px;display:flex;gap:12px;align-items:center;opacity:0.35">
+            <span style="width:8px;height:8px;border-radius:50%;background:#9a8f83;flex:none"></span>optimizing parallel tasks</div><div class="mono" style="font-size:14px;display:flex;gap:12px;align-items:center;opacity:0.35">
+            <span style="width:8px;height:8px;border-radius:50%;background:#9a8f83;flex:none"></span>compilation successful</div>
+      </div>
+      <div style="margin-top:18px;height:6px;background:#ffffff22;border-radius:99px;overflow:hidden">
+        <div style="width:58%;height:100%;background:#e2553d"></div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <h2 class="section-h">Empty and failure states</h2>
+    <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:10px">
+      <div style="padding:24px;background:#f5eadb;border-radius:28px 38px 31px 35px;display:flex;gap:18px;align-items:center">
+        <span style="color:#9a8f83;flex:none"><svg viewBox="0 0 48 48" width="68" height="68" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5.4l24.6-0.8c1.8 0 3 1.2 3 3l1 32c0 2.2-1.4 3.6-3.6 3.6l-21.4 0.6c-2.2 0-3.6-1.4-3.6-3.6z" fill="rgb(0 0 0 / 9%)"/><path d="M11 5.4l24.6-0.8c1.8 0 3 1.2 3 3l1 32c0 2.2-1.4 3.6-3.6 3.6l-21.4 0.6c-2.2 0-3.6-1.4-3.6-3.6z"/><path d="M10.8 18.4l28-0.8"/><path d="M15.4 10.4v4.2"/><path d="M15.8 23.4v4.4"/><path d="M20 31.4c3.8-1.4 8.2-1.4 11.4 0.2"/></svg></span>
+        <div><div class="display" style="font-size:21px">Nothing in the fridge yet</div>
+          <p style="margin:6px 0 0;font-size:14px;color:#6b625a">Tell me what you have and I will find the session in it.</p></div>
+      </div>
+      <div style="padding:24px;background:#f8dbd0;border-radius:28px 38px 31px 35px;display:flex;gap:18px;align-items:center">
+        <span style="color:#b8371f;flex:none"><svg viewBox="0 0 48 48" width="68" height="68" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.6 26c0-4.4 5.4-7.8 12.2-7.8s12.2 3.4 12.2 7.8c0 6-5.2 10.8-12.2 10.8s-12.2-4.8-12.2-10.8z" fill="rgb(0 0 0 / 9%)"/><path d="M24 4.4c9.4 0 17 7.6 17 17"/><path d="M24 4.4l-4.4-3"/><path d="M24 4.4l-4.6 3.2"/><path d="M14.6 26c0-4.4 5.4-7.8 12.2-7.8s12.2 3.4 12.2 7.8c0 6-5.2 10.8-12.2 10.8s-12.2-4.8-12.2-10.8z"/><path d="M14.4 24.8l-9.6-3.4"/><path d="M6.8 34.6L41 12.4"/></svg></span>
+        <div><div class="display" style="font-size:21px">This will not fit in 20 minutes</div>
+          <p style="margin:6px 0 0;font-size:14px;color:#6b625a">The shortest session here needs 34. Add time, or drop the salmon.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

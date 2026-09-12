@@ -1,0 +1,19 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",       "x": 0,    "y": 0,    "w": 940,  "h": 1500, "title": "01 · Palette" },
+    { "file": "Type.dc.html",       "x": 1060, "y": 0,    "w": 940,  "h": 1180, "title": "02 · Type" },
+    { "file": "Components.dc.html", "x": 2120, "y": 0,    "w": 940,  "h": 1320, "title": "03 · Primitives" },
+    { "file": "Glyphs.dc.html",     "x": 0,    "y": 1660, "w": 1020, "h": 1220, "title": "04 · Drawings" },
+    { "file": "Timeline.dc.html",   "x": 1140, "y": 1660, "w": 1080, "h": 1180, "title": "05 · Timeline" }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 2360,
+      "y": 1660,
+      "w": 300,
+      "text": "The palette is fixed by the brief.\nSo the design spends its structure budget on the restaurant pass: masking-tape lane labels, ticket-rail colour strips, labelled containers.\n\nPlate 05 is the only place this design raises its voice."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}
