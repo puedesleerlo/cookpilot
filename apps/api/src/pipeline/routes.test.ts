@@ -16,9 +16,11 @@ import { buildServer } from '../server';
 import { parseEnv } from '../config/env';
 import { createGateway } from '../llm/gateway';
 
+const ORIGIN = 'https://kitchen.example';
+
 const start = () =>
   buildServer({
-    env: parseEnv({ NODE_ENV: 'test', LOG_LEVEL: 'silent' }),
+    env: parseEnv({ NODE_ENV: 'test', LOG_LEVEL: 'silent', CORS_ORIGINS: ORIGIN }),
     pipeline: {
       gateway: createGateway({ generate: null }),
       brave: { available: false, reason: 'no search in this test' },
@@ -75,6 +77,53 @@ describe('POST /v1/cook', () => {
     expect(kinds[0]).toBe('heard');
     expect(kinds).toContain('searching');
 
+    await app.close();
+  });
+
+  /**
+   * The stream is written to `reply.raw`, which goes around the reply object — and around
+   * every header the CORS plugin put on it. The preflight passed, the JSON route worked,
+   * and the browser refused the stream with "Origin is not allowed by
+   * Access-Control-Allow-Origin. Status code: 200", which is a 200 nobody can read.
+   */
+  it('keeps the CORS headers a browser needs to read the stream at all', async () => {
+    const app = await start();
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/cook',
+      headers: { accept: 'text/event-stream', origin: ORIGIN },
+      payload: { wants: 'pasta', pantry: 'tomatoes' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toContain('text/event-stream');
+    expect(res.headers['access-control-allow-origin']).toBe(ORIGIN);
+
+    // And the plain JSON path, which never lost them, still has them.
+    const json = await app.inject({
+      method: 'POST',
+      url: '/v1/cook',
+      headers: { origin: ORIGIN },
+      payload: { wants: 'pasta', pantry: 'tomatoes' },
+    });
+    expect(json.headers['access-control-allow-origin']).toBe(ORIGIN);
+
+    await app.close();
+  });
+
+  it('answers the preflight a streaming POST triggers', async () => {
+    const app = await start();
+    const res = await app.inject({
+      method: 'OPTIONS',
+      url: '/v1/cook',
+      headers: {
+        origin: ORIGIN,
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'content-type,accept',
+      },
+    });
+    expect(res.statusCode).toBeLessThan(300);
+    expect(res.headers['access-control-allow-origin']).toBe(ORIGIN);
     await app.close();
   });
 

@@ -87,8 +87,15 @@ export const registerPipelineRoutes = (app: FastifyInstance, deps: PipelineDeps)
      *
      * `X-Accel-Buffering: no` matters in front of a proxy that would otherwise hold the
      * whole response until it completes, which turns a live log back into a long wait.
+     *
+     * The headers Fastify has already put on the reply are carried across by hand, because
+     * writing to `reply.raw` goes around the reply object entirely — and the plugin that
+     * sets `Access-Control-Allow-Origin` sets it *there*. Without this the preflight
+     * succeeded, the JSON route worked, and the browser refused the stream: "Origin is not
+     * allowed by Access-Control-Allow-Origin. Status code: 200."
      */
     reply.raw.writeHead(200, {
+      ...carried(reply.getHeaders()),
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
@@ -128,6 +135,24 @@ export const registerPipelineRoutes = (app: FastifyInstance, deps: PipelineDeps)
     }
     return reply;
   });
+};
+
+/**
+ * The reply headers a raw write must not lose.
+ *
+ * CORS above all — a stream without `Access-Control-Allow-Origin` is a stream no browser
+ * will read — plus the request id, which is how a screenshot of an error becomes a log
+ * search. Everything else is set explicitly by the writeHead that follows.
+ */
+const CARRY = /^(access-control-|vary$|x-request-id$)/i;
+
+const carried = (headers: Record<string, unknown>): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const [name, value] of Object.entries(headers)) {
+    if (!CARRY.test(name) || value === undefined) continue;
+    out[name] = Array.isArray(value) ? value.join(', ') : String(value);
+  }
+  return out;
 };
 
 const wantsStream = (accept: string | undefined): boolean =>
