@@ -8,8 +8,8 @@
 | Scheduler | **Works.** Task graph, critical path, resource-constrained scheduling, washes, the degradation ladder. |
 | Plan builder | **Works.** Compiles each candidate rather than estimating it. |
 | Timeline | **Works.** Gantt, run sheet, task detail, tomorrow's list, live recompilation. |
-| API | Runs. Health, readiness, server clock, device tokens, OpenAPI. |
-| Database | Runs. Schema, migrations, seed (5 packs, 22 recipes). |
+| API | **Deployed.** Cloud Run, on Postgres. Health, readiness, server clock, devices, shared sessions, the pipeline, OpenAPI. |
+| Database | **Runs.** Postgres in Docker locally; the organisation's Azure Postgres (`kitchen_compiler`) behind the deployed API. Schema, migrations, seed (5 packs, 22 recipes). |
 | Gemini via Vertex | Works. Verified live against `gemini-3.5-flash-lite`. |
 | Recipe extraction | Works. 100% JSON-LD hit rate measured on 27 real pages. |
 | The whole chain | **Works.** Two spoken answers → real recipes off the web → scheduled. See below. |
@@ -17,7 +17,7 @@
 | Recipe search | **Works.** Gemini writes the queries, Brave answers, robots is honoured. |
 | Step extraction | **Works.** Gemini reads each page into steps with timings and scales them. |
 | Your own fridge | **Works.** Search the lexicon, say what has to go today, correct the kitchen, compile. |
-| Cooking mode | **Works, on every phone.** Scan the host's code, pick your cook, follow your own steps with timers that count down together. Needs the API, with or without a database. |
+| Cooking mode | **Works, on every phone.** Scan the host's code, pick your cook, follow your own steps with timers that count down together. On the deployed site and locally; needs the API, with or without a database. |
 
 
 ### The chain, end to end
@@ -97,14 +97,17 @@ timeline for itself and checks its hash against the host's. Timers count from th
 clock, so two phones agree to within a round trip. The API is required for this and for
 nothing else — the single-device demo still runs with it blocked.
 
+The same flow runs on the deployed site: <https://hackaton-508407.web.app/#demo>, **Cook
+this together**, and the phones join through the Cloud Run API.
+
 **With or without a database.** Sessions, devices and the log live in Postgres when
 `DATABASE_URL` is set. Without it the API keeps them in memory on that instance: everything
 works, the log has one order, and every session ends when the process does — so run one
-instance in that mode. The boot log says which of the two it is. For the deployed API there
-is a dedicated `kitchen_compiler` database on the organisation's Azure Postgres server,
-already migrated; its URL (with `sslmode=require`) goes into Secret Manager as
-`DATABASE_URL` and is mounted by pinned version, as the Deploy section describes. Nothing of
-ours touches the other databases on that server.
+instance in that mode. The boot log says which of the two it is. The deployed API has a
+database: a dedicated `kitchen_compiler` on the organisation's Azure Postgres server,
+migrated, mounted as `DATABASE_URL:1`, and reported by `/readyz`. Nothing of ours touches
+the other databases on that server; `DROP DATABASE kitchen_compiler` is the whole clean-up.
+
 ## Run it locally
 
 ```bash
@@ -140,7 +143,7 @@ curl localhost:8080/v1/devices/me -H "authorization: Bearer $TOKEN"
 ## Verify everything
 
 ```bash
-pnpm check                 # secret scan, lint, typecheck, 436 tests
+pnpm check                 # secret scan, lint, typecheck, the whole suite
 pnpm test                  # tests alone (needs Postgres for the integration ones)
 LIVE_VERTEX=1 pnpm test apps/api/src/llm/vertex.live.test.ts   # real Gemini call, costs money
 node scripts/scan-bundle.mjs apps/web/dist                     # no secrets in the client
@@ -164,15 +167,23 @@ There is **no model API key**. Vertex authenticates through the service account,
 whole inventory is two provider keys plus infrastructure.
 
 ```bash
-# One-time: service accounts, secret containers, IAM bindings, the Vertex role.
-# Generated from apps/api/src/config/secrets.ts, so it cannot drift from the code.
-PROJECT_ID=hackaton-508407 ./infra/iam.sh
+# One-time, per secret: a container, and read access for the account the service runs as.
+# The deployed service runs as the project's DEFAULT COMPUTE account; that is what the four
+# mounted secrets are bound to today. infra/iam.sh (generated from
+# apps/api/src/config/secrets.ts) is the stricter setup — one account per service, each
+# reading only what it declares — and has not been applied. Apply it and redeploy with
+# --service-account=kc-api@... when that hardening is wanted.
+gcloud secrets create DATABASE_URL --project=hackaton-508407 --replication-policy=automatic
+gcloud secrets add-iam-policy-binding DATABASE_URL --project=hackaton-508407 \
+  --member=serviceAccount:667576706709-compute@developer.gserviceaccount.com \
+  --role=roles/secretmanager.secretAccessor
 
 # Put a value in. Repeat per secret; each add creates a NEW VERSION.
+# DATABASE_URL is the Azure kitchen_compiler URL, and it must carry ?sslmode=require.
+# REDIS_URL is not mounted: nothing deployed uses a queue, and the API says so at boot.
 printf '%s' "$BRAVE_API_KEY"      | gcloud secrets versions add BRAVE_API_KEY      --data-file=- --project=hackaton-508407
 printf '%s' "$ELEVENLABS_API_KEY" | gcloud secrets versions add ELEVENLABS_API_KEY --data-file=- --project=hackaton-508407
 printf '%s' "$DATABASE_URL"       | gcloud secrets versions add DATABASE_URL       --data-file=- --project=hackaton-508407
-printf '%s' "$REDIS_URL"          | gcloud secrets versions add REDIS_URL          --data-file=- --project=hackaton-508407
 openssl rand -base64 48 | tr -d '\n' | gcloud secrets versions add JWT_SECRET      --data-file=- --project=hackaton-508407
 
 # Find the version number you just created.
@@ -228,8 +239,9 @@ distinction that matters.
   client bundle. `pnpm deploy:web` runs it and refuses to deploy on a finding.
 - Logs redact by value **and** by shape, at the logger and at the log-method hook — so a
   key interpolated into a debug message is redacted too.
-- Each service reads only what it declares. The worker cannot read `ELEVENLABS_API_KEY`,
-  and `infra/iam.sh` enforces that in IAM, not just in code.
+- Each service reads only what it declares — in code, through the loader, today. In IAM it
+  is enforced only once `infra/iam.sh` is applied; the deployed service runs as the default
+  compute account, which can read all four mounted secrets.
 - One module per provider, so a leaked key has exactly one place to be rotated.
 
 ## Rotating a key
@@ -239,7 +251,7 @@ distinction that matters.
 # 2. Add a new version:
 printf '%s' "$NEW_KEY" | gcloud secrets versions add BRAVE_API_KEY --data-file=- --project=hackaton-508407
 # 3. Redeploy pinned to it (this is the deliberate step):
-gcloud run services update api --project=hackaton-508407 --region=us-central1 \
+gcloud run services update kitchen-api --project=hackaton-508407 --region=us-central1 \
   --update-secrets=BRAVE_API_KEY=BRAVE_API_KEY:2
 # 4. Disable the old version and confirm it is dead:
 gcloud secrets versions disable 1 --secret=BRAVE_API_KEY --project=hackaton-508407
