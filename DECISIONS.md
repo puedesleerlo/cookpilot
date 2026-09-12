@@ -545,3 +545,51 @@ Why: Including the model means changing model invalidates the cache — which is
      storing the input means the cache table never holds a readable pantry or transcript,
      which matters because those are the two things this product is told in confidence.
 Revisit if: cache hit rates need diagnosing; add a coarse non-identifying label, not the input.
+
+## D-042 — The JSON-LD hit rate is 100% on 27 recipe pages, measured three times
+Date: 2026-09-12
+Question: How often does `schema.org/Recipe` markup exist? The whole ingestion design
+          depends on it, so the delta requires it measured on ≥20 real URLs.
+Answer: **27 of 27 recipe pages across 13 domains, all JSON-LD, zero microdata needed,
+        zero misses, zero recipes invented from non-recipe pages.**
+Why the number took three attempts, which is the part worth recording:
+  1. Hand-written URLs: 11 of 20 404'd. Hit rate 9/9 on a self-selected sample.
+  2. Discovered URLs, denominator = everything fetched: 47%. Every "miss" was `/feed/`,
+     `/wp-json/`, `/about-us/` or a category index — pages the extractor correctly said
+     contained no recipe. That number measured my URL filter, not the extractor.
+  3. Discovered URLs, denominator = pages judged to be recipes **from their own visible
+     text**, never from the URL and never from the markup being measured. A URL-based
+     classifier was tried and was wrong in both directions: it counted `/about/…` as a
+     recipe and `allrecipes.com/recipe/223042/…` as not one.
+Consequence: LLM normalization is an edge case, not the hot path. Extraction is free,
+     instant and reproducible. `ingestion_jobs.method` records which path ran, so if the
+     `llm` share climbs that is a fact about our extractor, not about the web.
+Revisit if: the `llm` share in production exceeds ~15%.
+
+## D-043 — Extracted durations are checked against the plausible-range table
+Date: 2026-09-12
+Question: Structured markup is machine-readable. Is it trustworthy?
+Options: (a) use stated durations as given, (b) check them against the verb table
+Choice: (b), with an asymmetric tolerance: a third of the table value on the low side,
+        twelve times on the high side.
+Why: Machine-readable is not the same as true, and the two directions of error are not
+     equally bad. A page claiming a three-minute simmer produces a schedule that cannot
+     physically happen, and the user discovers that at minute three. A four-hour braise is
+     real, and the table's 35 minutes is a default rather than a ceiling — so the upper
+     bound is loose and the lower bound is tight.
+Revisit if: real corrections cluster at one verb, which would mean that row is wrong.
+
+## D-044 — A missing robots.txt means refused, not permitted
+Date: 2026-09-12
+Question: What if robots.txt cannot be fetched?
+Options: (a) treat as permission, (b) treat as refusal
+Choice: (b).
+Why: (a) is the convention and it is the wrong default for a crawler nobody asked for. An
+     unreachable robots.txt is an absence of information, not a grant. The cost of (b) is
+     a page we do not ingest; the cost of (a) is crawling someone who said no and whose
+     server happened to be down when we asked.
+     Writing the parser also turned up a real bug: robots paths are full of regex
+     metacharacters — `/*?filters[` is a live rule on a real recipe site — so the pattern
+     translation escapes everything first and re-enables only the two wildcards robots
+     actually defines.
+Revisit if: never.

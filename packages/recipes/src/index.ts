@@ -5,3 +5,7 @@ export type { ImportResult, ImportSuccess, ImportFailure } from './import';
 export { savePack, deletePack, loadStoredPacks, storageStatus, saveSession, loadSession } from './storage';
 export { packToJson, packFilename, downloadPack } from './export';
 export { PANTRY_STAPLES, isStaple } from './staples';
+export { extractJsonLd, extractMicrodata, extractStructured, parseIsoDuration, parseYield } from './extract/jsonld';
+export type { ExtractedRecipe, ExtractionOutcome } from './extract/jsonld';
+export { toRecipeIR, checkDuration } from './extract/to-ir';
+export type { ToIrResult, Correction } from './extract/to-ir';
