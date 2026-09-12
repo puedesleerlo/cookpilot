@@ -178,23 +178,47 @@ openssl rand -base64 48 | tr -d '\n' | gcloud secrets versions add JWT_SECRET   
 # Find the version number you just created.
 gcloud secrets versions list JWT_SECRET --project=hackaton-508407 --limit=1
 
-# Mount by PINNED VERSION, never :latest.
-gcloud run deploy api \
-  --project=hackaton-508407 --region=us-central1 \
-  --service-account=kc-api@hackaton-508407.iam.gserviceaccount.com \
-  --min-instances=1 --session-affinity --timeout=3600 \
-  --set-env-vars=GOOGLE_CLOUD_PROJECT=hackaton-508407,VERTEX_LOCATION=global \
-  --update-secrets=DATABASE_URL=DATABASE_URL:1,REDIS_URL=REDIS_URL:1,JWT_SECRET=JWT_SECRET:1,BRAVE_API_KEY=BRAVE_API_KEY:1,ELEVENLABS_API_KEY=ELEVENLABS_API_KEY:1 \
-  --source=.
+# Mount by PINNED VERSION, never :latest. This is the command that is actually deployed;
+# the service is `kitchen-api` and it runs as the project's default compute service account.
+# `--env-vars-file` rather than `--set-env-vars` because CORS_ORIGINS contains a comma.
+cat > /tmp/run-env.yaml <<'YAML'
+NODE_ENV: production
+GOOGLE_CLOUD_PROJECT: hackaton-508407
+VERTEX_LOCATION: global
+CORS_ORIGINS: https://hackaton-508407.web.app,https://hackaton-508407.firebaseapp.com
+YAML
+
+gcloud run deploy kitchen-api \
+  --project=hackaton-508407 --region=us-central1 --source=. --clear-base-image \
+  --allow-unauthenticated --port=8080 --memory=1Gi --cpu=1 --timeout=300 \
+  --max-instances=4 --concurrency=8 \
+  --env-vars-file=/tmp/run-env.yaml \
+  --set-secrets=BRAVE_API_KEY=BRAVE_API_KEY:1,ELEVENLABS_API_KEY=ELEVENLABS_API_KEY:1,JWT_SECRET=JWT_SECRET:1,DATABASE_URL=DATABASE_URL:1
 ```
+
+Live at <https://kitchen-api-667576706709.us-central1.run.app>. Two things about the build
+that cost four failed revisions and are worth not rediscovering:
+
+- The `Dockerfile` is at the **repository root**, because the build context is the whole
+  monorepo. Run `gcloud run deploy --source=.` from the root, not from `apps/api`, or
+  Cloud Build finds no Dockerfile and silently falls back to Buildpacks.
+- No BuildKit cache mounts. Cloud Build's docker builder does not enable BuildKit, and
+  `--mount=type=cache` fails the build outright.
+- The container runs `tsx`, not `node --experimental-strip-types`. Type stripping keeps
+  Node's ESM resolver, which will not resolve this codebase's extensionless imports.
+
+`/healthz` is answered by Google's frontend rather than the container on `*.run.app`; use
+`/readyz`, which reports dependencies and the scheduler version.
 
 **Why pinned versions and not `:latest`.** With `:latest`, adding a secret version silently
 changes what a running service uses — rotation becomes something that happens *to* you at
 2am rather than a deploy you can see, correlate and roll back. `loader.ts` refuses a
 reference ending in `/versions/latest` and says why.
 
-**Why the API is not deployed yet.** It would serve health checks and device tokens and
-nothing else. Deploying it before the scheduler exists is infrastructure theatre.
+**Storage is degradable.** `requireSecrets` takes a map of secret → what-you-lose, so an
+API serving only the cooking pipeline starts without Postgres and Redis and names what is
+off. A database that is *configured and broken* still fails readiness, which is the
+distinction that matters.
 
 ## Secrets: the rules that are enforced, not just written down
 
