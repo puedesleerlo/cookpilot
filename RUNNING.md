@@ -13,7 +13,7 @@
 | Gemini via Vertex | Works. Verified live against `gemini-3.5-flash-lite`. |
 | Recipe extraction | Works. 100% JSON-LD hit rate measured on 27 real pages. |
 | Your own fridge | **Works.** Search the lexicon, say what has to go today, correct the kitchen, compile. |
-| Cooking mode | **Works, on every phone.** Scan the host's code, pick your cook, follow your own steps with timers that count down together. Needs the API. |
+| Cooking mode | **Works, on every phone.** Scan the host's code, pick your cook, follow your own steps with timers that count down together. Needs the API, with or without a database. |
 | Voice intake | **Not built.** The structured form is the way in, by design — the free-text parser was deleted. |
 
 ### The demo, in one link
@@ -63,12 +63,14 @@ timeline for itself and checks its hash against the host's. Timers count from th
 clock, so two phones agree to within a round trip. The API is required for this and for
 nothing else — the single-device demo still runs with it blocked.
 
-**It needs an API with a database.** Sessions, devices and the log live in Postgres, and an
-API booted without `DATABASE_URL` registers none of those routes; the app says so when you
-press the button. A deployed API on Cloud Run without Cloud SQL or Neon behind it therefore
-hosts the pipeline but not shared sessions — giving it a database is a cost decision, not a
-code change.
-
+**With or without a database.** Sessions, devices and the log live in Postgres when
+`DATABASE_URL` is set. Without it the API keeps them in memory on that instance: everything
+works, the log has one order, and every session ends when the process does — so run one
+instance in that mode. The boot log says which of the two it is. For the deployed API there
+is a dedicated `kitchen_compiler` database on the organisation's Azure Postgres server,
+already migrated; its URL (with `sslmode=require`) goes into Secret Manager as
+`DATABASE_URL` and is mounted by pinned version, as the Deploy section describes. Nothing of
+ours touches the other databases on that server.
 ## Run it locally
 
 ```bash

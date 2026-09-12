@@ -230,9 +230,13 @@ describe('the entry point wires what the server needs', () => {
     expect(call).toContain('jwtSecret:');
   });
 
-  it('says so loudly when identity routes are not registered', async () => {
+  it('says so loudly when sessions are kept in memory rather than a database', async () => {
     const src = readFileSync(path.join(process.cwd(), 'apps/api/src/server.ts'), 'utf8');
-    expect(src).toContain('identity routes are NOT registered');
+    expect(src).toContain('sessions and devices are kept in memory on this instance');
+    // And the routes exist regardless: a server with no database is a server, not a 404.
+    const server = await start();
+    const res = await server.inject({ method: 'POST', url: '/v1/devices', payload: {} });
+    expect(res.statusCode).toBe(201);
   });
 });
 

@@ -16,22 +16,8 @@ import {
   type SessionView,
 } from '@kitchen/contracts';
 import type { Cook } from '@kitchen/domain';
-import type { Database } from '../db/client';
-import {
-  appendEvent,
-  claimCook,
-  createSession,
-  eventsSince,
-  generateJoinCode,
-  highestSeq,
-  isUniqueViolation,
-  markSessionStarted,
-  membersOf,
-  sessionByJoinCode,
-  sessionById,
-  type AppendedEvent,
-} from '../db/sessions';
-import { requireHost } from '../auth/devices';
+import { generateJoinCode, type AppendedEvent } from '../db/sessions';
+import { JoinCodeTakenError, type SessionStore, type StoredSession } from './store';
 import { ApiError } from '../errors';
 
 /**
@@ -48,7 +34,7 @@ import { ApiError } from '../errors';
  */
 
 export type SessionRouteContext = {
-  db: Database;
+  store: SessionStore;
   now: () => number;
   requireDevice: (request: FastifyRequest) => Promise<string>;
   /** Injected so a test can force a join-code collision. */
@@ -61,7 +47,7 @@ export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 /** Thirty-one to the sixth is 887 million codes; six collisions in a row is a bug, not luck. */
 const JOIN_CODE_ATTEMPTS = 6;
 
-type SessionRow = NonNullable<Awaited<ReturnType<typeof sessionById>>>;
+type SessionRow = StoredSession;
 
 const parseOrReject = <T extends z.ZodTypeAny>(schema: T, value: unknown): z.infer<T> => {
   const parsed = schema.safeParse(value);
@@ -99,11 +85,12 @@ const toEvent = (e: AppendedEvent): SessionEvent => ({
 });
 
 export const registerSessionRoutes = (app: FastifyInstance, ctx: SessionRouteContext): void => {
-  const { db, now, requireDevice } = ctx;
+  const { store, now, requireDevice } = ctx;
   const random = ctx.random ?? Math.random;
+  const at = (): Date => new Date(now());
 
   const load = async (id: string): Promise<SessionRow> => {
-    const row = await sessionById(db, id);
+    const row = await store.sessionById(id);
     if (!row) throw new ApiError('session_not_found', 'That session does not exist.');
     if (row.expiresAt.getTime() <= now()) {
       throw new ApiError('session_expired', 'That session has expired. Start a new one.');
@@ -114,7 +101,7 @@ export const registerSessionRoutes = (app: FastifyInstance, ctx: SessionRouteCon
   /** The host is always in; everyone else has to have claimed a cook. */
   const requireAccess = async (session: SessionRow, deviceId: string): Promise<void> => {
     if (session.hostDeviceId === deviceId) return;
-    const members = await membersOf(db, session.id);
+    const members = await store.membersOf(session.id);
     if (!members.some((m) => m.deviceId === deviceId)) {
       throw new ApiError('forbidden', 'This device is not part of that session.');
     }
@@ -122,8 +109,8 @@ export const registerSessionRoutes = (app: FastifyInstance, ctx: SessionRouteCon
 
   const view = async (session: SessionRow): Promise<SessionView> => {
     const [members, lastSeq] = await Promise.all([
-      membersOf(db, session.id),
-      highestSeq(db, session.id),
+      store.membersOf(session.id),
+      store.highestSeq(session.id),
     ]);
     return {
       id: session.id,
@@ -153,31 +140,34 @@ export const registerSessionRoutes = (app: FastifyInstance, ctx: SessionRouteCon
 
     for (let attempt = 1; ; attempt++) {
       try {
-        await createSession(db, {
-          id,
-          joinCode: generateJoinCode(random),
-          hostDeviceId: deviceId,
-          inputs: body.inputs,
-          crew: body.crew,
-          scheduleHash: body.scheduleHash,
-          schedulerVersion: body.schedulerVersion,
-          expiresAt: new Date(now() + SESSION_TTL_MS),
-        });
+        await store.createSession(
+          {
+            id,
+            joinCode: generateJoinCode(random),
+            hostDeviceId: deviceId,
+            inputs: body.inputs,
+            crew: body.crew,
+            scheduleHash: body.scheduleHash,
+            schedulerVersion: body.schedulerVersion,
+            expiresAt: new Date(now() + SESSION_TTL_MS),
+          },
+          at(),
+        );
         break;
       } catch (err) {
         // A code already in use is the one failure worth retrying; anything else is real.
-        if (!isUniqueViolation(err) || attempt >= JOIN_CODE_ATTEMPTS) throw err;
+        if (!(err instanceof JoinCodeTakenError) || attempt >= JOIN_CODE_ATTEMPTS) throw err;
       }
     }
 
-    return reply.status(201).send(await view((await sessionById(db, id))!));
+    return reply.status(201).send(await view((await store.sessionById(id))!));
   });
 
   // --------------------------------------------------------------- by code
   app.get(sessionRoutes.sessionByCode.path, async (request) => {
     await requireDevice(request);
     const { code } = request.params as { code: string };
-    const session = await sessionByJoinCode(db, code.trim().toUpperCase());
+    const session = await store.sessionByJoinCode(code.trim().toUpperCase());
     if (!session) {
       throw new ApiError('join_code_invalid', "No session has that code. Check the host's screen.");
     }
@@ -209,26 +199,32 @@ export const registerSessionRoutes = (app: FastifyInstance, ctx: SessionRouteCon
       });
     }
 
-    const claimed = await claimCook(db, {
-      sessionId: session.id,
-      deviceId,
-      cookId: cook.id,
-      displayName: body.displayName,
-      skill: cook.skill,
-    });
+    const claimed = await store.claimCook(
+      {
+        sessionId: session.id,
+        deviceId,
+        cookId: cook.id,
+        displayName: body.displayName,
+        skill: cook.skill,
+      },
+      at(),
+    );
     if (!claimed.ok) {
       throw new ApiError('conflict', `${claimed.holder} already took that one. Pick another.`);
     }
 
-    await appendEvent(db, {
-      id: newEventId(),
-      sessionId: session.id,
-      type: 'member-joined',
-      payload: { cookId: cook.id, displayName: body.displayName },
-      byDeviceId: deviceId,
-    });
+    await store.appendEvent(
+      {
+        id: newEventId(),
+        sessionId: session.id,
+        type: 'member-joined',
+        payload: { cookId: cook.id, displayName: body.displayName },
+        byDeviceId: deviceId,
+      },
+      at(),
+    );
 
-    return view((await sessionById(db, session.id))!);
+    return view((await store.sessionById(session.id))!);
   });
 
   // ---------------------------------------------------------------- replay
@@ -239,13 +235,13 @@ export const registerSessionRoutes = (app: FastifyInstance, ctx: SessionRouteCon
     const query = parseOrReject(SessionEventsQuerySchema, request.query ?? {});
 
     const [events, members] = await Promise.all([
-      eventsSince(db, session.id, query.after),
-      membersOf(db, session.id),
+      store.eventsSince(session.id, query.after),
+      store.membersOf(session.id),
     ]);
     const last = events[events.length - 1];
     const body: SessionEventsResponse = {
       events: events.map(toEvent),
-      lastSeq: last ? last.seq : await highestSeq(db, session.id),
+      lastSeq: last ? last.seq : await store.highestSeq(session.id),
       status: session.status as SessionStatus,
       startedAtMs: session.startedAt?.getTime() ?? null,
       members: members.map((m) => toMember(m, session.hostDeviceId)),
@@ -261,19 +257,25 @@ export const registerSessionRoutes = (app: FastifyInstance, ctx: SessionRouteCon
     const body = parseOrReject(AppendSessionEventRequestSchema, request.body ?? {});
 
     if (body.type === 'session-started') {
-      await requireHost(db, session.id, deviceId);
+      // Structural changes need one owner; two cooks dragging the plan is the worse failure.
+      if (session.hostDeviceId !== deviceId) {
+        throw new ApiError('forbidden', 'Only whoever started the session can change the plan.');
+      }
       if (session.status !== 'open') {
         throw new ApiError('conflict', 'This session has already started.');
       }
-      const at = now();
-      await markSessionStarted(db, session.id, new Date(at));
-      const event = await appendEvent(db, {
-        id: newEventId(),
-        sessionId: session.id,
-        type: 'session-started',
-        payload: { startedAtMs: at },
-        byDeviceId: deviceId,
-      });
+      const startedAt = at();
+      await store.markSessionStarted(session.id, startedAt);
+      const event = await store.appendEvent(
+        {
+          id: newEventId(),
+          sessionId: session.id,
+          type: 'session-started',
+          payload: { startedAtMs: startedAt.getTime() },
+          byDeviceId: deviceId,
+        },
+        startedAt,
+      );
       return reply.status(201).send({ event: toEvent(event), serverTimeMs: now() });
     }
 
@@ -281,13 +283,16 @@ export const registerSessionRoutes = (app: FastifyInstance, ctx: SessionRouteCon
     if (session.status !== 'cooking') {
       throw new ApiError('conflict', 'Nothing can be finished before the session has started.');
     }
-    const event = await appendEvent(db, {
-      id: newEventId(),
-      sessionId: session.id,
-      type: 'task-completed',
-      taskId: body.taskId,
-      byDeviceId: deviceId,
-    });
+    const event = await store.appendEvent(
+      {
+        id: newEventId(),
+        sessionId: session.id,
+        type: 'task-completed',
+        taskId: body.taskId,
+        byDeviceId: deviceId,
+      },
+      at(),
+    );
     return reply.status(201).send({ event: toEvent(event), serverTimeMs: now() });
   });
 };

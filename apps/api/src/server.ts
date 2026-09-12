@@ -1,7 +1,7 @@
 import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import {
   CreateDeviceRequestSchema,
   REQUEST_ID_HEADER,
@@ -16,8 +16,9 @@ import { createLogger } from './logging';
 import { describeEnv, type Env } from './config/env';
 import { buildOpenApi } from './openapi';
 import type { Database } from './db/client';
-import { bearerFrom, issueDevice, touchDevice, verifyDevice } from './auth/devices';
+import { bearerFrom, issueDeviceWith, verifyDeviceWith } from './auth/devices';
 import { registerSessionRoutes } from './sessions/routes';
+import { memorySessionStore, postgresSessionStore, type SessionStore } from './sessions/store';
 import { stageMetrics, totalSpendUsd } from './llm/gateway';
 
 /**
@@ -34,9 +35,11 @@ export type BuildOptions = {
   dependencies?: DependencyCheck[];
   /** Injected so tests can drive time without a real clock. */
   now?: () => number;
-  /** Absent in the unit tests that only exercise the routes needing no storage. */
+  /** The database. Absent, sessions and devices are kept in memory on this instance. */
   db?: Database;
-  /** Signing key for device tokens. Required once `db` is present. */
+  /** Where sessions live. Defaults to Postgres over `db`, or memory when there is no `db`. */
+  store?: SessionStore;
+  /** Signing key for device tokens. Absent, one is generated at boot and dies with it. */
   jwtSecret?: string;
   /** Lowered in tests so the limiter can be exercised without a thousand requests. */
   rateLimits?: { globalPerMinute: number; deviceCreationPerHour: number };
@@ -56,6 +59,7 @@ export const buildServer = async ({
   dependencies = [],
   now = () => Date.now(),
   db,
+  store,
   jwtSecret,
   rateLimits = { globalPerMinute: 300, deviceCreationPerHour: 20 },
   random,
@@ -177,13 +181,35 @@ export const buildServer = async ({
   });
 
   // -------------------------------------------------------------- identity
-  if (db && jwtSecret) {
+  /*
+   * Identity and sessions always exist. With a database they live in it; without one they
+   * live in this process, on this instance, until it restarts — which is said in the log,
+   * because it is the one thing about that mode worth knowing. The first real boot of this
+   * service had the identity routes silently absent, and that is the failure this replaces.
+   */
+  const sessionStore = store ?? (db ? postgresSessionStore(db) : memorySessionStore());
+  const signingSecret = jwtSecret ?? randomBytes(32).toString('base64');
+  if (sessionStore.kind === 'memory') {
+    app.log.warn(
+      'no database: sessions and devices are kept in memory on this instance. Run ONE ' +
+        'instance, and expect every session to end when the process does.',
+    );
+  }
+  if (!jwtSecret) {
+    app.log.warn('JWT_SECRET is not set: device tokens are signed with a key made at boot and die with it.');
+  }
+
+  {
     /**
      * A route declares that it needs a device; it does not remember to check. A handler
      * that forgets an `if` is a hole, and the holes are never in the handler anyone reviews.
      */
     const requireDevice = async (request: FastifyRequest): Promise<string> => {
-      const { deviceId } = await verifyDevice(db, jwtSecret, bearerFrom(request.headers.authorization));
+      const { deviceId } = await verifyDeviceWith(
+        sessionStore,
+        signingSecret,
+        bearerFrom(request.headers.authorization),
+      );
       request.deviceId = deviceId;
       return deviceId;
     };
@@ -206,7 +232,7 @@ export const buildServer = async ({
             })),
           });
         }
-        const issued = await issueDevice(db, jwtSecret, now);
+        const issued = await issueDeviceWith(sessionStore, signingSecret, now);
         return reply.status(201).send({
           deviceId: issued.deviceId,
           token: issued.token,
@@ -217,13 +243,11 @@ export const buildServer = async ({
 
     app.get(routes.whoAmI.path, async (request) => {
       const deviceId = await requireDevice(request);
-      await touchDevice(db, deviceId, new Date(now()));
+      await sessionStore.touchDevice(deviceId, new Date(now()));
       return { deviceId };
     });
 
-    // Sessions need both a device and somewhere to keep the log, so they live behind the
-    // same guard as identity rather than half-registering without it.
-    registerSessionRoutes(app, { db, now, requireDevice, ...(random ? { random } : {}) });
+    registerSessionRoutes(app, { store: sessionStore, now, requireDevice, ...(random ? { random } : {}) });
   }
 
   /**
@@ -242,17 +266,8 @@ export const buildServer = async ({
   const spec = buildOpenApi(allRoutes());
   app.get('/openapi.json', async () => spec);
 
-  if (!db || !jwtSecret) {
-    // Loud, because the first real boot of this service had exactly this gap: the identity
-    // routes existed, were tested through the harness, and were absent in production.
-    app.log.warn(
-      { db: Boolean(db), jwtSecret: Boolean(jwtSecret) },
-      'identity routes are NOT registered: buildServer was called without db and jwtSecret',
-    );
-  }
-
   app.log.info(
-    { ...describeEnv(env), identityRoutes: Boolean(db && jwtSecret) },
+    { ...describeEnv(env), sessionStore: sessionStore.kind, ephemeralSigningKey: !jwtSecret },
     'api configured',
   );
   return app;

@@ -945,3 +945,43 @@ Consequence: only `VITE_*` names reach the bundle, so the provider secrets in th
      file do not; the bundle scanner still fails the build if one did.
 Revisit if: the API ever runs on a different port locally.
 
+## D-066 — Sessions have two backends behind one interface, and the memory one is honest
+Date: 2026-09-12
+Question: The API is going to Cloud Run without a database. Do shared sessions go dark
+          there, or work?
+Options: (a) they go dark, and the app says so; (b) provision a database first; (c) a
+         `SessionStore` interface with a Postgres backend and an in-memory one, chosen at
+         boot by whether `DATABASE_URL` is set.
+Choice: (c), `apps/api/src/sessions/store.ts`. The routes and identity see only the
+        interface; the database-flavoured functions in `db/sessions.ts` and
+        `auth/devices.ts` stay as they were, wrapped. One test suite runs against both.
+Why: the user asked for both to work, and (c) is the only option that needs nothing
+     provisioned. The memory backend keeps the promises the routes rely on — one device
+     per cook, one order for the log — because JavaScript's single thread is a lock for as
+     long as the process lives. What it cannot promise is a second instance or a restart,
+     and rather than pretend, the boot log says so: one instance, and sessions die with the
+     process. A missing `JWT_SECRET` is treated the same way, a key made at boot and said
+     out loud, rather than a refusal to start.
+Consequence: the "identity routes are NOT registered" path is gone; a server with nothing
+     behind it is a server, not a 404. The client's not_found wording now only ever
+     describes an old build.
+Revisit if: the deployed API ever runs more than one instance without a database. Then
+     memory is a coin flip and Postgres is the only honest backend.
+
+## D-067 — The offered Azure server gets a database of its own, not our tables in theirs
+Date: 2026-09-12
+Question: The user offered a connection string for `ep_raw_data` on the organisation's
+          Azure Postgres server. Use it as given?
+Choice: create `kitchen_compiler` on the same server (the role has `CREATEDB`), migrate
+        that, and have its URL — with `sslmode=require` — mounted as `DATABASE_URL` from
+        Secret Manager. `ep_raw_data` was read, never written.
+Why: the server also holds `ep_prod`, `cruces_interinstitucionales` and others that read
+     as production; our migration creates ten tables, an extension and a trigger, and its
+     first statement drops a column `IF EXISTS`. None of that belongs inside somebody's
+     raw-data database, and a database of our own costs nothing on a server that already
+     runs. The credential itself lives in Secret Manager and `.env` only, never in the
+     repository, a message or a log.
+Consequence: with Postgres behind it the deployed API may run several instances again.
+     Azure's firewall has to admit Cloud Run's egress, which readiness will report.
+Revisit if: the organisation wants the app off that server. `DROP DATABASE
+     kitchen_compiler` is the whole of the clean-up.

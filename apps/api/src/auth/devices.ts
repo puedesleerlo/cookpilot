@@ -2,7 +2,8 @@ import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { createHash, randomBytes } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import type { Database } from '../db/client';
-import { devices, sessionMembers, sessions } from '../db/schema';
+import { sessionMembers, sessions } from '../db/schema';
+import { postgresSessionStore, type SessionStore } from '../sessions/store';
 import { ApiError } from '../errors';
 
 /**
@@ -37,8 +38,8 @@ export const hashToken = (token: string): string =>
 
 const key = (secret: string): Uint8Array => new TextEncoder().encode(secret);
 
-export const issueDevice = async (
-  db: Database,
+export const issueDeviceWith = async (
+  store: SessionStore,
   secret: string,
   now: () => number = () => Date.now(),
 ): Promise<IssuedDevice> => {
@@ -55,10 +56,16 @@ export const issueDevice = async (
     .setExpirationTime(expiresAt)
     .sign(key(secret));
 
-  await db.insert(devices).values({ id: deviceId, anonTokenHash: hashToken(token) });
+  await store.insertDevice({ id: deviceId, anonTokenHash: hashToken(token) }, new Date(now()));
 
   return { deviceId, token, expiresAt: new Date(expiresAt * 1000) };
 };
+
+export const issueDevice = (
+  db: Database,
+  secret: string,
+  now: () => number = () => Date.now(),
+): Promise<IssuedDevice> => issueDeviceWith(postgresSessionStore(db), secret, now);
 
 export type VerifiedDevice = { deviceId: string };
 
@@ -68,8 +75,8 @@ export type VerifiedDevice = { deviceId: string };
  * been deleted. Revocation is deleting the row, so that last check is what makes revocation
  * mean anything.
  */
-export const verifyDevice = async (
-  db: Database,
+export const verifyDeviceWith = async (
+  store: SessionStore,
   secret: string,
   token: string | undefined,
 ): Promise<VerifiedDevice> => {
@@ -92,7 +99,7 @@ export const verifyDevice = async (
     throw new ApiError('unauthorized', 'That device token is not valid.');
   }
 
-  const [row] = await db.select().from(devices).where(eq(devices.id, claims.sub)).limit(1);
+  const row = await store.findDevice(claims.sub);
   if (!row || row.anonTokenHash !== hashToken(token)) {
     throw new ApiError('unauthorized', 'That device token is not valid.');
   }
@@ -100,14 +107,18 @@ export const verifyDevice = async (
   return { deviceId: claims.sub };
 };
 
-export const touchDevice = async (db: Database, deviceId: string, at: Date): Promise<void> => {
-  await db.update(devices).set({ lastSeenAt: at }).where(eq(devices.id, deviceId));
-};
+export const verifyDevice = (
+  db: Database,
+  secret: string,
+  token: string | undefined,
+): Promise<VerifiedDevice> => verifyDeviceWith(postgresSessionStore(db), secret, token);
+
+export const touchDevice = (db: Database, deviceId: string, at: Date): Promise<void> =>
+  postgresSessionStore(db).touchDevice(deviceId, at);
 
 /** Revocation is deleting the row. `verifyDevice` checks for it on every request. */
-export const revokeDevice = async (db: Database, deviceId: string): Promise<void> => {
-  await db.delete(devices).where(eq(devices.id, deviceId));
-};
+export const revokeDevice = (db: Database, deviceId: string): Promise<void> =>
+  postgresSessionStore(db).deleteDevice(deviceId);
 
 // ------------------------------------------------------------ authorization
 
