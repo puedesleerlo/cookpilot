@@ -83,20 +83,6 @@ export const Recipes = ({ found }: Props) => {
         ))}
       </ul>
 
-      {found.notes.length > 0 ? (
-        <section aria-label="What it could not use" className="rounded-md bg-cream-deep p-4">
-          <h2 className="text-sm font-bold">What it could not use</h2>
-          <ul className="mt-2 space-y-1 text-xs text-ink-soft">
-            {found.notes.map((note, i) => (
-              <li key={`${note.stage}-${i}`}>
-                <span className="voice-compiler mr-2 text-ink-faint">{note.stage}</span>
-                {note.message}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
       <footer className="flex flex-wrap items-center gap-3 pb-4">
         <Button
           variant="primary"

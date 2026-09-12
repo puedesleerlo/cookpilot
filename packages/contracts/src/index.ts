@@ -420,12 +420,19 @@ export type SessionRouteName = keyof typeof sessionRoutes;
 // ------------------------------------------------------------ the pipeline
 
 export {
+  CookProgressSchema,
   CookRequestSchema,
   CookResponseSchema,
   PipelineNoteSchema,
   TranscribeResponseSchema,
 } from './cook';
-export type { CookRequest, CookResponse, PipelineNote, TranscribeResponse } from './cook';
+export type {
+  CookProgress,
+  CookRequest,
+  CookResponse,
+  PipelineNote,
+  TranscribeResponse,
+} from './cook';
 
 /**
  * The two routes that exist because they hold keys.

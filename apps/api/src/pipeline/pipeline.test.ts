@@ -16,7 +16,7 @@ import { readableText } from '../search/page';
 import { l1Intake } from './l1-intake';
 import { l2Queries } from './l2-queries';
 import { l3Recipe } from './l3-recipe';
-import { tooSimilar } from './run';
+import { plainly, tooSimilar } from './run';
 
 describe('robots.txt', () => {
   const robots = `
@@ -240,6 +240,40 @@ describe('what the model read, turned into a recipe', () => {
     const result = toRecipeFromModel(forward, source);
     if (!result.ok) return;
     expect(result.recipe.steps[0]!.dependsOn).toEqual([]);
+  });
+});
+
+describe('saying what went wrong, to a person', () => {
+  it('translates the reasons a page does not become a recipe', () => {
+    const cases: [string, RegExp][] = [
+      ['robots.txt disallows this path', /asks not to be read/],
+      ['page returned 403', /would not let us read it/],
+      ['page returned 404', /has gone/],
+      ['page returned 503', /having trouble/],
+      ['the page took too long', /took too long/],
+      ['model did not respond within 30s', /took too long/],
+      ['"Chicken Bowl" is the same dish as one already found', /same dish we already have/],
+      ['the page is not a recipe', /list of recipes rather than a recipe/],
+      ['this is a round-up of 25 dinners', /list of recipes rather than a recipe/],
+      ['the page had no steps to follow', /no recipe on the page/],
+      ['page had almost no readable text', /no recipe on the page/],
+    ];
+    for (const [technical, human] of cases) {
+      expect(plainly(technical), technical).toMatch(human);
+    }
+  });
+
+  it('never leaks a stage name, a status code or a stack into what it says', () => {
+    const noise = [
+      'L3-normalize failed: validation failed after one repair: steps.0.effort: Invalid input',
+      'ERR_MODULE_NOT_FOUND at file:///repo/apps/api/src/server',
+      '{"error":{"code":429,"status":"RESOURCE_EXHAUSTED"}}',
+    ];
+    for (const message of noise) {
+      const said = plainly(message);
+      expect(said).not.toMatch(/L\d-|steps\.\d|ERR_|RESOURCE_EXHAUSTED|\{/);
+      expect(said[0]).toBe(said[0]!.toLowerCase());
+    }
   });
 });
 

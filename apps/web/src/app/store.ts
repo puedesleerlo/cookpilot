@@ -8,9 +8,9 @@ import {
   type Ingredient,
   type Urgency,
 } from '@kitchen/domain';
-import type { CookResponse } from '@kitchen/contracts';
+import type { CookProgress, CookResponse } from '@kitchen/contracts';
 import { compileSession, compileFound, intakeFromSpoken, type CompileOutcome } from './compile';
-import { runCookPipeline } from './cook';
+import { runCookPipelineStreaming } from './cook';
 import { demoIntake } from './demo';
 
 /**
@@ -30,6 +30,7 @@ export type Screen =
   | 'landing'
   | 'speak'
   | 'intake'
+  | 'working'
   | 'recipes'
   | 'crew'
   | 'plans'
@@ -149,6 +150,8 @@ export type SessionState = {
   found: CookResponse | null;
   /** True while the API is searching and reading pages. It takes a minute; say so. */
   finding: boolean;
+  /** What the pipeline has done so far, in order. Shown live while it works. */
+  progress: CookProgress[];
   /** The last compile. Null until one has been run. */
   outcome: CompileOutcome | null;
   /** True while the compile curtain is up, which is theatre, not latency. */
@@ -168,8 +171,10 @@ export type SessionState = {
     value: IntakeAnswers[K] extends Answer<infer V> ? V : never,
   ) => void;
   setSpokenAnswer: (key: 'wants' | 'pantry', text: string) => void;
-  /** Run the pipeline, then schedule what it came back with. */
+  /** Run the pipeline on the two spoken answers, then schedule what it comes back with. */
   findRecipes: () => Promise<void>;
+  /** The same chain, from a fridge that was typed in rather than spoken. */
+  findFromPantry: () => Promise<void>;
   /** Drop one of the found recipes and recompile the rest. */
   dropRecipe: (id: string) => void;
   /** Change one step's duration and recompile. */
@@ -187,12 +192,93 @@ export type SessionState = {
   canCompile: () => boolean;
 };
 
+type Setter = (partial: Partial<SessionState>) => void;
+type Getter = () => SessionState;
+
+/**
+ * One road from two answers to a compiled session.
+ *
+ * Shared by the spoken and typed paths so they cannot drift. `returnTo` is where a failure
+ * puts the user back — the screen they came from, with what they entered still in it.
+ */
+const run = async (
+  set: Setter,
+  get: Getter,
+  answers: { wants: string; pantry: string },
+  returnTo: Screen,
+  /**
+   * What to do when the chain cannot run at all.
+   *
+   * Only the typed path has one, and it is the recipes that ship in the bundle. Someone who
+   * has told us what is in their fridge should get a session out of it on a train, and the
+   * landing page promises exactly that — no account, no key. The spoken path has no such
+   * fallback, because without the pipeline there is nothing to fall back *from*: the
+   * transcript has not been read.
+   */
+  offline?: () => CompileOutcome,
+): Promise<void> => {
+  if (answers.wants.trim().length === 0 && answers.pantry.trim().length === 0) return;
+
+  set({ finding: true, outcome: null, progress: [], screen: 'working' });
+
+  const response = await runCookPipelineStreaming(answers, (event) => {
+    set({ progress: [...get().progress, event] });
+  });
+
+  if (!response.ok) {
+    /*
+     * When there is a local answer, it is the one to show — including when it is a refusal.
+     * "Nothing in the registry can be made from this fridge" is something the user can act
+     * on; "could not reach the server" is not, and it is the less specific of the two facts
+     * about a fridge with one chicken breast in it.
+     */
+    const local = offline?.();
+    if (local) {
+      set({
+        finding: false,
+        found: null,
+        outcome: local,
+        screen: local.ok ? 'timeline' : returnTo,
+      });
+      return;
+    }
+    set({ finding: false, outcome: { ok: false, reason: response.reason }, screen: returnTo });
+    return;
+  }
+
+  const found = response.result;
+  if (found.recipes.length === 0) {
+    const local = offline?.();
+    if (local?.ok) {
+      set({ finding: false, found: null, outcome: local, screen: 'timeline' });
+      return;
+    }
+    set({
+      finding: false,
+      found,
+      screen: returnTo,
+      outcome: {
+        ok: false,
+        reason: 'Nothing readable came back. Try naming a dish you fancy, or add an ingredient.',
+      },
+    });
+    return;
+  }
+
+  set({ found, finding: false, intake: intakeFromSpoken(found, get().intake) });
+  get().scheduleFound();
+  // Straight through to the results: the log has been showing the work all along, and
+  // stopping to say "done" in front of it would be theatre.
+  set({ screen: 'recipes' });
+};
+
 export const useSession = create<SessionState>((set, get) => ({
   screen: 'landing',
   intake: emptyIntake(),
   spoken: { wants: '', pantry: '' },
   found: null,
   finding: false,
+  progress: [],
   outcome: null,
   compiling: false,
 
@@ -298,7 +384,16 @@ export const useSession = create<SessionState>((set, get) => ({
    */
   adjust: (key, value) => {
     const intake = { ...get().intake, [key]: { value, source: 'stated' as const } };
-    set({ intake, outcome: compileSession(intake) });
+    /*
+     * Recompile whatever this session is actually made of.
+     *
+     * This unconditionally rebuilt from the bundled seed packs, so changing the time on a
+     * session built from recipes found on the web silently replaced them with whatever the
+     * seed packs scored highest — the user moved a slider and their dinner turned into
+     * batch soft-boiled eggs.
+     */
+    const found = get().found;
+    set({ intake, outcome: found ? compileFound(found, intake) : compileSession(intake) });
   },
 
   settle: () => set({ compiling: false }),
@@ -313,33 +408,35 @@ export const useSession = create<SessionState>((set, get) => ({
    * planning, scheduling, the timeline — still happens here, so a session survives losing
    * the network once the recipes have landed.
    */
-  findRecipes: async () => {
-    const { wants, pantry } = get().spoken;
-    if (wants.trim().length === 0 && pantry.trim().length === 0) return;
+  findRecipes: () => run(set, get, get().spoken, 'speak'),
 
-    set({ finding: true, outcome: null });
-    const response = await runCookPipeline({ wants, pantry });
-    if (!response.ok) {
-      set({ finding: false, outcome: { ok: false, reason: response.reason } });
-      return;
-    }
+  /**
+   * The typed fridge takes the same road as the spoken one.
+   *
+   * The form used to compile against the twenty-two recipes in the bundle while the spoken
+   * path went and found real ones — two different products behind two buttons. The pantry
+   * becomes a sentence and goes through the same chain, so the only difference between
+   * typing and speaking is how the sentence got written.
+   */
+  findFromPantry: () => {
+    const { pantry, cookCount, style } = get().intake;
+    if (pantry.length === 0) return Promise.resolve();
 
-    const found = response.result;
-    if (found.recipes.length === 0) {
-      set({
-        finding: false,
-        found,
-        outcome: {
-          ok: false,
-          reason:
-            'Nothing readable came back. Try naming a dish, or type your fridge in instead.',
-        },
-      });
-      return;
-    }
+    const said = pantry
+      .map((i) => (i.urgency === 'use-today' ? `${i.name} (needs using today)` : i.name))
+      .join(', ');
+    const people = cookCount.value === 1 ? 'one of us cooking' : `${cookCount.value} of us cooking`;
 
-    set({ found, finding: false, intake: intakeFromSpoken(found, get().intake), screen: 'recipes' });
-    get().scheduleFound();
+    return run(
+      set,
+      get,
+      {
+        wants: style.source === 'stated' ? `${style.value} food` : '',
+        pantry: `${said}. ${people}.`,
+      },
+      'intake',
+      () => compileSession(get().intake),
+    );
   },
 
   dropRecipe: (id) => {
@@ -396,6 +493,7 @@ export const useSession = create<SessionState>((set, get) => ({
       spoken: { wants: '', pantry: '' },
       found: null,
       finding: false,
+      progress: [],
       outcome: null,
       compiling: false,
     }),

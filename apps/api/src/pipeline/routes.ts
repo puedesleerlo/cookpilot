@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { CookRequestSchema, cookRoutes } from '@kitchen/contracts';
+import { CookRequestSchema, cookRoutes, type CookProgress } from '@kitchen/contracts';
 import { ApiError } from '../errors';
 import type { Gateway } from '../llm/gateway';
 import type { BraveProvider } from '../providers/brave';
@@ -52,7 +52,7 @@ export const registerPipelineRoutes = (app: FastifyInstance, deps: PipelineDeps)
     return { text: result.text, source: 'elevenlabs' as const };
   });
 
-  app.post(cookRoutes.cook.path, async (request) => {
+  app.post(cookRoutes.cook.path, async (request, reply) => {
     const parsed = CookRequestSchema.safeParse(request.body ?? {});
     if (!parsed.success) {
       throw new ApiError('invalid_request', 'That is not a request this route understands.');
@@ -62,15 +62,69 @@ export const registerPipelineRoutes = (app: FastifyInstance, deps: PipelineDeps)
       throw new ApiError('invalid_request', 'Answer at least one of the two questions.');
     }
 
-    return runPipeline({
-      gateway: deps.gateway,
-      brave: deps.brave,
-      wantsTranscript: wants,
-      pantryTranscript: pantry,
-      wantRecipes,
+    const run = (onProgress?: (event: CookProgress) => void) =>
+      runPipeline({
+        gateway: deps.gateway,
+        brave: deps.brave,
+        wantsTranscript: wants,
+        pantryTranscript: pantry,
+        wantRecipes,
+        // Inside Cloud Run's 300s request timeout and the client's 180s, so the answer is
+        // always what was found rather than a timeout on either side.
+        deadlineMs: 120_000,
+        ...(onProgress ? { onProgress } : {}),
+      });
+
+    // A client that did not ask for the commentary gets the plain JSON it always got.
+    if (!wantsStream(request.headers.accept)) return run();
+
+    /*
+     * Server-sent events, for a client that wants to watch.
+     *
+     * The chain takes the better part of a minute, and a minute of spinner reads as broken.
+     * Streaming is the honest fix: what the screen shows is what the pipeline is actually
+     * doing, at the moment it does it, rather than an animation timed to look plausible.
+     *
+     * `X-Accel-Buffering: no` matters in front of a proxy that would otherwise hold the
+     * whole response until it completes, which turns a live log back into a long wait.
+     */
+    reply.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
     });
+
+    const send = (event: string, data: unknown): void => {
+      if (reply.raw.writableEnded) return;
+      reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // The client going away mid-run is ordinary; stop writing into a closed socket.
+    let gone = false;
+    request.raw.on('close', () => {
+      gone = true;
+    });
+
+    try {
+      const result = await run((event) => {
+        if (!gone) send('progress', event);
+      });
+      send('result', result);
+    } catch (error) {
+      send('progress', {
+        kind: 'failed',
+        reason: error instanceof Error ? error.message : 'Something went wrong.',
+      } satisfies CookProgress);
+    } finally {
+      if (!reply.raw.writableEnded) reply.raw.end();
+    }
+    return reply;
   });
 };
+
+const wantsStream = (accept: string | undefined): boolean =>
+  typeof accept === 'string' && accept.includes('text/event-stream');
 
 const capitalise = (text: string): string =>
   text.length === 0 ? text : `${text[0]!.toUpperCase()}${text.slice(1)}`;

@@ -1,8 +1,25 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSession } from '@/app/store';
 import { App } from '@/ui/App';
+
+/*
+ * No network, on purpose.
+ *
+ * These tests are about the typed fridge becoming a session, not about the recipe search.
+ * Without this they call the real `/v1/cook` — and if a dev API happens to be running on
+ * this machine they will sit there for forty seconds while it reads the open web, which is
+ * a test suite that passes or fails depending on what else is running.
+ *
+ * The unreachable answer is also the interesting one: it exercises the offline fallback,
+ * which is what the landing page promises when it says no account and no key.
+ */
+vi.mock('@/app/cook', () => ({
+  runCookPipelineStreaming: async () => ({ ok: false, reason: 'no network in this test' }),
+  runCookPipeline: async () => ({ ok: false, reason: 'no network in this test' }),
+  transcribeAnswer: async () => ({ ok: false, reason: 'no network in this test' }),
+}));
 
 /**
  * Entering your own fridge, all the way to a compiled session.
@@ -100,11 +117,40 @@ describe('telling it what you have', () => {
     expect(pantry()).toHaveLength(0);
   });
 
-  it('will not compile an empty fridge, and says so', async () => {
+  it('will not search on an empty fridge, and says so', async () => {
     const user = userEvent.setup();
     await openIntake(user);
-    expect(screen.getByRole('button', { name: 'Compile the session' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Find me recipes' })).toBeDisabled();
     expect(screen.getByText('Add something to the fridge first.')).toBeInTheDocument();
+  });
+
+  it('offers the common things, and stops offering one once it is in', async () => {
+    const user = userEvent.setup();
+    await openIntake(user);
+
+    await user.click(screen.getByRole('button', { name: '+ eggs' }));
+    expect(pantry().map((i) => i.canonicalName)).toEqual(['eggs']);
+    expect(screen.queryByRole('button', { name: '+ eggs' })).not.toBeInTheDocument();
+
+    // And the row stays up, because a fridge with one thing in it is not a finished fridge.
+    expect(screen.getByRole('button', { name: '+ tomatoes' })).toBeInTheDocument();
+  });
+
+  it('keeps the list open so several things can be picked in a row', async () => {
+    const user = userEvent.setup();
+    await openIntake(user);
+
+    const box = screen.getByRole('combobox');
+    await user.type(box, 'pepper');
+    await user.click(await screen.findByRole('option', { name: /bell peppers/ }));
+
+    // The list is still there, and what was taken is marked rather than vanishing.
+    const chosen = await screen.findByRole('option', { name: /bell peppers/ });
+    expect(within(chosen).getByText('added')).toBeInTheDocument();
+    expect(pantry().map((i) => i.canonicalName)).toEqual(['bell peppers']);
+
+    await user.click(screen.getByRole('option', { name: /black pepper/ }));
+    expect(pantry().map((i) => i.canonicalName)).toEqual(['bell peppers', 'black pepper']);
   });
 });
 
@@ -148,11 +194,18 @@ describe('a session that will not build', () => {
     const user = userEvent.setup();
     await openIntake(user);
     await typeAndPick(user, 'chicken breast', /chicken breast/);
-    await user.click(screen.getByRole('button', { name: 'Compile the session' }));
+    await user.click(screen.getByRole('button', { name: 'Find me recipes' }));
 
-    expect(useSession.getState().outcome?.ok).toBe(false);
-    expect(screen.getByText(/Nothing in the registry can be made/)).toBeInTheDocument();
-    // Still on the fridge, with the fridge intact, so the fix is one more ingredient.
+    /*
+     * There is no network here, so the chain cannot run and the offline fallback takes
+     * over: the recipes that ship in the bundle. One chicken breast is not enough for any
+     * of them either, so the honest answer is the same one, and the user is left on the
+     * fridge with what they typed still in it.
+     */
+    await waitFor(() => expect(useSession.getState().finding).toBe(false));
+    const outcome = useSession.getState().outcome;
+    expect(outcome?.ok).toBe(false);
+    if (outcome?.ok === false) expect(outcome.reason).toMatch(/Nothing in the registry can be made/);
     expect(screen.getByRole('heading', { name: 'Tell me what you have' })).toBeInTheDocument();
     expect(pantry()).toHaveLength(1);
   });
@@ -169,7 +222,7 @@ describe('a session that will not build', () => {
     ] as [string, RegExp][]) {
       await typeAndPick(user, query, option);
     }
-    await user.click(screen.getByRole('button', { name: 'Compile the session' }));
+    await user.click(screen.getByRole('button', { name: 'Find me recipes' }));
     await waitFor(() => expect(screen.getByText('Sunday session')).toBeInTheDocument());
 
     // Strip the kitchen down until nothing in the registry can be made in it.
@@ -206,7 +259,8 @@ describe('from a fridge to a session', () => {
     }
     expect(pantry()).toHaveLength(7);
 
-    await user.click(screen.getByRole('button', { name: 'Compile the session' }));
+    await user.click(screen.getByRole('button', { name: 'Find me recipes' }));
+    await waitFor(() => expect(useSession.getState().finding).toBe(false));
 
     const outcome = useSession.getState().outcome;
     expect(outcome?.ok, outcome?.ok === false ? outcome.reason : '').toBe(true);
@@ -222,8 +276,10 @@ describe('from a fridge to a session', () => {
     await openIntake(user);
     await typeAndPick(user, 'chicken breast', /chicken breast/);
     await typeAndPick(user, 'bok choy', /bok choy/);
-    await user.click(screen.getByRole('button', { name: 'Compile the session' }));
-    await waitFor(() => expect(screen.getByText('Sunday session')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Find me recipes' }));
+    await waitFor(() => expect(screen.getByText('Sunday session')).toBeInTheDocument(), {
+      timeout: 4_000,
+    });
 
     await user.click(screen.getByRole('button', { name: 'Change the fridge' }));
     expect(screen.getByRole('heading', { name: 'Tell me what you have' })).toBeInTheDocument();

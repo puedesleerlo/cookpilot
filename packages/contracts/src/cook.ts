@@ -44,6 +44,47 @@ export const PipelineNoteSchema = z.object({
 });
 export type PipelineNote = z.infer<typeof PipelineNoteSchema>;
 
+// ---------------------------------------------------------------- progress
+
+/**
+ * What the pipeline is doing, as it does it.
+ *
+ * The chain takes the better part of a minute — it reads four strangers' web pages and
+ * calls a model on each — and a spinner for that long reads as broken. These events are
+ * written to be shown to somebody waiting in a kitchen, so every string in them is a
+ * sentence rather than a stage name: the server does the translating, because the server
+ * is the only thing that knows the difference between "that page is a list of recipes"
+ * and "that site would not let us read it".
+ */
+export const CookProgressSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('heard'),
+    wants: z.array(z.string()),
+    pantry: z.array(z.object({ name: z.string(), urgent: z.boolean() })),
+    cookCount: z.number().int(),
+    portionTarget: z.number().int(),
+  }),
+  z.object({
+    kind: z.literal('searching'),
+    query: z.string(),
+    index: z.number().int().nonnegative(),
+    total: z.number().int().nonnegative(),
+  }),
+  z.object({ kind: z.literal('reading'), site: z.string() }),
+  z.object({
+    kind: z.literal('found'),
+    title: z.string(),
+    site: z.string(),
+    servings: z.number().int(),
+    steps: z.number().int(),
+  }),
+  /** `reason` is a sentence for a person, not a stage name and not an error code. */
+  z.object({ kind: z.literal('skipped'), site: z.string(), reason: z.string() }),
+  z.object({ kind: z.literal('finished'), recipes: z.number().int() }),
+  z.object({ kind: z.literal('failed'), reason: z.string() }),
+]);
+export type CookProgress = z.infer<typeof CookProgressSchema>;
+
 export const CookResponseSchema = z.object({
   intake: SpokenIntakeSchema,
   recipes: z.array(RecipeIRSchema),

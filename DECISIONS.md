@@ -1095,3 +1095,4 @@ Consequence: no schema change and no new route; the log already carries any type
      countdown to within a round trip.
 Revisit if: mid-session recompilation lands. Then a start by hand is also an input to the
      scheduler, and the same event feeds it.
+

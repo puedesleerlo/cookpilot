@@ -63,6 +63,15 @@ const main = async (): Promise<void> => {
   const pipeline = {
     gateway: createGateway({
       generate,
+      /*
+       * Longer than the 30s default, because this budget covers the retries too.
+       *
+       * The generator backs off and retries a 429, and with a 30s cap the first slow
+       * attempt used the whole budget and the retry never happened — which showed up as
+       * "model did not respond within 30s" against pages that would have been read fine
+       * on a second ask. The run's own deadline is what bounds the total.
+       */
+      timeoutMs: 45_000,
       // Without a database the stage cache is simply not there. It saves money; it is not
       // load-bearing.
       ...(database ? { db: database.db } : {}),

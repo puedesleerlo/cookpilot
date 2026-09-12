@@ -63,7 +63,7 @@ describe('the pipeline, for real', () => {
     const braveKey = env['BRAVE_API_KEY'];
     expect(braveKey, 'BRAVE_API_KEY must be set').toBeTruthy();
 
-    const gateway = createGateway({ generate, env, timeoutMs: 90_000 });
+    const gateway = createGateway({ generate, env, timeoutMs: 45_000 });
     const result = await runPipeline({
       gateway,
       brave: { available: true, apiKey: braveKey!, endpoint: 'https://api.search.brave.com/res/v1/web/search' },

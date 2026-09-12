@@ -18,18 +18,52 @@ import { Kitchen } from '../intake/Kitchen';
  */
 
 /** Somewhere to start, for a fridge that is empty because the screen just opened. */
-const STARTERS = ['chicken breast', 'bok choy', 'eggs', 'jasmine rice', 'lemons', 'garlic'];
+const STARTERS = [
+  'chicken breast', 'eggs', 'jasmine rice', 'bok choy', 'spinach', 'tomatoes',
+  'bell peppers', 'mushrooms', 'onions', 'garlic', 'lemons', 'potatoes',
+];
+
+/**
+ * The fast way to fill a fridge.
+ *
+ * Tapping is quicker than typing for the dozen things most kitchens actually contain, and
+ * the row stays on screen while the pantry is small rather than vanishing the moment the
+ * first thing is added — which is the point at which someone still has six more to enter.
+ */
+const Starters = ({ taken, onAdd }: { taken: string[]; onAdd: (name: string) => boolean }) => {
+  const held = new Set(taken);
+  const left = STARTERS.filter((name) => !held.has(name));
+  if (left.length === 0) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-2">
+      {left.map((name) => (
+        <button
+          key={name}
+          type="button"
+          onClick={() => onAdd(name)}
+          className="min-h-[44px] rounded-chip border-[1.5px] border-dashed border-line-strong
+            bg-cream px-4 text-sm font-semibold text-ink-soft hover:border-line-strong hover:text-charcoal"
+        >
+          + {name}
+        </button>
+      ))}
+    </div>
+  );
+};
 
 export const Intake = () => {
   const pantry = useSession((s) => s.intake.pantry);
   const addByName = useSession((s) => s.addByName);
   const dropIngredient = useSession((s) => s.dropIngredient);
   const cycleUrgency = useSession((s) => s.cycleUrgency);
-  const compile = useSession((s) => s.compile);
+  const findFromPantry = useSession((s) => s.findFromPantry);
+  const finding = useSession((s) => s.finding);
   const reset = useSession((s) => s.reset);
   const outcome = useSession((s) => s.outcome);
 
   const urgent = pantry.filter((i) => i.urgency === 'use-today').length;
+  const taken = pantry.map((i) => i.canonicalName);
   const failed = outcome && !outcome.ok ? outcome.reason : null;
 
   return (
@@ -62,21 +96,9 @@ export const Intake = () => {
               <Glyph name="state-empty" size={40} />
             </span>
             <p className="mt-2 text-sm text-ink-soft">
-              Nothing yet. Search above, or start from one of these:
+              Nothing yet. Search above, or tap a few of these:
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {STARTERS.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => addByName(name)}
-                  className="min-h-[44px] rounded-chip border-[1.5px] border-dashed border-line-strong
-                    bg-cream px-4 text-sm font-semibold text-ink-soft hover:text-charcoal"
-                >
-                  + {name}
-                </button>
-              ))}
-            </div>
+            <Starters taken={taken} onAdd={addByName} />
           </div>
         ) : (
           <ul className="mt-2 flex flex-wrap gap-2">
@@ -105,6 +127,13 @@ export const Intake = () => {
         )}
       </section>
 
+      {pantry.length > 0 && pantry.length < 8 ? (
+        <section aria-label="Common things">
+          <h2 className="text-xs font-bold text-ink-soft">Anything else in there?</h2>
+          <Starters taken={taken} onAdd={addByName} />
+        </section>
+      ) : null}
+
       <Kitchen />
 
       {failed ? (
@@ -114,8 +143,13 @@ export const Intake = () => {
       ) : null}
 
       <div className="flex flex-wrap items-center gap-3 pb-4">
-        <Button variant="primary" size="lg" onClick={compile} disabled={pantry.length === 0}>
-          Compile the session
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={() => void findFromPantry()}
+          disabled={pantry.length === 0 || finding}
+        >
+          {finding ? 'Finding recipes…' : 'Find me recipes'}
         </Button>
         <Button variant="quiet" onClick={reset}>
           Start again

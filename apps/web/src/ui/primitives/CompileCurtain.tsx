@@ -75,7 +75,7 @@ export const CompileCurtain = ({ active, onDone, stageMs = 520 }: Props) => {
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-0 z-30 grid place-items-center bg-charcoal/95 p-5 text-cream"
+      className="fixed inset-0 z-30 grid place-items-center bg-charcoal p-5 text-cream"
     >
       <div className="w-full max-w-[420px]">
         <div className="mb-5 flex justify-center text-cream">

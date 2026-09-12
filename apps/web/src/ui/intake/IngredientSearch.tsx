@@ -30,8 +30,16 @@ export const IngredientSearch = ({ onAdd, taken }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const id = useId();
 
+  /*
+   * Matches stay listed after they are taken, ticked.
+   *
+   * Filtering them out closed the list on every pick, so adding seven things meant typing
+   * seven times. Keeping them means the list survives a selection and a run of related
+   * things — "pepper", then the other pepper — can be taken in one go, with what you
+   * already have visible rather than inferred from the list getting shorter.
+   */
   const held = new Set(taken);
-  const matches = searchLexicon(query, 7).filter((m) => !held.has(m.entry.canonicalName));
+  const matches = searchLexicon(query, 7);
   const typed = query.trim();
   const exact = matches.some((m) => m.entry.canonicalName === typed.toLowerCase());
   const options: (LexiconMatch | 'verbatim')[] =
@@ -39,9 +47,10 @@ export const IngredientSearch = ({ onAdd, taken }: Props) => {
 
   const take = (option: LexiconMatch | 'verbatim'): void => {
     const name = option === 'verbatim' ? typed : option.entry.canonicalName;
-    setNote(onAdd(name) ? '' : `${name} is already in the fridge.`);
-    setQuery('');
-    setActive(0);
+    const added = onAdd(name);
+    // Typing a whole new word is the signal to move on, not picking one thing.
+    if (option === 'verbatim') setQuery('');
+    setNote(added ? '' : `${name} is already in the fridge.`);
     inputRef.current?.focus();
   };
 
@@ -107,7 +116,8 @@ export const IngredientSearch = ({ onAdd, taken }: Props) => {
                   onMouseEnter={() => setActive(i)}
                   onClick={() => take(option)}
                   className={`flex min-h-[44px] w-full items-center gap-3 px-3 py-2 text-left text-sm
-                    ${i === active ? 'bg-cream-deep' : 'bg-cream'}`}
+                    ${i === active ? 'bg-cream-deep' : 'bg-cream'}
+                    ${!isVerbatim && held.has(option.entry.canonicalName) ? 'text-ink-soft' : ''}`}
                 >
                   <span className={isVerbatim ? 'text-ink-faint' : 'text-sage-ink'}>
                     <Glyph
@@ -131,6 +141,14 @@ export const IngredientSearch = ({ onAdd, taken }: Props) => {
                       ) : null}
                     </span>
                   )}
+                  {!isVerbatim && held.has(option.entry.canonicalName) ? (
+                    <span
+                      aria-label="already in the fridge"
+                      className="flex-none rounded-xs bg-sage-wash px-2 text-xs font-bold text-sage-ink"
+                    >
+                      added
+                    </span>
+                  ) : null}
                 </button>
               </li>
             );
@@ -139,7 +157,7 @@ export const IngredientSearch = ({ onAdd, taken }: Props) => {
       ) : null}
 
       <p className="mt-1 min-h-[1.2em] text-xs text-ink-soft" role="status">
-        {note}
+        {note || (options.length > 0 ? 'Pick as many as you like. Esc closes the list.' : '')}
       </p>
     </div>
   );

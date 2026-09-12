@@ -5,6 +5,7 @@ import { Intake } from './screens/Intake';
 import { Landing } from './screens/Landing';
 import { Recipes } from './screens/Recipes';
 import { Speak } from './screens/Speak';
+import { Working } from './screens/Working';
 import { Shared } from './screens/Shared';
 import { Timeline } from './screens/Timeline';
 
@@ -43,6 +44,8 @@ export const App = () => {
 
       {screen === 'intake' ? <Intake /> : null}
 
+      {screen === 'working' ? <Working /> : null}
+
       {screen === 'recipes' ? (
         found ? <Recipes found={found} /> : <Speak />
       ) : null}
@@ -68,6 +71,7 @@ export const App = () => {
       {screen !== 'landing' &&
       screen !== 'speak' &&
       screen !== 'intake' &&
+      screen !== 'working' &&
       screen !== 'recipes' &&
       screen !== 'timeline' ? (
         <NotBuiltYet />

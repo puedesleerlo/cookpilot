@@ -1,8 +1,10 @@
 import {
+  portionTarget,
   servingsPerDish,
   type RecipeIR,
   type SpokenIntake,
 } from '@kitchen/domain';
+import type { CookProgress } from '@kitchen/contracts';
 import { toRecipeFromModel } from '@kitchen/recipes';
 import type { Gateway } from '../llm/gateway';
 import type { BraveProvider } from '../providers/brave';
@@ -52,7 +54,58 @@ export type RunOptions = {
   pantryTranscript: string;
   /** How many recipes to try to come back with. */
   wantRecipes?: number;
+  /**
+   * How long the whole run may take before it stops starting new work.
+   *
+   * A deadline rather than a timeout: when it passes, the run returns what it already has
+   * instead of failing. Four recipes in ninety seconds and two in a hundred and twenty are
+   * both a week of dinners; "finding recipes took too long" is nothing at all, and it threw
+   * away recipes that had already been read and paid for.
+   */
+  deadlineMs?: number;
+  /**
+   * Called as the chain works, for a client that wants to show it.
+   *
+   * Progress is reported rather than returned because the useful moment is while it is
+   * happening. Nothing here changes what the run produces, and a caller that does not pass
+   * it gets exactly the same result.
+   */
+  onProgress?: (event: CookProgress) => void;
 };
+
+/**
+ * Why a page did not become a recipe, said to a person.
+ *
+ * The internal reasons are precise and unreadable — `L3-normalize`, `403`, a Zod path. The
+ * translation lives here, on the server, because the server is the only thing that knows
+ * the difference between "that page is a list of recipes" and "that site would not let us
+ * read it", and a person waiting in a kitchen deserves the difference.
+ */
+export const plainly = (reason: string): string => {
+  if (/robots/i.test(reason)) return 'that site asks not to be read automatically';
+  if (/\b403\b|forbidden/i.test(reason)) return 'that site would not let us read it';
+  if (/\b404\b|\b410\b/i.test(reason)) return 'that page has gone';
+  if (/\b5\d\d\b/i.test(reason)) return 'that site was having trouble';
+  if (/too long|timed out|did not respond/i.test(reason)) return 'that page took too long';
+  if (/same dish/i.test(reason)) return 'it is the same dish we already have';
+  if (/not a recipe|round-?up|listing|category/i.test(reason)) {
+    return 'it is a list of recipes rather than a recipe';
+  }
+  if (/no steps|no ingredients|almost no readable text|too large|not HTML/i.test(reason)) {
+    return 'there was no recipe on the page to read';
+  }
+  return 'we could not make sense of that page';
+};
+
+/**
+ * How long a run may spend before it settles for what it has.
+ *
+ * Chosen against the client, not against the model: the browser gives up at three minutes,
+ * so stopping at two leaves room to schedule what was found and send it back. A page that
+ * is still being read when the deadline passes is allowed to finish — abandoning a model
+ * call already paid for buys nothing.
+ */
+const DEFAULT_DEADLINE_MS = 120_000;
 
 /** Sites that never carry a single recipe, so fetching them only spends time. */
 const NEVER_A_RECIPE =
@@ -96,7 +149,17 @@ export const tooSimilar = (a: string, b: string): boolean => {
 export const runPipeline = async (options: RunOptions): Promise<PipelineResult> => {
   const { gateway, brave, wantsTranscript, pantryTranscript } = options;
   const wantRecipes = options.wantRecipes ?? 6;
+  const startedAt = Date.now();
+  const deadlineMs = options.deadlineMs ?? DEFAULT_DEADLINE_MS;
+  const outOfTime = (): boolean => Date.now() - startedAt > deadlineMs;
   const notes: PipelineNote[] = [];
+  const report = options.onProgress ?? ((): void => {});
+
+  /** Every drop is both a note for the record and a sentence for whoever is waiting. */
+  const drop = (stage: string, site: string, reason: string): void => {
+    notes.push({ stage, message: `${site}: ${reason}` });
+    report({ kind: 'skipped', site, reason: plainly(reason) });
+  };
 
   // ---- L1: two transcripts into structured intake -------------------------
   const intakeResult = await gateway(l1Intake, { wantsTranscript, pantryTranscript });
@@ -104,6 +167,13 @@ export const runPipeline = async (options: RunOptions): Promise<PipelineResult> 
     notes.push({ stage: 'L1-intake', message: intakeResult.reason ?? 'the recording could not be read' });
   }
   const intake = intakeResult.value;
+  report({
+    kind: 'heard',
+    wants: intake.wants,
+    pantry: intake.pantry.map((p) => ({ name: p.said, urgent: p.urgency === 'use-today' })),
+    cookCount: intake.cookCount,
+    portionTarget: portionTarget(intake.cookCount),
+  });
 
   // ---- L2: intake into queries -------------------------------------------
   const queryResult = await gateway(l2Queries, intake);
@@ -127,10 +197,12 @@ export const runPipeline = async (options: RunOptions): Promise<PipelineResult> 
    */
   const seen = new Set<string>();
   const buckets: SearchHit[][] = [];
-  for (const query of queries) {
+  for (const [index, query] of queries.entries()) {
+    report({ kind: 'searching', query, index, total: queries.length });
     const found = await searchWeb(brave, query, 8);
     if (!found.ok) {
       notes.push({ stage: 'search', message: `"${query}": ${found.reason}` });
+      report({ kind: 'skipped', site: 'the search', reason: plainly(found.reason) });
       continue;
     }
     const bucket = found.hits.filter((hit) => {
@@ -144,6 +216,7 @@ export const runPipeline = async (options: RunOptions): Promise<PipelineResult> 
   const candidates = buckets.flat();
   if (candidates.length === 0) {
     notes.push({ stage: 'search', message: 'nothing came back to read' });
+    report({ kind: 'failed', reason: 'Nothing came back to read. Try naming a dish you fancy.' });
     return { intake, recipes: [], queries, corrections: [], notes, portionTarget: 0 };
   }
 
@@ -172,15 +245,16 @@ export const runPipeline = async (options: RunOptions): Promise<PipelineResult> 
   const claimed = new Set<string>();
 
   const readOne = async (hit: SearchHit): Promise<RecipeIR | null> => {
+    report({ kind: 'reading', site: hit.siteName });
     const outcome = await fetchPage(hit.url);
     if (!outcome.ok) {
-      notes.push({ stage: 'fetch', message: `${hit.siteName}: ${outcome.reason}` });
+      drop('fetch', hit.siteName, outcome.reason);
       return null;
     }
 
     const read = await gateway(l3Recipe, { page: outcome.page, targetServings: target });
     if (read.source === 'fallback') {
-      notes.push({ stage: 'L3-normalize', message: `${hit.siteName}: ${read.reason ?? 'could not be read'}` });
+      drop('L3-normalize', hit.siteName, read.reason ?? 'could not be read');
       return null;
     }
 
@@ -189,7 +263,7 @@ export const runPipeline = async (options: RunOptions): Promise<PipelineResult> 
       siteName: outcome.page.siteName,
     });
     if (!mapped.ok) {
-      notes.push({ stage: 'L3-normalize', message: `${hit.siteName}: ${mapped.reason}` });
+      drop('L3-normalize', hit.siteName, mapped.reason);
       return null;
     }
 
@@ -203,15 +277,19 @@ export const runPipeline = async (options: RunOptions): Promise<PipelineResult> 
     const title = mapped.recipe.title.toLowerCase();
     const clash = [...claimed].find((seenTitle) => tooSimilar(seenTitle, title));
     if (clash) {
-      notes.push({
-        stage: 'L3-normalize',
-        message: `${hit.siteName}: "${mapped.recipe.title}" is the same dish as one already found`,
-      });
+      drop('L3-normalize', hit.siteName, `"${mapped.recipe.title}" is the same dish as one already found`);
       return null;
     }
     claimed.add(title);
 
     for (const c of mapped.corrections) corrections.push(`${mapped.recipe.title} — ${c}`);
+    report({
+      kind: 'found',
+      title: mapped.recipe.title,
+      site: mapped.recipe.source?.siteName ?? hit.siteName,
+      servings: mapped.recipe.yieldServings,
+      steps: mapped.recipe.steps.length,
+    });
     return mapped.recipe;
   };
 
@@ -219,6 +297,8 @@ export const runPipeline = async (options: RunOptions): Promise<PipelineResult> 
   const ATTEMPTS_PER_QUERY = 3;
   const fromBucket = async (bucket: SearchHit[]): Promise<RecipeIR | null> => {
     for (const hit of bucket.slice(0, ATTEMPTS_PER_QUERY)) {
+      // Stop starting new pages once the deadline has passed; whatever is in flight finishes.
+      if (outOfTime()) return null;
       const recipe = await readOne(hit);
       if (recipe) return recipe;
     }
@@ -231,13 +311,20 @@ export const runPipeline = async (options: RunOptions): Promise<PipelineResult> 
   }
 
   // Short of the target: go back for seconds, from the deepest results not yet tried.
-  if (recipes.length < wantRecipes) {
+  if (recipes.length < wantRecipes && !outOfTime()) {
     const leftovers = buckets.flatMap((b) => b.slice(ATTEMPTS_PER_QUERY));
     for (const hit of leftovers) {
-      if (recipes.length >= wantRecipes) break;
+      if (recipes.length >= wantRecipes || outOfTime()) break;
       const recipe = await readOne(hit);
       if (recipe) recipes.push(recipe);
     }
+  }
+
+  if (outOfTime() && recipes.length > 0) {
+    notes.push({
+      stage: 'summary',
+      message: `stopped after ${Math.round((Date.now() - startedAt) / 1000)}s with ${recipes.length} recipes`,
+    });
   }
 
   if (recipes.length < wantRecipes) {
@@ -246,6 +333,8 @@ export const runPipeline = async (options: RunOptions): Promise<PipelineResult> 
       message: `read ${recipes.length} of the ${wantRecipes} recipes this session was aiming for`,
     });
   }
+
+  report({ kind: 'finished', recipes: recipes.length });
 
   return {
     intake,
