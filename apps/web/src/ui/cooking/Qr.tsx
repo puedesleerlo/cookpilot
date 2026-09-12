@@ -15,7 +15,14 @@ const inherit = (svg: string): string =>
     .replace(/fill="#[0-9a-f]{6}"/gi, 'fill="none"')
     .replace(/stroke="#[0-9a-f]{6}"/gi, 'stroke="currentColor"');
 
-type Props = { text: string; label: string; size?: number; className?: string };
+type Props = {
+  text: string;
+  /** What a screen reader hears. Leave it out where the code is only a picture of itself. */
+  label?: string;
+  /** Pixels, or any CSS length when it has to follow the viewport. */
+  size?: number | string;
+  className?: string;
+};
 
 export const Qr = ({ text, label, size = 224, className = '' }: Props) => {
   const [svg, setSvg] = useState('');
@@ -36,8 +43,7 @@ export const Qr = ({ text, label, size = 224, className = '' }: Props) => {
 
   return (
     <div
-      role="img"
-      aria-label={label}
+      {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
       data-testid="qr"
       style={{ width: size, height: size }}
       className={`aspect-square max-w-full flex-none bg-paper-bright text-charcoal [&>svg]:block [&>svg]:h-full [&>svg]:w-full ${className}`}

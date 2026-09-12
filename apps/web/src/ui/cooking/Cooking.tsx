@@ -4,6 +4,7 @@ import { selectCompiled, selectMe, useSync } from '@/app/sync';
 import { clockText, elapsedSeconds, holdsAt, startsSince, type Watch } from '@/app/story';
 import { Button, Display, Glyph, Patch, type PatchTone } from '../primitives';
 import { allocateDishHues } from '../theme';
+import { InvitePanel, InvitePocket } from './Invite';
 import { Dial, Icon } from './Paper';
 import { Story } from './Story';
 import { useNow } from './useNow';
@@ -22,6 +23,7 @@ import { useNow } from './useNow';
  */
 export const Cooking = () => {
   const session = useSync((s) => s.session);
+  const role = useSync((s) => s.role);
   const compiled = useSync(selectCompiled);
   const me = useSync(selectMe);
   const startedAtMs = useSync((s) => s.startedAtMs);
@@ -77,23 +79,27 @@ export const Cooking = () => {
   const myIndex = me ? session.crew.findIndex((c) => c.id === me.cookId) : -1;
   const mine = myIndex >= 0 ? session.crew[myIndex] : undefined;
   const showingMe = view === 'me' && mine !== undefined;
+  /** The device that opened the session keeps its join code on screen until the end. */
+  const host = role === 'host';
 
   return (
     <div className="mk-cook min-h-dvh">
       <main className="mx-auto flex min-h-dvh w-full max-w-[1240px] flex-col gap-4 px-4 pt-3 sm:px-6 sm:pt-5">
-        <header className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-xs font-bold uppercase tracking-[0.14em] text-muted">Cooking · {plan.name}</p>
-            <p
-              className="voice-numeral mt-1 inline-block whitespace-nowrap bg-marigold pb-[3px] pl-2 pr-3 pt-[2px] text-md leading-tight text-charcoal [clip-path:var(--mk-cut-tag)] sm:text-lg"
-              style={{ rotate: '-2deg' }}
-              aria-live="off"
-            >
-              minute {Math.floor(elapsedSec / 60)} of {schedule.makespanMin}
-            </p>
-          </div>
+        {/* Two rows so a phone has room for the invite beside the plan's name. */}
+        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
+          <p className="truncate text-xs font-bold uppercase tracking-[0.14em] text-muted">Cooking · {plan.name}</p>
+          {host ? (
+            <InvitePocket joinCode={session.joinCode} className="col-start-2 row-start-1 lg:hidden" />
+          ) : null}
+          <p
+            className="voice-numeral col-start-1 row-start-2 inline-block justify-self-start whitespace-nowrap bg-marigold pb-[3px] pl-2 pr-3 pt-[2px] text-md leading-tight text-charcoal [clip-path:var(--mk-cut-tag)] sm:text-lg"
+            style={{ rotate: '-2deg' }}
+            aria-live="off"
+          >
+            minute {Math.floor(elapsedSec / 60)} of {schedule.makespanMin}
+          </p>
           {mine ? (
-            <div className="flex flex-none gap-1 rounded-nick-md bg-sunken p-1" role="tablist" aria-label="Whose steps">
+            <div className="col-start-2 row-start-2 flex flex-none gap-1 justify-self-end rounded-nick-md bg-sunken p-1" role="tablist" aria-label="Whose steps">
               <Tab active={showingMe} onClick={() => setView('me')}>
                 Me
               </Tab>
@@ -137,30 +143,36 @@ export const Cooking = () => {
               onStart={(taskId) => void startNow(taskId)}
               size="full"
             />
-            {stove.length > 0 ? <Stove watches={stove} layout="side" /> : <NothingOnTheStove />}
+            <div className="flex flex-col gap-6 lg:sticky lg:top-5">
+              {stove.length > 0 ? <Stove watches={stove} layout="side" /> : <NothingOnTheStove />}
+              {host ? <InvitePanel joinCode={session.joinCode} className="hidden lg:flex" /> : null}
+            </div>
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              {session.crew.map((cook, index) => (
-                <Story
-                  key={cook.id}
-                  schedule={schedule}
-                  cook={cook}
-                  cookIndex={index}
-                  displayName={nameOf(cook.id, cook.name)}
-                  elapsedSec={elapsedSec}
-                  completed={completedSet}
-                  starts={starts}
-                  hues={hues}
-                  onDone={(taskId) => void complete(taskId)}
-                  onStart={(taskId) => void startNow(taskId)}
-                  size="compact"
-                />
-              ))}
+          <div className={`grid grid-cols-1 gap-6 ${host ? 'lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-7' : ''}`}>
+            <div className="flex min-w-0 flex-col gap-6">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {session.crew.map((cook, index) => (
+                  <Story
+                    key={cook.id}
+                    schedule={schedule}
+                    cook={cook}
+                    cookIndex={index}
+                    displayName={nameOf(cook.id, cook.name)}
+                    elapsedSec={elapsedSec}
+                    completed={completedSet}
+                    starts={starts}
+                    hues={hues}
+                    onDone={(taskId) => void complete(taskId)}
+                    onStart={(taskId) => void startNow(taskId)}
+                    size="compact"
+                  />
+                ))}
+              </div>
+              {stove.length > 0 ? <Stove watches={stove} layout="wide" /> : null}
             </div>
-            {stove.length > 0 ? <Stove watches={stove} layout="wide" /> : null}
-          </>
+            {host ? <InvitePanel joinCode={session.joinCode} className="hidden lg:sticky lg:top-5 lg:flex" /> : null}
+          </div>
         )}
 
         <footer className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pb-5 pt-4">
@@ -181,7 +193,7 @@ const STOVE_TONES: PatchTone[] = ['dough', 'preserve', 'drink'];
 const STOVE_TILT = [-1.5, 1, -0.5, 1.5];
 
 const Stove = ({ watches, layout }: { watches: Watch[]; layout: 'side' | 'wide' }) => (
-  <section aria-label="Looking after itself" className={layout === 'side' ? 'lg:sticky lg:top-5' : ''}>
+  <section aria-label="Looking after itself">
     <div className="flex items-center gap-3">
       <span className="text-enamel">
         <Glyph name="pot" size={30} strokeWidth={1.8} />

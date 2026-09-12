@@ -346,6 +346,34 @@ describe('cooking', () => {
     await user.click(screen.getByRole('tab', { name: 'Everyone' }));
     expect(screen.getByRole('region', { name: "Ana's steps" })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: "Ben's steps" })).toBeInTheDocument();
+
+    // Inviting is the host's job; a guest's phone stays on its steps.
+    expect(screen.queryByRole('button', { name: 'Invite' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /QR code/ })).not.toBeInTheDocument();
+  });
+
+  it('keeps the join code on the host’s screen after the start, full size on request', async () => {
+    const user = userEvent.setup();
+    const s = view({ status: 'cooking', startedAtMs: Date.now(), members: [ana] });
+    stubFetch([device, quiet(s)]);
+    useSync.setState({ phase: 'cooking', role: 'host', session: s, outcome: compiled, deviceId: 'dev_host', agreement: 'same', startedAtMs: Date.now() });
+    render(<App />);
+
+    // The wide-screen panel beside the steps, for whoever walks in late.
+    const panel = screen.getByRole('region', { name: 'Invite someone to cook' });
+    expect(within(panel).getByRole('img', { name: 'QR code to join with ABC234' })).toBeInTheDocument();
+    expect(within(panel).getByText('join code A B C 2 3 4')).toBeInTheDocument();
+
+    // A phone's button opens the code at a size a camera can read, and closes back to it.
+    const invite = screen.getByRole('button', { name: 'Invite' });
+    await user.click(invite);
+    const dialog = screen.getByRole('dialog', { name: 'Scan to cook along' });
+    expect(within(dialog).getByRole('img', { name: 'QR code to join with ABC234' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Close' })).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(invite).toHaveFocus();
   });
 
   it('gives the kitchen display everyone’s slides when nobody claimed it', () => {

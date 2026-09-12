@@ -5,6 +5,7 @@ import { everyoneHere, roleOf, slots, type Slot } from '@/app/story';
 import { Button, Display, Field, Glyph, Motif, Patch, cookGlyph } from '../primitives';
 import { cookColor } from '../theme';
 import { Agreement } from './Agreement';
+import { joinUrlFor } from './Invite';
 import { CodeTiles, Icon, STAMP_IN, StampTag } from './Paper';
 import { Qr } from './Qr';
 import { SlotPicker } from './SlotPicker';
@@ -42,7 +43,7 @@ export const Lobby = () => {
   const all = everyoneHere(session.crew, session.members);
   const here = roster.filter((s) => s.member).length;
   const missing = roster.filter((s) => !s.member).map((s) => s.cook.name);
-  const joinUrl = `${window.location.origin}${window.location.pathname}#join/${session.joinCode}`;
+  const joinUrl = joinUrlFor(session.joinCode);
   const hostName = session.members.find((m) => m.isHost)?.displayName ?? 'the host';
   const host = role === 'host';
 

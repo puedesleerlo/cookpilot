@@ -94,10 +94,13 @@
   --mk-surface: var(--mk-paper-bright);
   --mk-sunken: var(--mk-flour);
   --mk-text: var(--mk-plum-900);
-  --mk-text-muted: #6E5B72;           /* 5.58:1 on paper */
+  --mk-day-text-muted: #6E5B72;       /* 5.58:1 on paper */
+  --mk-day-line: #E6D5B1;             /* dividers only, never a control edge */
+  --mk-day-line-strong: #8C7890;      /* control edges — 3.65:1 */
+  --mk-text-muted: var(--mk-day-text-muted);
   --mk-text-faint: #97849A;           /* large text and hairlines only */
-  --mk-line: #E6D5B1;                 /* dividers only, never a control edge */
-  --mk-line-strong: #8C7890;          /* control edges — 3.65:1 */
+  --mk-line: var(--mk-day-line);
+  --mk-line-strong: var(--mk-day-line-strong);
   --mk-action: var(--mk-paprika-600);
   --mk-action-hover: var(--mk-paprika-700);
   --mk-on-action: var(--mk-paper);
@@ -483,6 +486,26 @@ body {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+/*
+ * The day kitchen, re-declared for a piece of paper laid over the night kitchen — the join
+ * code a host holds up mid-session. The mirror of Makitra's .mk-cook scope.
+ */
+.mk-day {
+  --mk-bg: var(--mk-paper);
+  --mk-surface: var(--mk-paper-bright);
+  --mk-sunken: var(--mk-flour);
+  --mk-text: var(--mk-plum-900);
+  --mk-text-muted: var(--mk-day-text-muted);
+  --mk-line: var(--mk-day-line);
+  --mk-line-strong: var(--mk-day-line-strong);
+  --mk-action: var(--mk-paprika-600);
+  --mk-action-hover: var(--mk-paprika-700);
+  --mk-on-action: var(--mk-paper);
+  --mk-link: var(--mk-paprika-700);
+  --mk-focus: var(--mk-cornflower-700);
+  color: var(--mk-text);
 }
 
 /* Visually hidden, still announced. */
