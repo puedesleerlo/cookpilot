@@ -290,6 +290,23 @@ describe('the same dish under a different headline', () => {
     }
   });
 
+  it('does not mistake the same ingredients for the same dish', () => {
+    /*
+     * From a live run: asking for pasta with tomatoes found one recipe and then rejected
+     * ten, because every pasta recipe on the web shares the words "tomato" and "pasta".
+     * Sharing a main ingredient is not being the same dinner.
+     */
+    const first = 'Easy Tomato and Spinach Pasta';
+    for (const other of [
+      'Creamy Tomato Pasta',
+      'One Pot Spinach Ricotta Pasta',
+      'Garlic Butter Pasta with Tomatoes',
+      'Baked Feta Pasta',
+    ]) {
+      expect(tooSimilar(first, other), other).toBe(false);
+    }
+  });
+
   it('lets genuinely different dishes through', () => {
     for (const [a, b] of [
       ['Chicken Bok Choy Stir-Fry', 'Lemon Mint Agua Fresca'],

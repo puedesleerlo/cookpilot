@@ -130,6 +130,22 @@ const dishWords = (title: string): Set<string> =>
   );
 
 /**
+ * How much of the shorter title has to be shared before two dishes are one dish.
+ *
+ * Set at 0.6 this was right for stir-fries and catastrophic for pasta. Ask for pasta with
+ * tomatoes and every result shares "tomato" and "pasta", so the first recipe found rejected
+ * the next ten — the check could not tell "the same dish" from "the same ingredients", and
+ * a request for four recipes came back with one after two minutes of reading pages and
+ * throwing them away.
+ *
+ * At 0.8 a title has to be almost entirely the other one. "Chicken Bok Choy Stir-Fry" and
+ * "Bok Choy Chicken" still collapse — every word of the shorter is in the longer — while
+ * "Creamy Tomato Pasta" and "Tomato and Spinach Pasta" stay two dinners, which is what they
+ * are.
+ */
+const SAME_DISH_RATIO = 0.8;
+
+/**
  * Is this the dish we already have, under a different headline?
  *
  * Exact title matching caught nothing useful: the same dinner comes back as "Chicken Bok
@@ -143,7 +159,7 @@ export const tooSimilar = (a: string, b: string): boolean => {
   if (left.size === 0 || right.size === 0) return false;
   let shared = 0;
   for (const word of left) if (right.has(word)) shared += 1;
-  return shared / Math.min(left.size, right.size) >= 0.6;
+  return shared / Math.min(left.size, right.size) >= SAME_DISH_RATIO;
 };
 
 export const runPipeline = async (options: RunOptions): Promise<PipelineResult> => {
