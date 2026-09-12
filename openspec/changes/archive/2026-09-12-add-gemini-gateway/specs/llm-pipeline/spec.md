@@ -34,19 +34,6 @@ than a style problem.
 - **WHEN** the configured model for each stage is inspected
 - **THEN** every one is from a generation the provider still serves
 
-### Requirement: The model provider contributes no secret
-
-The system SHALL authenticate to Vertex AI through the service account's Application
-Default Credentials and SHALL NOT read, store, log or transmit a model API key.
-
-#### Scenario: No model key is read
-- **WHEN** the Vertex client is constructed
-- **THEN** it is given a project and a location, and no credential value
-
-#### Scenario: The secret inventory has no model entry
-- **WHEN** the secret inventory is filtered for the model provider
-- **THEN** it is empty
-
 ### Requirement: Output is constrained at generation and validated after it
 
 Each stage SHALL pass a `responseSchema` generated from its own Zod schema, and SHALL
@@ -129,3 +116,29 @@ prompt itself.
 #### Scenario: Client-supplied prompt text is ignored
 - **WHEN** a request includes prompt text alongside a stage name
 - **THEN** the gateway builds the prompt from the stage definition and the validated input, and the supplied text is not sent to the provider
+
+## MODIFIED Requirements
+
+### Requirement: The model provider contributes no secret
+
+The system SHALL authenticate to Vertex AI through workload identity — the Cloud Run
+service account's Application Default Credentials — and SHALL NOT read, store, log or
+transmit a model API key.
+
+The Vertex client SHALL be constructed from a project id and a location only.
+
+#### Scenario: No model key is configured anywhere
+- **WHEN** the repository and the deployment configuration are scanned for a model provider API key
+- **THEN** none is found, and no module reads one
+
+#### Scenario: The client bundle carries no provider secret
+- **WHEN** the built client bundle is scanned
+- **THEN** it contains no provider secret name and no value matching a known key shape
+
+#### Scenario: The Vertex client takes no credential
+- **WHEN** the Vertex client is constructed
+- **THEN** it is given a project and a location, and no credential value
+
+#### Scenario: The secret inventory has no model entry
+- **WHEN** the secret inventory is filtered for the model provider
+- **THEN** it is empty
